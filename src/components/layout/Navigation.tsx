@@ -80,8 +80,8 @@ export function Navigation() {
           </NavLink>
         ))}
       </div>
-      {/* Safe area spacer — fills the home indicator zone with nav background */}
-      <div className="h-[env(safe-area-inset-bottom,0px)] md:hidden" />
+      {/* Safe area spacer — fills the home indicator zone with nav background colour */}
+      <div className="md:hidden" style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
 
       {/* Desktop navigation */}
       <div className="hidden md:flex md:flex-col md:p-3 md:gap-1">

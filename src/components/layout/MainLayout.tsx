@@ -15,14 +15,13 @@ export function MainLayout({ children }: MainLayoutProps) {
           fixed to the viewport and prevents the iOS Safari momentum-scroll
           drift bug that pushes the bottom nav off-screen. */}
       <main
-        className={[
-          'absolute inset-0 overflow-y-auto overscroll-none',
-          'pt-[calc(3rem+env(safe-area-inset-top))]',
-          'pb-[calc(5rem+env(safe-area-inset-bottom))]',
-          'md:pb-6 md:ml-56',
-        ].join(' ')}
-        // Smooth momentum scroll on iOS without sharing the root scroll layer
-        style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+        className="absolute inset-0 overflow-y-auto overscroll-none md:pb-6 md:ml-56"
+        // Inline styles for safe-area calcs — Tailwind JIT misparses env() with commas
+        style={{
+          paddingTop: 'calc(3rem + env(safe-area-inset-top, 0px))',
+          paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))',
+          WebkitOverflowScrolling: 'touch',
+        } as React.CSSProperties}
       >
         <div className="px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] py-4 md:p-6 min-h-full">
           {children}
