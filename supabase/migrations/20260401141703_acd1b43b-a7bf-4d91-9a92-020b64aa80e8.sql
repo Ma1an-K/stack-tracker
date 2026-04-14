@@ -1,0 +1,1 @@
+ALTER TABLE public.homegames DROP CONSTRAINT IF EXISTS homegames_user_id_key;
