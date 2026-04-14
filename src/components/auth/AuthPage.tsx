@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Wallet, Plus, UserPlus, ArrowLeft, KeyRound } from 'lucide-react';
+import { Loader2, Plus, UserPlus, ArrowLeft, KeyRound } from 'lucide-react';
+import appIcon from '@/assets/icon.webp';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -208,9 +209,7 @@ export function AuthPage() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <Card className="w-full max-w-md border-border/50">
           <CardHeader className="text-center space-y-4">
-            <div className="mx-auto w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-              <Wallet className="w-6 h-6 text-gold" />
-            </div>
+            <img src={appIcon} alt="Stack Tracker" className="mx-auto w-12 h-12 rounded-xl" />
             <div>
               <CardTitle className="text-xl">Welcome</CardTitle>
               <CardDescription className="mt-2">
@@ -356,7 +355,7 @@ export function AuthPage() {
             <Wallet className="w-6 h-6 text-gold" />
           </div>
           <div>
-            <CardTitle className="text-xl">Home Game Ledger</CardTitle>
+            <CardTitle className="text-xl">Stack Tracker</CardTitle>
             <CardDescription className="mt-2">
               Track sessions and settlements
             </CardDescription>

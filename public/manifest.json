@@ -1,7 +1,7 @@
 {
-  "name": "Card Crew Ledger",
-  "short_name": "Card Crew",
-  "description": "Poker homegame manager - track sessions, players, and standings",
+  "name": "Stack Tracker",
+  "short_name": "Stack Tracker",
+  "description": "Track your poker homegame sessions, standings, and settlements",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#090b10",

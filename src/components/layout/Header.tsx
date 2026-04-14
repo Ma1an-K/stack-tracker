@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { LogOut, Settings, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2 } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useToast } from '@/hooks/use-toast';
-import { PokerChipSpade } from '@/components/icons/PokerChipSpade';
+import appIcon from '@/assets/icon.webp';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -91,9 +91,7 @@ export function Header() {
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)]">
         <div className="px-4 h-12 flex items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-              <PokerChipSpade className="w-4.5 h-4.5 text-gold" />
-            </div>
+            <img src={appIcon} alt="Stack Tracker" className="w-9 h-9 rounded-lg" />
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
