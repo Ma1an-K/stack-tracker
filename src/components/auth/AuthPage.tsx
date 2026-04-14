@@ -66,7 +66,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   headline: {
     color: '#f2e8ce',
-    fontSize: 32,
+    fontSize: 48,
     fontWeight: 800,
     lineHeight: 1.25,
     letterSpacing: '-0.4px',
@@ -399,7 +399,7 @@ export function AuthPage() {
   if (step === 'auth') {
     return (
       <div style={S.screen}>
-        <ScreenChrome glyph="♠" headline={<>Track every<br />hand. Settle<br />every debt.</>} />
+        <ScreenChrome glyph="♠" headline={<>Track every hand.<br />Settle every debt.</>} />
         <form onSubmit={handleLogin} style={{ position: 'relative', zIndex: 1 }}>
           <div style={lbl(true)}>Email</div>
           <input
