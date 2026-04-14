@@ -83,7 +83,7 @@ const S: Record<string, React.CSSProperties> = {
     position: 'relative',
     zIndex: 1,
   },
-  spacer: { flex: 1 },
+  spacer: { flex: 1, maxHeight: 120 },
   divider: {
     height: 1,
     flexShrink: 0,
@@ -399,7 +399,7 @@ export function AuthPage() {
   if (step === 'auth') {
     return (
       <div style={S.screen}>
-        <ScreenChrome glyph="♠" headline={<>Track every hand.<br />Settle every debt.</>} />
+        <ScreenChrome glyph="♠" headline={<>Track every<br />hand. Settle<br />every debt.</>} />
         <form onSubmit={handleLogin} style={{ position: 'relative', zIndex: 1 }}>
           <div style={lbl(true)}>Email</div>
           <input
