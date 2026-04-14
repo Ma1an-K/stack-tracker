@@ -26,7 +26,7 @@ const mobileNavRight = [
 
 export function Navigation() {
   return (
-    <nav className="shrink-0 border-t border-border/50 bg-card z-50 pb-[env(safe-area-inset-bottom)] md:fixed md:top-12 md:left-0 md:bottom-0 md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background md:pb-0">
+    <nav className="shrink-0 border-t border-border/50 bg-card z-50 md:fixed md:top-12 md:left-0 md:bottom-0 md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background">
       {/* Mobile navigation */}
       <div className="flex md:hidden items-center justify-around">
         {mobileNavLeft.map((item) => (
