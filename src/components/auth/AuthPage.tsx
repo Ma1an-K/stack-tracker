@@ -76,7 +76,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   appTag: {
     color: '#2e2416',
-    fontSize: '7.5px',
+    fontSize: '10px',
     letterSpacing: '2.5px',
     textTransform: 'uppercase',
     fontWeight: 500,
@@ -137,7 +137,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   micro: {
     color: '#2e2416',
-    fontSize: '7.5px',
+    fontSize: '11px',
     textAlign: 'center',
     marginTop: 14,
     position: 'relative',
@@ -251,6 +251,7 @@ function ScreenChrome({ glyph, headline }: { glyph: string; headline: React.Reac
       <div style={S.headline}>{headline}</div>
       <div style={S.appTag}>Stack Tracker</div>
       <div style={S.spacer} />
+      <div style={S.divider} />
     </>
   );
 }
