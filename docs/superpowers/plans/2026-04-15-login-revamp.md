@@ -1,3 +1,35 @@
+# Login Screen Revamp Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Replace the tab-based card auth UI in `AuthPage.tsx` with a full-screen editorial design — dark poker aesthetic, typographic headline, underline inputs, gold gradient buttons.
+
+**Architecture:** Single-file rewrite of `src/components/auth/AuthPage.tsx`. All auth logic handlers (signIn, signUp, createHomegame, joinHomegame, resetPasswordForEmail) are unchanged. Only the Step type, JSX, and styling change. No new files.
+
+**Tech Stack:** React, TypeScript, inline styles (no Tailwind — design tokens are bespoke hex/rgba values not in the Tailwind config)
+
+---
+
+## File Map
+
+| Action | File |
+|---|---|
+| Modify | `src/components/auth/AuthPage.tsx` — full JSX + style rewrite, Step type extended |
+
+---
+
+### Task 1: Rewrite AuthPage.tsx
+
+**Files:**
+- Modify: `src/components/auth/AuthPage.tsx`
+
+This is a complete replacement of the file's JSX and imports. All handler functions (`handleLogin`, `handleSignup`, `handleCreateHomegame`, `handleJoinHomegame`, `handleBackToLogin`, `handleForgotPassword`) and all state (`loginForm`, `signupForm`, `setupForm`, `setupMode`, `forgotEmail`, `loading`, `step`) are preserved verbatim. Only the Step type, imports, style tokens, and rendered JSX change.
+
+- [ ] **Step 1: Replace the entire file with the new implementation**
+
+Replace `src/components/auth/AuthPage.tsx` with the following:
+
+```tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -23,36 +55,39 @@ type Step = 'auth' | 'signup' | 'setup' | 'forgot';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
-const S: Record<string, React.CSSProperties> = {
+const S = {
   screen: {
-    position: 'fixed',
+    position: 'fixed' as const,
     inset: 0,
     background: '#090b10',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as const,
     padding: '52px 28px 44px',
     overflow: 'hidden',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", sans-serif',
-    boxSizing: 'border-box',
-  },
+    boxSizing: 'border-box' as const,
+  } satisfies React.CSSProperties,
+
   glowTopLeft: {
-    position: 'absolute',
+    position: 'absolute' as const,
     top: -60,
     left: -60,
     width: 280,
     height: 280,
     background: 'radial-gradient(circle, rgba(200,155,60,0.10) 0%, transparent 65%)',
-    pointerEvents: 'none',
-  },
+    pointerEvents: 'none' as const,
+  } satisfies React.CSSProperties,
+
   glowBottomRight: {
-    position: 'absolute',
+    position: 'absolute' as const,
     bottom: 40,
     right: -40,
     width: 220,
     height: 220,
     background: 'radial-gradient(circle, rgba(200,155,60,0.055) 0%, transparent 65%)',
-    pointerEvents: 'none',
-  },
+    pointerEvents: 'none' as const,
+  } satisfies React.CSSProperties,
+
   suit: {
     fontSize: 24,
     color: '#c89b3c',
@@ -61,9 +96,10 @@ const S: Record<string, React.CSSProperties> = {
     marginBottom: 14,
     lineHeight: 1,
     display: 'block',
-    position: 'relative',
+    position: 'relative' as const,
     zIndex: 1,
-  },
+  } satisfies React.CSSProperties,
+
   headline: {
     color: '#f2e8ce',
     fontSize: 22,
@@ -71,19 +107,22 @@ const S: Record<string, React.CSSProperties> = {
     lineHeight: 1.25,
     letterSpacing: '-0.4px',
     marginBottom: 6,
-    position: 'relative',
+    position: 'relative' as const,
     zIndex: 1,
-  },
+  } satisfies React.CSSProperties,
+
   appTag: {
     color: '#2e2416',
     fontSize: '7.5px',
     letterSpacing: '2.5px',
-    textTransform: 'uppercase',
+    textTransform: 'uppercase' as const,
     fontWeight: 500,
-    position: 'relative',
+    position: 'relative' as const,
     zIndex: 1,
-  },
-  spacer: { flex: 1 },
+  } satisfies React.CSSProperties,
+
+  spacer: { flex: 1 } satisfies React.CSSProperties,
+
   divider: {
     height: 1,
     flexShrink: 0,
@@ -91,9 +130,39 @@ const S: Record<string, React.CSSProperties> = {
       'linear-gradient(90deg, rgba(200,155,60,0.45) 0%, rgba(200,155,60,0.08) 60%, transparent 100%)',
     boxShadow: '0 0 6px rgba(200,155,60,0.15)',
     marginBottom: 22,
+    position: 'relative' as const,
+    zIndex: 1,
+  } satisfies React.CSSProperties,
+
+  lbl: (first = false): React.CSSProperties => ({
+    color: '#4a3d26',
+    fontSize: '7.5px',
+    textTransform: 'uppercase',
+    letterSpacing: '1.5px',
+    marginBottom: 6,
+    marginTop: first ? 0 : 16,
+    fontWeight: 600,
     position: 'relative',
     zIndex: 1,
-  },
+  }),
+
+  inp: (focused: boolean): React.CSSProperties => ({
+    display: 'block',
+    width: '100%',
+    height: 34,
+    border: 'none',
+    borderBottom: focused ? '1px solid rgba(200,155,60,0.5)' : '1px solid #1e1a12',
+    boxShadow: focused ? '0 1px 0 rgba(200,155,60,0.28)' : 'none',
+    background: 'transparent',
+    color: '#f2e8ce',
+    fontSize: 14,
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    position: 'relative',
+    zIndex: 1,
+  }),
+
   btnPrimary: {
     marginTop: 20,
     width: '100%',
@@ -112,10 +181,11 @@ const S: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     gap: 8,
     cursor: 'pointer',
-    position: 'relative',
+    position: 'relative' as const,
     zIndex: 1,
     flexShrink: 0,
-  },
+  } satisfies React.CSSProperties,
+
   btnSecondary: {
     marginTop: 8,
     width: '100%',
@@ -131,66 +201,36 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    position: 'relative',
+    position: 'relative' as const,
     zIndex: 1,
     flexShrink: 0,
-  },
+  } satisfies React.CSSProperties,
+
   micro: {
     color: '#2e2416',
     fontSize: '7.5px',
-    textAlign: 'center',
+    textAlign: 'center' as const,
     marginTop: 14,
-    position: 'relative',
+    position: 'relative' as const,
     zIndex: 1,
-  },
+  } satisfies React.CSSProperties,
+
   microSpan: {
     color: '#5a4530',
     cursor: 'pointer',
-  },
+  } satisfies React.CSSProperties,
+
   hint: {
     color: '#2e2416',
     fontSize: '7.5px',
     lineHeight: 1.6,
     marginTop: 10,
-    position: 'relative',
+    position: 'relative' as const,
     zIndex: 1,
-  },
+  } satisfies React.CSSProperties,
 };
 
-function lbl(first = false): React.CSSProperties {
-  return {
-    color: '#4a3d26',
-    fontSize: '7.5px',
-    textTransform: 'uppercase',
-    letterSpacing: '1.5px',
-    marginBottom: 6,
-    marginTop: first ? 0 : 16,
-    fontWeight: 600,
-    position: 'relative',
-    zIndex: 1,
-  };
-}
-
-function inp(focused: boolean): React.CSSProperties {
-  return {
-    display: 'block',
-    width: '100%',
-    height: 34,
-    border: 'none',
-    borderBottom: focused ? '1px solid rgba(200,155,60,0.5)' : '1px solid #1e1a12',
-    boxShadow: focused ? '0 1px 0 rgba(200,155,60,0.28)' : 'none',
-    background: 'transparent',
-    color: '#f2e8ce',
-    fontSize: 14,
-    outline: 'none',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.2s, box-shadow 0.2s',
-    position: 'relative',
-    zIndex: 1,
-  };
-}
-
-// ─── Toggle tile helpers ──────────────────────────────────────────────────────
+// ─── Toggle tile styles ───────────────────────────────────────────────────────
 
 function toggleStyle(active: boolean): React.CSSProperties {
   return active
@@ -205,7 +245,8 @@ function toggleStyle(active: boolean): React.CSSProperties {
         gap: 4,
         border: '1px solid rgba(200,155,60,0.32)',
         background: 'rgba(200,155,60,0.07)',
-        boxShadow: '0 0 14px rgba(200,155,60,0.07), inset 0 1px 0 rgba(200,155,60,0.1)',
+        boxShadow:
+          '0 0 14px rgba(200,155,60,0.07), inset 0 1px 0 rgba(200,155,60,0.1)',
         cursor: 'pointer',
       }
     : {
@@ -385,7 +426,7 @@ export function AuthPage() {
     }
   };
 
-  // ─── Loading ──────────────────────────────────────────────────────────────────
+  // ─── Loading ────────────────────────────────────────────────────────────────
 
   if (authLoading) {
     return (
@@ -395,32 +436,32 @@ export function AuthPage() {
     );
   }
 
-  // ─── Sign In ──────────────────────────────────────────────────────────────────
+  // ─── Sign In ─────────────────────────────────────────────────────────────────
 
   if (step === 'auth') {
     return (
       <div style={S.screen}>
         <ScreenChrome glyph="♠" headline={<>Track every hand.<br />Settle every debt.</>} />
         <form onSubmit={handleLogin} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Email</div>
+          <div style={S.lbl(true)}>Email</div>
           <input
             type="email"
             value={loginForm.email}
             onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
             onFocus={() => setFocused('login-email')}
             onBlur={() => setFocused(null)}
-            style={inp(focused === 'login-email')}
+            style={S.inp(focused === 'login-email')}
             required
             autoComplete="email"
           />
-          <div style={lbl()}>Password</div>
+          <div style={S.lbl()}>Password</div>
           <input
             type="password"
             value={loginForm.password}
             onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
             onFocus={() => setFocused('login-password')}
             onBlur={() => setFocused(null)}
-            style={inp(focused === 'login-password')}
+            style={S.inp(focused === 'login-password')}
             required
             autoComplete="current-password"
           />
@@ -442,44 +483,44 @@ export function AuthPage() {
     );
   }
 
-  // ─── Sign Up ──────────────────────────────────────────────────────────────────
+  // ─── Sign Up ─────────────────────────────────────────────────────────────────
 
   if (step === 'signup') {
     return (
       <div style={S.screen}>
         <ScreenChrome glyph="♠" headline="Join the table." />
         <form onSubmit={handleSignup} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Username</div>
+          <div style={S.lbl(true)}>Username</div>
           <input
             type="text"
             value={signupForm.username}
             onChange={(e) => setSignupForm({ ...signupForm, username: e.target.value })}
             onFocus={() => setFocused('signup-username')}
             onBlur={() => setFocused(null)}
-            style={inp(focused === 'signup-username')}
+            style={S.inp(focused === 'signup-username')}
             required
             maxLength={20}
             autoComplete="username"
           />
-          <div style={lbl()}>Email</div>
+          <div style={S.lbl()}>Email</div>
           <input
             type="email"
             value={signupForm.email}
             onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
             onFocus={() => setFocused('signup-email')}
             onBlur={() => setFocused(null)}
-            style={inp(focused === 'signup-email')}
+            style={S.inp(focused === 'signup-email')}
             required
             autoComplete="email"
           />
-          <div style={lbl()}>Password</div>
+          <div style={S.lbl()}>Password</div>
           <input
             type="password"
             value={signupForm.password}
             onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
             onFocus={() => setFocused('signup-password')}
             onBlur={() => setFocused(null)}
-            style={inp(focused === 'signup-password')}
+            style={S.inp(focused === 'signup-password')}
             required
             autoComplete="new-password"
           />
@@ -502,14 +543,14 @@ export function AuthPage() {
       <div style={S.screen}>
         <ScreenChrome glyph="🔑" headline="Reset your password." />
         <form onSubmit={handleForgotPassword} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Email</div>
+          <div style={S.lbl(true)}>Email</div>
           <input
             type="email"
             value={forgotEmail}
             onChange={(e) => setForgotEmail(e.target.value)}
             onFocus={() => setFocused('forgot-email')}
             onBlur={() => setFocused(null)}
-            style={inp(focused === 'forgot-email')}
+            style={S.inp(focused === 'forgot-email')}
             required
             autoComplete="email"
           />
@@ -543,7 +584,7 @@ export function AuthPage() {
       </div>
       {setupMode === 'create' ? (
         <form onSubmit={handleCreateHomegame} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Game Name</div>
+          <div style={S.lbl(true)}>Game Name</div>
           <input
             type="text"
             placeholder="Friday Night Game"
@@ -551,7 +592,7 @@ export function AuthPage() {
             onChange={(e) => setSetupForm({ ...setupForm, homegameName: e.target.value })}
             onFocus={() => setFocused('setup-name')}
             onBlur={() => setFocused(null)}
-            style={inp(focused === 'setup-name')}
+            style={S.inp(focused === 'setup-name')}
             required
           />
           <button type="submit" style={S.btnPrimary} disabled={loading}>
@@ -561,7 +602,7 @@ export function AuthPage() {
         </form>
       ) : (
         <form onSubmit={handleJoinHomegame} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Invite Code</div>
+          <div style={S.lbl(true)}>Invite Code</div>
           <input
             type="text"
             placeholder="ABCD1234"
@@ -570,7 +611,7 @@ export function AuthPage() {
             onFocus={() => setFocused('setup-code')}
             onBlur={() => setFocused(null)}
             style={{
-              ...inp(focused === 'setup-code'),
+              ...S.inp(focused === 'setup-code'),
               fontFamily: 'monospace',
               textAlign: 'center',
               letterSpacing: '0.2em',
@@ -592,3 +633,104 @@ export function AuthPage() {
     </div>
   );
 }
+```
+
+- [ ] **Step 2: Verify TypeScript compiles**
+
+Run: `npm run build 2>&1 | tail -20`
+
+Expected: No type errors. If `satisfies React.CSSProperties` causes issues with the TypeScript version, replace each `satisfies` with an explicit `: React.CSSProperties` type annotation on the const.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/components/auth/AuthPage.tsx
+git commit -m "feat: revamp login screen with editorial dark poker design
+
+Replace tab-based card UI with full-screen typographic layout:
+- Bold headline in top half, minimal form in bottom half
+- Gold glowing divider separating hero from form
+- Underline inputs with gold focus glow
+- Gold gradient primary button (wt 500), outline secondary (wt 400)
+- Step type extended with 'signup' — tabs replaced by explicit screens
+- All auth logic handlers unchanged
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 2: Visual verification
+
+**Files:**
+- Read: browser at `http://localhost:5173/auth` (or wherever Vite serves)
+
+- [ ] **Step 1: Start the dev server**
+
+Run: `npm run dev`
+
+- [ ] **Step 2: Check Sign In screen (`step: 'auth'`)**
+
+Navigate to `/auth`. Verify:
+- Full-screen dark `#090b10` background
+- Faint gold ambient glow top-left and bottom-right
+- ♠ glyph with gold glow
+- Bold `#f2e8ce` headline "Track every hand. Settle every debt."
+- Tiny `#2e2416` "Stack Tracker" app tag
+- Gold gradient divider across page
+- Email and Password underline inputs (gold on focus)
+- Gold gradient "Sign In" primary button
+- Faint-bordered "Create Account" secondary button
+- Tiny "Forgot password? Reset it" micro link
+
+- [ ] **Step 3: Check Sign Up screen (`step: 'signup'`)**
+
+Click "Create Account". Verify:
+- Same full-screen chrome
+- Headline: "Join the table."
+- Three fields: Username, Email, Password
+- "Create Account" primary, "Back to Sign In" secondary
+- No micro link
+
+- [ ] **Step 4: Check Forgot Password screen (`step: 'forgot'`)**
+
+Click "Back to Sign In" → click "Forgot password? Reset it". Verify:
+- 🔑 glyph (emoji, no gold glow needed)
+- Headline: "Reset your password."
+- Single Email field
+- Helper text "We'll send a reset link straight to your inbox." in dim `#2e2416`
+- "Send Reset Link" primary, "Back to Sign In" secondary
+
+- [ ] **Step 5: Check Setup screen (`step: 'setup'`)**
+
+This screen only shows post-login with no homegame. To test locally: in browser console, set `localStorage` to simulate the step or temporarily change the `useEffect` condition. Verify:
+- Headline: "Welcome to the table."
+- Two toggle tiles: "Create Game" (gold, selected by default) and "Join with Code" (silver)
+- Clicking "Join with Code" switches the active tile and the form field to "Invite Code"
+- Primary button label updates: "Create Game" / "Join Game"
+- "Back to sign in" micro link at bottom
+
+---
+
+## Spec Coverage Check
+
+| Spec requirement | Covered |
+|---|---|
+| Background `#090b10` | ✅ Task 1 |
+| Headline `#f2e8ce`, 22px, wt 800, line-height 1.25 | ✅ Task 1 |
+| App tag `#2e2416`, 7.5px, uppercase | ✅ Task 1 |
+| Gold divider gradient + glow | ✅ Task 1 |
+| Underline input idle `#1e1a12` | ✅ Task 1 |
+| Underline input focused gold + glow | ✅ Task 1 (focus state via `focused` state) |
+| Primary button gold gradient, wt 500 | ✅ Task 1 |
+| Secondary button outline, wt 400 | ✅ Task 1 |
+| Ambient glows top-left + bottom-right | ✅ Task 1 (absolute divs) |
+| ♠ glyph text-shadow 8+20+40px halos | ✅ Task 1 |
+| Step type includes `'signup'` | ✅ Task 1 |
+| Sign In screen: fields + micro link | ✅ Task 1 |
+| Sign Up screen: 3 fields, no micro link | ✅ Task 1 |
+| Forgot PW: 🔑 glyph, helper text | ✅ Task 1 |
+| Setup: gold/silver toggle tiles | ✅ Task 1 |
+| Setup: field + button label swap on mode change | ✅ Task 1 |
+| Setup: "Back to sign in" micro link | ✅ Task 1 |
+| Auth logic handlers unchanged | ✅ Task 1 (copied verbatim) |
