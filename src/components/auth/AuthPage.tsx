@@ -250,8 +250,8 @@ function ScreenChrome({ glyph, headline }: { glyph: string; headline: React.Reac
       <span style={S.suit}>{glyph}</span>
       <div style={S.headline}>{headline}</div>
       <div style={S.appTag}>Stack Tracker</div>
+      <div style={{ ...S.divider, marginTop: 10, marginBottom: 0 }} />
       <div style={S.spacer} />
-      <div style={S.divider} />
     </>
   );
 }
