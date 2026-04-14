@@ -8,7 +8,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="h-[100dvh] bg-background relative overflow-hidden">
+    <div className="h-[100dvh] bg-background relative">
       <Header />
       <Navigation />
       {/* main is the ONLY scroll container — keeps fixed header/nav truly

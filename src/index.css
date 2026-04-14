@@ -104,7 +104,9 @@
   html {
     height: 100%;
     overscroll-behavior: none;
-    background-color: hsl(225 25% 5%);
+    /* Match nav bg-card so any sub-pixel gap at the physical screen edge
+       is the same colour as the nav bar — no visible seam. */
+    background-color: hsl(225 22% 8%);
   }
   body {
     height: 100%;
@@ -117,11 +119,12 @@
     height: 100%;
     width: 100%;
     max-width: 100vw;
-    /* No overflow-y here — scrolling lives in <main> so fixed elements
-       are anchored to the true viewport, not a momentum-scroll layer.
-       The iOS Safari bug that drifts fixed nav off-screen only triggers
-       when fixed children share a -webkit-overflow-scrolling container. */
-    overflow: hidden;
+    /* overflow:clip clips page-level scroll like overflow:hidden but does NOT
+       create a scroll container — so position:fixed children remain anchored
+       to the true viewport rather than a clipping rectangle.
+       Fallback for older iOS: 'visible' (no clipping), which is fine because
+       body/html height:100% already prevents page-level scroll. */
+    overflow: clip;
   }
   /* Professional sans-serif for all text - no decorative fonts */
   h1, h2, h3, h4, h5, h6 {

@@ -1,3 +1,4 @@
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Users, Calendar, BarChart3, Plus, Trophy, Calculator, LayoutDashboard } from 'lucide-react';
@@ -26,7 +27,10 @@ const mobileNavRight = [
 
 export function Navigation() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 border-t border-border/50 bg-card z-50 md:fixed md:top-12 md:left-0 md:bottom-auto md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background">
+    <nav
+      className="fixed bottom-0 left-0 right-0 border-t border-border/50 bg-card z-50 md:fixed md:top-12 md:left-0 md:bottom-auto md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' } as React.CSSProperties}
+    >
       {/* Mobile navigation */}
       <div className="flex md:hidden items-center justify-around">
         {mobileNavLeft.map((item) => (
@@ -80,8 +84,6 @@ export function Navigation() {
           </NavLink>
         ))}
       </div>
-      {/* Safe area spacer — fills the home indicator zone with nav background colour */}
-      <div className="md:hidden" style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
 
       {/* Desktop navigation */}
       <div className="hidden md:flex md:flex-col md:p-3 md:gap-1">
