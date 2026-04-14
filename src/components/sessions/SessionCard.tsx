@@ -143,11 +143,11 @@ export function SessionCard({
                   return (
                     <div
                       key={sp.id}
-                      className="flex items-center justify-between px-3 py-2.5"
+                      className="flex items-center justify-between gap-2 px-3 py-2.5"
                     >
-                      <span className="font-medium text-sm">{sp.player.name}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground tabular-nums">
+                      <span className="font-medium text-sm truncate min-w-0">{sp.player.name}</span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="hidden sm:block text-xs text-muted-foreground tabular-nums">
                           {formatCurrency(Number(sp.buy_in), currency)} → {formatCurrency(Number(sp.cash_out), currency)}
                         </span>
                         <span className={`font-semibold text-sm tabular-nums ${profit >= 0 ? 'profit' : 'loss'}`}>
@@ -183,7 +183,7 @@ export function SessionCard({
           )}
 
           {/* Actions */}
-          <div className="flex gap-2 pt-3 border-t border-border/50">
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-border/50">
             <Button variant="secondary" size="sm" onClick={handleShare}>
               {copied ? <Check className="h-4 w-4 mr-1.5" /> : <Share2 className="h-4 w-4 mr-1.5" />}
               {copied ? 'Copied' : 'Share'}

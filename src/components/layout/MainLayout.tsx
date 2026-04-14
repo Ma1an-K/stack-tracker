@@ -24,7 +24,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         // Smooth momentum scroll on iOS without sharing the root scroll layer
         style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
-        <div className="p-4 md:p-6 min-h-full">
+        <div className="px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] py-4 md:p-6 min-h-full">
           {children}
         </div>
       </main>

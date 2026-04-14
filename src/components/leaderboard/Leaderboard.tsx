@@ -79,9 +79,9 @@ export function Leaderboard({ sessions, players, currency }: LeaderboardProps) {
                 onClick={() => setH2hOpponent(stat.player)}
               >
                 <CardContent className="py-4">
-                  <div className="flex items-center gap-2 md:gap-4">
+                  <div className="flex items-center gap-2">
                     {/* Rank */}
-                    <div className={`w-8 text-center font-mono text-sm ${isTop3 ? 'text-gold font-semibold' : 'text-muted-foreground'}`}>
+                    <div className={`w-7 flex-shrink-0 text-center font-mono text-sm ${isTop3 ? 'text-gold font-semibold' : 'text-muted-foreground'}`}>
                       {rankDisplay}
                     </div>
 
@@ -93,20 +93,23 @@ export function Leaderboard({ sessions, players, currency }: LeaderboardProps) {
                       </div>
                     </div>
 
-                    {/* Badges — fixed-width column so profit numbers stay aligned */}
-                    <div className="flex-shrink-0 w-40 flex items-center justify-end" onClick={e => e.stopPropagation()}>
+                    {/* Badges — 2 max on mobile, 4 on desktop */}
+                    <div
+                      className="flex-shrink-0 flex items-center justify-end overflow-hidden max-w-[4.5rem] md:max-w-[10rem]"
+                      onClick={e => e.stopPropagation()}
+                    >
                       {playerBadges.length > 0 && (
-                        <PlayerBadges badges={playerBadges} currency={currency} size="sm" />
+                        <PlayerBadges badges={playerBadges} currency={currency} size="sm" maxDisplay={2} />
                       )}
                     </div>
 
                     {/* Net position */}
-                    <div className="w-24 flex-shrink-0 text-right md:w-36">
-                      <div className={`text-base font-semibold tabular-nums flex items-center justify-end gap-1.5 ${stat.netProfit >= 0 ? 'profit' : 'loss'}`}>
+                    <div className="w-20 flex-shrink-0 text-right md:w-32">
+                      <div className={`text-sm font-semibold tabular-nums flex items-center justify-end gap-1 ${stat.netProfit >= 0 ? 'profit' : 'loss'}`}>
                         {stat.netProfit >= 0 ? (
-                          <TrendingUp className="h-3.5 w-3.5" />
+                          <TrendingUp className="h-3 w-3" />
                         ) : (
-                          <TrendingDown className="h-3.5 w-3.5" />
+                          <TrendingDown className="h-3 w-3" />
                         )}
                         {formatProfit(stat.netProfit, currency)}
                       </div>

@@ -89,17 +89,17 @@ export function Header() {
   return (
     <>
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)]">
-        <div className="container mx-auto px-4 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="px-4 h-12 flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
               <PokerChipSpade className="w-4.5 h-4.5 text-gold" />
             </div>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-auto py-1 px-2 flex flex-col items-start">
-                  <div className="flex items-center gap-1">
-                    <span className="font-semibold">{homegame?.name || 'Select Homegame'}</span>
+                <Button variant="ghost" className="h-auto py-1 px-2 flex flex-col items-start min-w-0 max-w-[180px]">
+                  <div className="flex items-center gap-1 min-w-0 w-full">
+                    <span className="font-semibold truncate">{homegame?.name || 'Select Homegame'}</span>
                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -144,7 +144,7 @@ export function Header() {
             </DropdownMenu>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {profile && (
               <span className="text-sm text-muted-foreground hidden sm:block font-mono">
                 {profile.username}#{profile.discriminator}
