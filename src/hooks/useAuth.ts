@@ -248,6 +248,31 @@ export function useAuth() {
     return { error };
   };
 
+  const deleteHomegame = async (homegameId: string) => {
+    if (!user) return { error: new Error('Not authenticated') };
+
+    const { error } = await supabase
+      .from('homegames')
+      .delete()
+      .eq('id', homegameId);
+
+    if (!error) {
+      const remaining = homegames.filter(h => h.id !== homegameId);
+      setHomegames(remaining);
+      if (currentHomegame?.id === homegameId) {
+        const next = remaining[0] ?? null;
+        setCurrentHomegame(next);
+        if (next) {
+          localStorage.setItem('currentHomegameId', next.id);
+        } else {
+          localStorage.removeItem('currentHomegameId');
+        }
+      }
+    }
+
+    return { error };
+  };
+
   const updateHomegame = async (updates: Partial<Homegame>) => {
     if (!currentHomegame) return { error: new Error('No homegame selected') };
     
@@ -287,6 +312,7 @@ export function useAuth() {
     selectHomegame,
     updateProfile,
     updateHomegame,
+    deleteHomegame,
     resetPasswordForEmail,
     updatePassword,
     refetchUserData: () => user && fetchUserData(user.id),

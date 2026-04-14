@@ -21,6 +21,7 @@ interface AuthContextType {
   selectHomegame: (homegameId: string) => void;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
   updateHomegame: (updates: Partial<Homegame>) => Promise<{ error: any }>;
+  deleteHomegame: (homegameId: string) => Promise<{ error: any }>;
   resetPasswordForEmail: (email: string) => Promise<{ error: any }>;
   updatePassword: (password: string) => Promise<{ error: any }>;
   refetchUserData: () => void;

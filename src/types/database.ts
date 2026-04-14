@@ -12,6 +12,7 @@ export interface Homegame {
   user_id: string;
   name: string;
   currency: string;
+  icon_id: string | null;
   created_at: string;
   updated_at: string;
 }

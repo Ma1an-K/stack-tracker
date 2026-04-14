@@ -3,11 +3,11 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogOut, Settings, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2 } from 'lucide-react';
+import { LogOut, Settings, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2, Trash2, Image } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useToast } from '@/hooks/use-toast';
-import appIcon from '@/assets/icon.webp';
 import { Link as RouterLink } from 'react-router-dom';
+import { HOMEGAME_ICONS, getIconSrc } from '@/lib/homegameIcons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,17 +17,22 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { HomegameDialog } from './HomegameDialog';
 
 export function Header() {
-  const { homegame, homegames, profile, isOwner, signOut, selectHomegame, updateProfile } = useAuthContext();
+  const { homegame, homegames, profile, isOwner, signOut, selectHomegame, updateProfile, updateHomegame, deleteHomegame } = useAuthContext();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTab, setDialogTab] = useState<'create' | 'join'>('create');
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({ display_name: '', username: '' });
   const [profileLoading, setProfileLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [iconLoading, setIconLoading] = useState(false);
   const { isSubscribed, isSupported, subscribe, unsubscribe } = usePushNotifications();
 
   const handleToggleNotifications = async () => {
@@ -72,6 +77,19 @@ export function Header() {
     }
   };
 
+  const handleDeleteHomegame = async () => {
+    if (!homegame) return;
+    setDeleteLoading(true);
+    const { error } = await deleteHomegame(homegame.id);
+    setDeleteLoading(false);
+    setDeleteDialogOpen(false);
+    if (error) {
+      toast({ title: 'Failed to delete homegame', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Homegame deleted' });
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -86,12 +104,24 @@ export function Header() {
     setDialogOpen(true);
   };
 
+  const handleSelectIcon = async (iconId: string) => {
+    setIconLoading(true);
+    const { error } = await updateHomegame({ icon_id: iconId });
+    setIconLoading(false);
+    if (error) {
+      toast({ title: 'Failed to update icon', description: error.message, variant: 'destructive' });
+    } else {
+      setIconPickerOpen(false);
+      toast({ title: 'Icon updated' });
+    }
+  };
+
   return (
     <>
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)]">
         <div className="px-4 h-12 flex items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <img src={appIcon} alt="Stack Tracker" className="w-9 h-9 rounded-lg" />
+            <img src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover" />
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -188,6 +218,17 @@ export function Header() {
                         Invite Codes
                       </RouterLink>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIconPickerOpen(true)}>
+                      <Image className="mr-2 h-4 w-4" />
+                      Change Icon
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Homegame
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
                 )}
@@ -211,6 +252,56 @@ export function Header() {
         onOpenChange={setDialogOpen}
         defaultTab={dialogTab}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{homegame?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the homegame and all its data — sessions, players, and results. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteHomegame}
+              disabled={deleteLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete Homegame
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Choose Homegame Icon</DialogTitle>
+            <DialogDescription>Select a badge icon for your homegame.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-3 mt-2">
+            {HOMEGAME_ICONS.map((icon) => (
+              <button
+                key={icon.id}
+                onClick={() => handleSelectIcon(icon.id)}
+                disabled={iconLoading}
+                className={`relative rounded-lg p-1 border-2 transition-colors hover:border-yellow-500/60 focus:outline-none ${homegame?.icon_id === icon.id ? 'border-yellow-500' : 'border-border/40'}`}
+              >
+                <img src={icon.src} alt={icon.label} className="w-full aspect-square object-cover rounded" />
+                <span className="block text-center text-[10px] text-muted-foreground mt-1 truncate">{icon.label}</span>
+                {iconLoading && homegame?.icon_id !== icon.id && null}
+              </button>
+            ))}
+          </div>
+          {iconLoading && (
+            <div className="flex justify-center mt-2">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
         <DialogContent className="sm:max-w-md">
