@@ -66,7 +66,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   headline: {
     color: '#f2e8ce',
-    fontSize: 22,
+    fontSize: 32,
     fontWeight: 800,
     lineHeight: 1.25,
     letterSpacing: '-0.4px',
@@ -251,7 +251,6 @@ function ScreenChrome({ glyph, headline }: { glyph: string; headline: React.Reac
       <div style={S.headline}>{headline}</div>
       <div style={S.appTag}>Stack Tracker</div>
       <div style={S.spacer} />
-      <div style={S.divider} />
     </>
   );
 }
