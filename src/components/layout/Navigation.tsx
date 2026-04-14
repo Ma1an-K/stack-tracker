@@ -35,7 +35,7 @@ export function Navigation() {
             to={item.to}
             className={({ isActive }) =>
               cn(
-                'flex-1 flex flex-col items-center justify-center gap-0.5 py-3 text-[10px] font-medium transition-all duration-150 min-h-[44px]',
+                'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-all duration-150 min-h-[44px]',
                 isActive
                   ? 'text-gold'
                   : 'text-muted-foreground hover:text-foreground'
@@ -68,7 +68,7 @@ export function Navigation() {
             to={item.to}
             className={({ isActive }) =>
               cn(
-                'flex-1 flex flex-col items-center justify-center gap-0.5 py-3 text-[10px] font-medium transition-all duration-150 min-h-[44px]',
+                'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-all duration-150 min-h-[44px]',
                 isActive
                   ? 'text-gold'
                   : 'text-muted-foreground hover:text-foreground'
