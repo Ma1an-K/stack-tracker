@@ -26,7 +26,7 @@ const mobileNavRight = [
 
 export function Navigation() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 border-t border-border/50 bg-card z-50 pb-[env(safe-area-inset-bottom)] md:fixed md:top-12 md:left-0 md:bottom-auto md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background md:pb-0">
+    <nav className="fixed bottom-0 left-0 right-0 border-t border-border/50 bg-card z-50 md:fixed md:top-12 md:left-0 md:bottom-auto md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background">
       {/* Mobile navigation */}
       <div className="flex md:hidden items-center justify-around">
         {mobileNavLeft.map((item) => (
@@ -80,6 +80,8 @@ export function Navigation() {
           </NavLink>
         ))}
       </div>
+      {/* Safe area spacer — fills the home indicator zone with nav background */}
+      <div className="h-[env(safe-area-inset-bottom,0px)] md:hidden" />
 
       {/* Desktop navigation */}
       <div className="hidden md:flex md:flex-col md:p-3 md:gap-1">
