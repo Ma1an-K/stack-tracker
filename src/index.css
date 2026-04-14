@@ -111,7 +111,8 @@
   body {
     height: 100%;
     overscroll-behavior: none;
-    @apply bg-background text-foreground antialiased;
+    background-color: hsl(225 22% 8%);
+    @apply text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
   #root {
