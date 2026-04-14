@@ -27,8 +27,6 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Nav is last in flex column on mobile (sits flush at layout bottom),
           md:fixed takes it out of the flex flow for the desktop sidebar. */}
       <Navigation />
-      {/* Safe area fill — same colour as nav, keeps the strip below the home indicator seamless */}
-      <div className="shrink-0 bg-card md:hidden h-[env(safe-area-inset-bottom)]" />
     </div>
   );
 }
