@@ -5,7 +5,7 @@
 //   supabase.co API                   → network-only (never cache live data)
 //   everything else                   → network-only
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `card-crew-${CACHE_VERSION}`;
 
 // ─── Install ──────────────────────────────────────────────────────────────────

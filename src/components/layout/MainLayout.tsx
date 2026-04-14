@@ -8,18 +8,16 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="h-[100dvh] bg-background relative">
+    // Mobile: flex column — nav is a natural flex item pinned at the bottom
+    // of the OS-controlled layout edge. Avoids position:fixed iOS clipping bugs.
+    // Desktop (md:): block layout with fixed header/sidebar as before.
+    <div className="flex flex-col h-[100dvh] md:block md:relative bg-background">
       <Header />
-      <Navigation />
-      {/* main is the ONLY scroll container — keeps fixed header/nav truly
-          fixed to the viewport and prevents the iOS Safari momentum-scroll
-          drift bug that pushes the bottom nav off-screen. */}
+      {/* Scrollable content area — flex-1 fills space between fixed header and nav */}
       <main
-        className="absolute inset-0 overflow-y-auto overscroll-none md:pb-6 md:ml-56"
-        // Inline styles for safe-area calcs — Tailwind JIT misparses env() with commas
+        className="flex-1 min-h-0 overflow-y-auto overscroll-none md:absolute md:inset-0 md:pb-6 md:ml-56"
         style={{
           paddingTop: 'calc(3rem + env(safe-area-inset-top, 0px))',
-          paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))',
           WebkitOverflowScrolling: 'touch',
         } as React.CSSProperties}
       >
@@ -27,6 +25,9 @@ export function MainLayout({ children }: MainLayoutProps) {
           {children}
         </div>
       </main>
+      {/* Nav after main — sits at the bottom of the flex column on mobile,
+          fixed sidebar on desktop (md:fixed takes it out of flex flow) */}
+      <Navigation />
     </div>
   );
 }
