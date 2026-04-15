@@ -140,6 +140,7 @@ export function Header() {
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {isOwner ? (
               <button
+                data-tutorial="tutorial-homegame-icon"
                 onClick={() => setIconPickerOpen(true)}
                 className="rounded-lg focus:outline-none hover:ring-2 hover:ring-yellow-500/50 transition-all"
                 aria-label="Change homegame icon"
@@ -147,7 +148,7 @@ export function Header() {
                 <img src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover" />
               </button>
             ) : (
-              <img src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover" />
+              <img data-tutorial="tutorial-homegame-icon" src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover" />
             )}
             
             <DropdownMenu>
@@ -208,7 +209,7 @@ export function Header() {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button data-tutorial="tutorial-settings" variant="ghost" size="icon" className="h-8 w-8">
                   <Settings className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>

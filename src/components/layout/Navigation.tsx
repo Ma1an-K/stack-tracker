@@ -4,23 +4,23 @@ import { Users, Calendar, BarChart3, Plus, Trophy, Calculator, LayoutDashboard }
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/sessions', icon: Calendar, label: 'Sessions' },
-  { to: '/leaderboard', icon: BarChart3, label: 'Standings' },
-  { to: '/players', icon: Users, label: 'Players' },
-  { to: '/my-stats', icon: Trophy, label: 'My Stats' },
+  { to: '/sessions', icon: Calendar, label: 'Sessions', 'data-tutorial': 'tutorial-nav-sessions' },
+  { to: '/leaderboard', icon: BarChart3, label: 'Standings', 'data-tutorial': 'tutorial-nav-standings' },
+  { to: '/players', icon: Users, label: 'Players', 'data-tutorial': 'tutorial-nav-players' },
+  { to: '/my-stats', icon: Trophy, label: 'My Stats', 'data-tutorial': 'tutorial-nav-stats' },
   { to: '/calculator', icon: Calculator, label: 'Calculator' },
 ];
 
 // Mobile bottom nav items - 3 on each side of the center plus button
 const mobileNavLeft = [
   { to: '/', icon: LayoutDashboard, label: 'Home' },
-  { to: '/sessions', icon: Calendar, label: 'Sessions' },
-  { to: '/players', icon: Users, label: 'Players' },
+  { to: '/sessions', icon: Calendar, label: 'Sessions', 'data-tutorial': 'tutorial-nav-sessions' },
+  { to: '/players', icon: Users, label: 'Players', 'data-tutorial': 'tutorial-nav-players' },
 ];
 
 const mobileNavRight = [
-  { to: '/leaderboard', icon: BarChart3, label: 'Standings' },
-  { to: '/my-stats', icon: Trophy, label: 'Stats' },
+  { to: '/leaderboard', icon: BarChart3, label: 'Standings', 'data-tutorial': 'tutorial-nav-standings' },
+  { to: '/my-stats', icon: Trophy, label: 'Stats', 'data-tutorial': 'tutorial-nav-stats' },
   { to: '/calculator', icon: Calculator, label: 'Calc' },
 ];
 
@@ -33,6 +33,7 @@ export function Navigation() {
           <NavLink
             key={item.to}
             to={item.to}
+            data-tutorial={item['data-tutorial']}
             className={({ isActive }) =>
               cn(
                 'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-all duration-150 min-h-[44px]',
@@ -50,6 +51,7 @@ export function Navigation() {
         {/* Center Plus Button */}
         <NavLink
           to="/new-session"
+          data-tutorial="tutorial-new-session"
           className={({ isActive }) =>
             cn(
               'flex flex-col items-center justify-center -mt-5 transition-all duration-150',
@@ -66,6 +68,7 @@ export function Navigation() {
           <NavLink
             key={item.to}
             to={item.to}
+            data-tutorial={item['data-tutorial']}
             className={({ isActive }) =>
               cn(
                 'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-all duration-150 min-h-[44px]',
@@ -87,6 +90,7 @@ export function Navigation() {
           <NavLink
             key={item.to}
             to={item.to}
+            data-tutorial={item['data-tutorial']}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-2.5 py-2 px-3 text-sm font-medium transition-all duration-150 rounded-md',
@@ -104,6 +108,7 @@ export function Navigation() {
         {/* New Session button for desktop */}
         <NavLink
           to="/new-session"
+          data-tutorial="tutorial-new-session"
           className={({ isActive }) =>
             cn(
               'flex items-center gap-2.5 py-2 px-3 text-sm font-medium transition-all duration-150 rounded-md mt-2 bg-gold/10 border border-gold/20',
