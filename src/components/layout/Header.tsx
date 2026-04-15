@@ -158,11 +158,11 @@ export function Header() {
                     <span className="font-semibold truncate">{homegame?.name || 'Select Homegame'}</span>
                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="text-xs flex items-center gap-1">
                     {isOwner ? (
-                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-normal">Owner</Badge>
+                      <span className="text-[9px] font-bold uppercase tracking-wide text-gold">Owner</span>
                     ) : homegame ? (
-                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-normal">Member</Badge>
+                      <span className="text-[9px] font-bold uppercase tracking-wide text-gold/60">Member</span>
                     ) : null}
                   </span>
                 </Button>
