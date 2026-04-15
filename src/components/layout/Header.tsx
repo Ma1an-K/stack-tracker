@@ -276,12 +276,13 @@ export function Header() {
       </AlertDialog>
 
       <Dialog open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
+        <DialogContent className="flex flex-col sm:max-w-sm max-h-[85vh]">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Choose Homegame Icon</DialogTitle>
             <DialogDescription>Select a badge icon for your homegame.</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-3 gap-3 mt-2">
+          <div className="overflow-y-auto flex-1 pr-1">
+          <div className="grid grid-cols-4 gap-2 mt-2 pb-2">
             {HOMEGAME_ICONS.map((icon) => (
               <button
                 key={icon.id}
@@ -295,8 +296,9 @@ export function Header() {
               </button>
             ))}
           </div>
+          </div>
           {iconLoading && (
-            <div className="flex justify-center mt-2">
+            <div className="flex justify-center mt-2 shrink-0">
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           )}
