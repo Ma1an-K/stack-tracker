@@ -32,7 +32,7 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip }: Tutorial
     }
     const r = el.getBoundingClientRect();
     setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
-  }, [step]);
+  }, [step?.targetId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const id = setTimeout(measureTarget, 50);
