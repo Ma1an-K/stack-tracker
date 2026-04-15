@@ -145,10 +145,10 @@ export function Header() {
                 className="rounded-lg focus:outline-none hover:ring-2 hover:ring-yellow-500/50 transition-all"
                 aria-label="Change homegame icon"
               >
-                <img src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover" />
+                <img src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover shadow-[0_0_12px_rgba(200,155,60,0.45)]" />
               </button>
             ) : (
-              <img data-tutorial="tutorial-homegame-icon" src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover" />
+              <img data-tutorial="tutorial-homegame-icon" src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover shadow-[0_0_12px_rgba(200,155,60,0.45)]" />
             )}
             
             <DropdownMenu>
