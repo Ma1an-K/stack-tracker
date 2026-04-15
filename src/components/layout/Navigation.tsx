@@ -68,7 +68,7 @@ export function Navigation() {
             )
           }
         >
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gold text-background shadow-lg shadow-gold/30">
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gold text-background ring-2 ring-gold/20 shadow-[0_6px_22px_rgba(200,155,60,0.55)]">
             <Plus className="h-6 w-6" strokeWidth={2.5} />
           </div>
         </NavLink>
