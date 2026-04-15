@@ -57,15 +57,15 @@ export function SidepotCalculator() {
   return (
     <div className="space-y-6">
       {/* Mode Selection */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center gap-2">
         <Tabs value={mode} onValueChange={(v) => setMode(v as GameMode)}>
           <TabsList>
-            <TabsTrigger value="holdem">Texas Hold'em</TabsTrigger>
+            <TabsTrigger value="holdem">Hold'em</TabsTrigger>
             <TabsTrigger value="omaha">Omaha</TabsTrigger>
           </TabsList>
         </Tabs>
-        
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-3 ml-auto">
           <div className="flex items-center gap-2">
             <Label htmlFor="double-deck" className="text-xs text-muted-foreground whitespace-nowrap">2 Decks</Label>
             <Switch
