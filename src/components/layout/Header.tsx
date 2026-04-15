@@ -9,6 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Link as RouterLink } from 'react-router-dom';
 import { HOMEGAME_ICONS, getIconSrc } from '@/lib/homegameIcons';
 import { BADGE_DEFINITIONS } from '@/lib/badges';
+import { getStaticBadgeImage } from '@/assets/badges/static_badges';
+import { getHeaterImage } from '@/assets/badges/heater';
+import { getColdImage } from '@/assets/badges/cold';
 import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
@@ -342,10 +345,19 @@ export function Header() {
           <div className="space-y-3 mt-2">
             {Object.values(BADGE_DEFINITIONS).map((badge) => {
               const isDisabled = (homegame?.disabled_badges ?? []).includes(badge.id);
+              const img = badge.id === 'heater'
+                ? getHeaterImage(3)
+                : badge.id === 'ice_cold'
+                  ? getColdImage(3)
+                  : getStaticBadgeImage(badge.id);
               return (
                 <div key={badge.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{badge.emoji}</span>
+                    {img ? (
+                      <img src={img} alt={badge.name} className="h-10 w-10 object-contain" />
+                    ) : (
+                      <span className="text-lg w-10 text-center">{badge.emoji}</span>
+                    )}
                     <div>
                       <p className="text-sm font-medium">{badge.name}</p>
                       <p className="text-xs text-muted-foreground">{badge.description}</p>
