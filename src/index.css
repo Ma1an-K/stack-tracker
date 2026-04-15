@@ -237,3 +237,21 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Main content bottom padding: nav height + safe area, collapses to pb-6 on desktop */
+.main-pb {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .main-pb {
+    padding-bottom: 1.5rem;
+  }
+}
+
+/* Mobile nav: extend height into iOS safe area so the background fills home indicator zone.
+   Scoped to max-width so the desktop sidebar (md:h-[calc(100dvh-3rem)]) is unaffected. */
+@media (max-width: 767px) {
+  .nav-mobile-safe {
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
