@@ -1,12 +1,25 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Header } from './Header';
 import { Navigation } from './Navigation';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { useTutorialContext } from '@/contexts/TutorialContext';
+import { TutorialOverlay } from '@/components/tutorial/TutorialOverlay';
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
+  const { homegame, currentHomegame, loading } = useAuthContext();
+  const { activeTour, currentStep, steps, startTour, nextStep, skipTour } = useTutorialContext();
+
+  useEffect(() => {
+    if (loading || !homegame || !currentHomegame) return;
+    if (currentHomegame.role !== 'owner') {
+      startTour('player');
+    }
+  }, [loading, homegame, currentHomegame]);
+
   return (
     // Mobile: flex column — nav is a natural flex item at the OS layout edge.
     // Sidesteps position:fixed iOS PWA clipping issues entirely.
@@ -30,6 +43,15 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Nav is last in flex column on mobile (sits flush at layout bottom),
           md:fixed takes it out of the flex flow for the desktop sidebar. */}
       <Navigation />
+
+      {activeTour && (
+        <TutorialOverlay
+          steps={steps}
+          currentStep={currentStep}
+          onNext={nextStep}
+          onSkip={skipTour}
+        />
+      )}
     </div>
   );
 }
