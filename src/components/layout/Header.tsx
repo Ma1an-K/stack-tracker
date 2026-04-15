@@ -3,11 +3,13 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogOut, Settings, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2, Trash2, Image } from 'lucide-react';
+import { LogOut, Settings, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2, Trash2, Image, Award } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useToast } from '@/hooks/use-toast';
 import { Link as RouterLink } from 'react-router-dom';
 import { HOMEGAME_ICONS, getIconSrc } from '@/lib/homegameIcons';
+import { BADGE_DEFINITIONS } from '@/lib/badges';
+import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,7 @@ export function Header() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [iconLoading, setIconLoading] = useState(false);
+  const [badgesDialogOpen, setBadgesDialogOpen] = useState(false);
   const { isSubscribed, isSupported, subscribe, unsubscribe } = usePushNotifications();
 
   const handleToggleNotifications = async () => {
@@ -113,6 +116,17 @@ export function Header() {
     } else {
       setIconPickerOpen(false);
       toast({ title: 'Icon updated' });
+    }
+  };
+
+  const handleToggleBadge = async (badgeId: string) => {
+    const current = homegame?.disabled_badges ?? [];
+    const updated = current.includes(badgeId)
+      ? current.filter(id => id !== badgeId)
+      : [...current, badgeId];
+    const { error } = await updateHomegame({ disabled_badges: updated });
+    if (error) {
+      toast({ title: 'Failed to update badge', description: error.message, variant: 'destructive' });
     }
   };
 
@@ -232,6 +246,10 @@ export function Header() {
                       <Image className="mr-2 h-4 w-4" />
                       Change Icon
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setBadgesDialogOpen(true)}>
+                      <Award className="mr-2 h-4 w-4" />
+                      Badges
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setDeleteDialogOpen(true)}
                       className="text-destructive focus:text-destructive"
@@ -312,6 +330,35 @@ export function Header() {
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={badgesDialogOpen} onOpenChange={setBadgesDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Homegame Badges</DialogTitle>
+            <DialogDescription>Toggle which badges are shown for all members.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            {Object.values(BADGE_DEFINITIONS).map((badge) => {
+              const isDisabled = (homegame?.disabled_badges ?? []).includes(badge.id);
+              return (
+                <div key={badge.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{badge.emoji}</span>
+                    <div>
+                      <p className="text-sm font-medium">{badge.name}</p>
+                      <p className="text-xs text-muted-foreground">{badge.description}</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={!isDisabled}
+                    onCheckedChange={() => handleToggleBadge(badge.id)}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </DialogContent>
       </Dialog>
 
