@@ -1,7 +1,9 @@
+// src/components/tutorial/TutorialOverlay.tsx
 import { useEffect, useState, useCallback } from 'react';
 import { TourStep } from './tours';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { InstallPromptInfo } from '@/hooks/useInstallPrompt';
 
 interface SpotlightRect {
   top: number;
@@ -15,16 +17,29 @@ interface TutorialOverlayProps {
   currentStep: number;
   onNext: () => void;
   onSkip: () => void;
+  installPrompt: InstallPromptInfo;
 }
 
 const PADDING = 6;
+const INSTALL_TARGET_ID = 'tutorial-install';
 
-export function TutorialOverlay({ steps, currentStep, onNext, onSkip }: TutorialOverlayProps) {
+export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPrompt }: TutorialOverlayProps) {
   const [rect, setRect] = useState<SpotlightRect | null>(null);
   const step = steps[currentStep];
+  const isInstallStep = step?.targetId === INSTALL_TARGET_ID;
+
+  // Auto-skip install step on unsupported platforms or already-installed
+  useEffect(() => {
+    if (
+      isInstallStep &&
+      (installPrompt.platform === 'installed' || installPrompt.platform === 'unsupported')
+    ) {
+      onNext();
+    }
+  }, [isInstallStep, installPrompt.platform, onNext]);
 
   const measureTarget = useCallback(() => {
-    if (!step) return;
+    if (!step || isInstallStep) return;
     const el = document.querySelector(`[data-tutorial="${step.targetId}"]`);
     if (!el) {
       setRect(null);
@@ -32,7 +47,7 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip }: Tutorial
     }
     const r = el.getBoundingClientRect();
     setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
-  }, [step?.targetId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [step?.targetId, isInstallStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const id = setTimeout(measureTarget, 50);
@@ -45,6 +60,75 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip }: Tutorial
 
   if (!step) return null;
 
+  // Suppress render while auto-skip effect fires
+  if (
+    isInstallStep &&
+    (installPrompt.platform === 'installed' || installPrompt.platform === 'unsupported')
+  ) {
+    return null;
+  }
+
+  // Install step: full-screen dim + centered card, no spotlight
+  if (isInstallStep) {
+    const cardW = Math.min(300, window.innerWidth - 24);
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.65)' }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: cardW,
+          }}
+          className="rounded-xl border border-border bg-card shadow-xl p-5"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-muted-foreground font-medium">
+              Step {currentStep + 1} of {steps.length}
+            </span>
+            <button
+              onClick={onSkip}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Skip tutorial"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="font-semibold text-sm mb-2">{step.title}</p>
+          {installPrompt.platform === 'android' ? (
+            <>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                {step.description}
+              </p>
+              <Button
+                className="w-full text-sm h-9 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold mb-2"
+                onClick={() => {
+                  installPrompt.trigger?.();
+                  onNext();
+                }}
+              >
+                Install App
+              </Button>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              Tap <strong>Share ↑</strong> in your browser, then tap{' '}
+              <strong>Add to Home Screen</strong> to install Stack Tracker for the best experience.
+            </p>
+          )}
+          <button
+            onClick={onSkip}
+            className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center py-1"
+          >
+            Maybe later
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Normal spotlight tooltip (unchanged)
   const spotlightTop = rect ? rect.top - PADDING : 0;
   const spotlightLeft = rect ? rect.left - PADDING : 0;
   const spotlightW = rect ? rect.width + PADDING * 2 : 0;
@@ -80,7 +164,6 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip }: Tutorial
           transition: 'top 0.2s, left 0.2s, width 0.2s, height 0.2s',
         }}
       />
-
       <div
         style={{
           position: 'absolute',
