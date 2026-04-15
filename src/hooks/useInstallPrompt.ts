@@ -1,5 +1,5 @@
 // src/hooks/useInstallPrompt.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // BeforeInstallPromptEvent is not in the standard TypeScript DOM lib
 interface BeforeInstallPromptEvent extends Event {
@@ -15,12 +15,14 @@ export interface InstallPromptInfo {
 }
 
 export function useInstallPrompt(): InstallPromptInfo {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      deferredPromptRef.current = e as BeforeInstallPromptEvent;
+      forceUpdate(n => n + 1);
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -36,12 +38,22 @@ export function useInstallPrompt(): InstallPromptInfo {
 
   if (isStandalone) return { platform: 'installed', trigger: null };
   if (isIOS) return { platform: 'ios', trigger: null };
-  if (deferredPrompt) {
+  if (deferredPromptRef.current) {
     return {
       platform: 'android',
       trigger: () => {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(() => setDeferredPrompt(null));
+        const prompt = deferredPromptRef.current;
+        if (!prompt) return;
+        prompt.prompt();
+        prompt.userChoice
+          .then(() => {
+            deferredPromptRef.current = null;
+            forceUpdate(n => n + 1);
+          })
+          .catch(() => {
+            deferredPromptRef.current = null;
+            forceUpdate(n => n + 1);
+          });
       },
     };
   }
