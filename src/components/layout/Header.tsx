@@ -209,7 +209,12 @@ export function Header() {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button data-tutorial="tutorial-settings" variant="ghost" size="icon" className="h-8 w-8">
+                <Button
+                  data-tutorial="tutorial-settings"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg border border-[rgba(200,155,60,0.28)] bg-[rgba(200,155,60,0.10)] hover:bg-[rgba(200,155,60,0.18)] text-gold/70 hover:text-gold transition-colors"
+                >
                   <Settings className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
