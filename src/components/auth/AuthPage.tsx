@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { useTutorialContext } from '@/contexts/TutorialContext';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
@@ -270,6 +271,7 @@ export function AuthPage() {
     homegames,
     loading: authLoading,
   } = useAuthContext();
+  const { startTour } = useTutorialContext();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<Step>('auth');
@@ -343,6 +345,8 @@ export function AuthPage() {
     setLoading(false);
     if (error) {
       toast({ title: 'Error', description: 'Failed to create homegame', variant: 'destructive' });
+    } else {
+      startTour('owner');
     }
   };
 
