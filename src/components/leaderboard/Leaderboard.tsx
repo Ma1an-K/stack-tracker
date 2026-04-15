@@ -19,7 +19,7 @@ interface LeaderboardProps {
 export function Leaderboard({ sessions, players, currency }: LeaderboardProps) {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('all');
   const [h2hOpponent, setH2hOpponent] = useState<Player | null>(null);
-  const { user } = useAuthContext();
+  const { user, homegame } = useAuthContext();
 
   const filteredSessions = filterSessionsByTimeFrame(sessions, timeFrame);
   const leaderboard = calculateLeaderboard(filteredSessions, players);
@@ -32,8 +32,8 @@ export function Leaderboard({ sessions, players, currency }: LeaderboardProps) {
 
   // Compute badges from ALL sessions (not filtered) since badges are cumulative
   const badgeMap = useMemo(
-    () => computeHomegameBadges(sessions, players),
-    [sessions, players]
+    () => computeHomegameBadges(sessions, players, homegame?.disabled_badges ?? []),
+    [sessions, players, homegame?.disabled_badges]
   );
 
   return (
