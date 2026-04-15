@@ -40,6 +40,11 @@ export const OWNER_TOUR: TourStep[] = [
     title: 'My Stats',
     description: 'Your personal profit chart, badges, and session history.',
   },
+  {
+    targetId: 'tutorial-install',
+    title: 'Add to Home Screen',
+    description: 'Install Stack Tracker on your home screen for the best experience — faster loads, full screen, no browser bar.',
+  },
 ];
 
 export const PLAYER_TOUR: TourStep[] = [
@@ -77,5 +82,10 @@ export const PLAYER_TOUR: TourStep[] = [
     targetId: 'tutorial-settings',
     title: 'Settings',
     description: 'Edit your profile name and manage notification settings here.',
+  },
+  {
+    targetId: 'tutorial-install',
+    title: 'Add to Home Screen',
+    description: 'Install Stack Tracker on your home screen for the best experience — faster loads, full screen, no browser bar.',
   },
 ];
