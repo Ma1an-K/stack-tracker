@@ -222,7 +222,8 @@ export function usePersonalStats() {
           // Compute badges
           const badgeMap = computeHomegameBadges(
             allSessions as SessionWithPlayers[],
-            allPlayersInHomegame
+            allPlayersInHomegame,
+            homegame?.disabled_badges ?? []
           );
           playerBadges = badgeMap.get(myPlayer.id) || [];
         }
