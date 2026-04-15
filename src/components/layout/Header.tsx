@@ -121,7 +121,17 @@ export function Header() {
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)]">
         <div className="px-4 h-12 flex items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <img src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover" />
+            {isOwner ? (
+              <button
+                onClick={() => setIconPickerOpen(true)}
+                className="rounded-lg focus:outline-none hover:ring-2 hover:ring-yellow-500/50 transition-all"
+                aria-label="Change homegame icon"
+              >
+                <img src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover" />
+              </button>
+            ) : (
+              <img src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover" />
+            )}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
