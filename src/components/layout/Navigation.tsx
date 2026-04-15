@@ -49,8 +49,8 @@ export function Navigation() {
                     : 'text-[rgba(237,232,216,0.30)]'
                 )} />
                 <span className={cn(
-                  'text-[10px] font-medium',
-                  isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.30)]'
+                  'text-[10px]',
+                  isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.30)] font-medium'
                 )}>{item.label}</span>
               </div>
             )}
@@ -92,8 +92,8 @@ export function Navigation() {
                     : 'text-[rgba(237,232,216,0.30)]'
                 )} />
                 <span className={cn(
-                  'text-[10px] font-medium',
-                  isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.30)]'
+                  'text-[10px]',
+                  isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.30)] font-medium'
                 )}>{item.label}</span>
               </div>
             )}
@@ -107,6 +107,7 @@ export function Navigation() {
           <NavLink
             key={item.to}
             to={item.to}
+            end={item.to === '/'}
             data-tutorial={item['data-tutorial']}
             className={({ isActive }) =>
               cn(
