@@ -33,18 +33,27 @@ export function Navigation() {
           <NavLink
             key={item.to}
             to={item.to}
+            end={item.to === '/'}
             data-tutorial={item['data-tutorial']}
-            className={({ isActive }) =>
-              cn(
-                'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-all duration-150 min-h-[44px]',
-                isActive
-                  ? 'text-gold'
-                  : 'text-muted-foreground hover:text-foreground'
-              )
-            }
+            className="flex-1 flex flex-col items-center justify-center min-h-[44px] py-1 transition-all duration-150"
           >
-            <item.icon className="h-5 w-5" />
-            <span>{item.label}</span>
+            {({ isActive }) => (
+              <div className={cn(
+                'flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-[9px] transition-all duration-150',
+                isActive ? 'bg-gold/15' : ''
+              )}>
+                <item.icon className={cn(
+                  'h-5 w-5',
+                  isActive
+                    ? 'text-gold drop-shadow-[0_0_6px_rgba(200,155,60,0.6)]'
+                    : 'text-[rgba(237,232,216,0.30)]'
+                )} />
+                <span className={cn(
+                  'text-[10px] font-medium',
+                  isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.30)]'
+                )}>{item.label}</span>
+              </div>
+            )}
           </NavLink>
         ))}
         
@@ -69,17 +78,25 @@ export function Navigation() {
             key={item.to}
             to={item.to}
             data-tutorial={item['data-tutorial']}
-            className={({ isActive }) =>
-              cn(
-                'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-all duration-150 min-h-[44px]',
-                isActive
-                  ? 'text-gold'
-                  : 'text-muted-foreground hover:text-foreground'
-              )
-            }
+            className="flex-1 flex flex-col items-center justify-center min-h-[44px] py-1 transition-all duration-150"
           >
-            <item.icon className="h-5 w-5" />
-            <span>{item.label}</span>
+            {({ isActive }) => (
+              <div className={cn(
+                'flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-[9px] transition-all duration-150',
+                isActive ? 'bg-gold/15' : ''
+              )}>
+                <item.icon className={cn(
+                  'h-5 w-5',
+                  isActive
+                    ? 'text-gold drop-shadow-[0_0_6px_rgba(200,155,60,0.6)]'
+                    : 'text-[rgba(237,232,216,0.30)]'
+                )} />
+                <span className={cn(
+                  'text-[10px] font-medium',
+                  isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.30)]'
+                )}>{item.label}</span>
+              </div>
+            )}
           </NavLink>
         ))}
       </div>
