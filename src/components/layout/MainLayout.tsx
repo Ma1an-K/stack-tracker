@@ -18,7 +18,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     if (currentHomegame.role !== 'owner') {
       startTour('player');
     }
-  }, [loading, homegame, currentHomegame]);
+  }, [loading, homegame, currentHomegame, startTour]);
 
   return (
     // Mobile: flex column — nav is a natural flex item at the OS layout edge.

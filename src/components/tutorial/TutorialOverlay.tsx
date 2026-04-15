@@ -55,12 +55,12 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip }: Tutorial
   const tooltipW = Math.min(300, viewportW - 24);
 
   const spaceBelow = viewportH - (spotlightTop + spotlightH);
-  const tooltipBelow = spaceBelow >= 170 || !rect;
+  const tooltipBelow = spaceBelow >= 220 || !rect;
   const tooltipTop = rect
     ? tooltipBelow
       ? spotlightTop + spotlightH + 12
-      : spotlightTop - 170
-    : viewportH / 2 - 85;
+      : spotlightTop - 220
+    : viewportH / 2 - 110;
   const tooltipLeft = rect
     ? Math.max(12, Math.min(spotlightLeft, viewportW - tooltipW - 12))
     : 12;

@@ -1,5 +1,5 @@
 // src/contexts/TutorialContext.tsx
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { TourStep, OWNER_TOUR, PLAYER_TOUR } from '@/components/tutorial/tours';
 
 type TourType = 'owner' | 'player';
@@ -21,12 +21,12 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
   const steps = activeTour === 'owner' ? OWNER_TOUR : activeTour === 'player' ? PLAYER_TOUR : [];
 
-  const startTour = (type: TourType) => {
+  const startTour = useCallback((type: TourType) => {
     const key = type === 'owner' ? 'tutorial_owner_seen' : 'tutorial_player_seen';
     if (localStorage.getItem(key)) return;
     setActiveTour(type);
     setCurrentStep(0);
-  };
+  }, []);
 
   const completeTour = (type: TourType) => {
     const key = type === 'owner' ? 'tutorial_owner_seen' : 'tutorial_player_seen';
