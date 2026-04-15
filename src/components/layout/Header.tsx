@@ -135,7 +135,7 @@ export function Header() {
 
   return (
     <>
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)]">
+      <header className="border-b fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)] backdrop-blur-sm bg-[rgba(13,16,30,0.97)] border-[rgba(200,155,60,0.28)] shadow-[0_2px_20px_rgba(200,155,60,0.08)]">
         <div className="px-4 h-12 flex items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {isOwner ? (
