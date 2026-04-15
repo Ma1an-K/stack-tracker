@@ -38,7 +38,8 @@ interface PlayerSessionData {
  */
 export function computeHomegameBadges(
   sessions: SessionWithPlayers[],
-  players: Player[]
+  players: Player[],
+  disabledBadges: string[] = []
 ): Map<string, PlayerBadge[]> {
   const badgeMap = new Map<string, PlayerBadge[]>();
   players.forEach(p => badgeMap.set(p.id, []));
@@ -66,6 +67,15 @@ export function computeHomegameBadges(
   computeCompetitiveBadges(playerSessions, badgeMap);
   computeMilestoneBadges(playerSessions, badgeMap);
   computeAchievementBadges(playerSessions, badgeMap);
+
+  if (disabledBadges.length > 0) {
+    badgeMap.forEach((badges, playerId) => {
+      badgeMap.set(
+        playerId,
+        badges.filter(pb => !disabledBadges.includes(pb.badge.id))
+      );
+    });
+  }
 
   return badgeMap;
 }
