@@ -13,6 +13,7 @@ export interface Homegame {
   name: string;
   currency: string;
   icon_id: string | null;
+  disabled_badges: string[] | null;
   created_at: string;
   updated_at: string;
 }
