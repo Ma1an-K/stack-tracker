@@ -104,14 +104,14 @@
   html {
     height: 100%;
     overscroll-behavior: none;
-    /* Match nav bg-card so any sub-pixel gap at the physical screen edge
-       is the same colour as the nav bar — no visible seam. */
-    background-color: hsl(225 22% 8%);
+    /* Match the nav background so any sub-pixel gap at the physical screen
+       edge (safe area / home indicator) blends seamlessly with the nav bar. */
+    background-color: rgb(10, 13, 24);
   }
   body {
     height: 100%;
     overscroll-behavior: none;
-    background-color: hsl(225 22% 8%);
+    background-color: rgb(10, 13, 24);
     @apply text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
