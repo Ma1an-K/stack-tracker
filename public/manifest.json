@@ -4,8 +4,8 @@
   "description": "Track your poker homegame sessions, standings, and settlements",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#090b10",
-  "theme_color": "#090b10",
+  "background_color": "#0a0d18",
+  "theme_color": "#0a0d18",
   "orientation": "portrait",
   "icons": [
     {

@@ -121,11 +121,10 @@
     min-height: -webkit-fill-available;
     width: 100%;
     max-width: 100vw;
-    /* Do NOT use overflow:clip/hidden here — on iOS standalone mode it creates
-       a virtual viewport container that prevents position:fixed children from
-       anchoring to the physical screen edge. Horizontal overflow is handled by
-       max-width:100vw and overflow-x:hidden on the layout wrapper. */
-    overflow-x: hidden;
+    /* Do NOT use overflow:clip/hidden/scroll here — on iOS standalone mode any
+       of these turn #root into a scroll container that traps position:fixed
+       children above the safe-area. Horizontal overflow is handled by
+       overflow-x:hidden on the MainLayout wrapper. */
   }
   /* Professional sans-serif for all text - no decorative fonts */
   h1, h2, h3, h4, h5, h6 {
