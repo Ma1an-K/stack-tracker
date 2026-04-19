@@ -44,13 +44,13 @@ export function Navigation() {
                 isActive ? 'bg-gold/15' : ''
               )}>
                 <item.icon className={cn(
-                  'h-5 w-5',
+                  'h-6 w-6',
                   isActive
                     ? 'text-gold drop-shadow-[0_0_6px_rgba(200,155,60,0.6)]'
                     : 'text-[rgba(237,232,216,0.55)]'
                 )} />
                 <span className={cn(
-                  'text-[10px]',
+                  'text-[11px]',
                   isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.55)] font-medium'
                 )}>{item.label}</span>
               </div>
@@ -87,13 +87,13 @@ export function Navigation() {
                 isActive ? 'bg-gold/15' : ''
               )}>
                 <item.icon className={cn(
-                  'h-5 w-5',
+                  'h-6 w-6',
                   isActive
                     ? 'text-gold drop-shadow-[0_0_6px_rgba(200,155,60,0.6)]'
                     : 'text-[rgba(237,232,216,0.55)]'
                 )} />
                 <span className={cn(
-                  'text-[10px]',
+                  'text-[11px]',
                   isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.55)] font-medium'
                 )}>{item.label}</span>
               </div>
