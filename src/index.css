@@ -235,7 +235,7 @@
 
 /* Main content bottom padding: nav icon row height, collapses to pb-6 on desktop */
 .main-pb {
-  padding-bottom: 56px;
+  padding-bottom: 84px;
 }
 @media (min-width: 768px) {
   .main-pb {

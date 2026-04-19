@@ -27,9 +27,9 @@ const mobileNavRight = [
 
 export function Navigation() {
   const nav = (
-    <nav className="fixed bottom-[6px] left-0 right-0 border-t z-50 bg-[rgb(10,13,24)] border-[rgba(200,155,60,0.22)] shadow-[0_-4px_28px_rgba(200,155,60,0.07)] rounded-b-[2rem] md:bottom-0 md:rounded-none md:top-12 md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background md:shadow-none">
+    <nav className="fixed bottom-[6px] left-0 right-0 border-t z-50 h-[72px] bg-[rgb(10,13,24)] border-[rgba(200,155,60,0.22)] shadow-[0_-4px_28px_rgba(200,155,60,0.07)] rounded-b-[2rem] md:bottom-0 md:rounded-none md:top-12 md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background md:shadow-none">
       {/* Mobile navigation */}
-      <div className="flex md:hidden items-center justify-around">
+      <div className="flex md:hidden h-full items-center justify-around">
         {mobileNavLeft.map((item) => (
           <NavLink
             key={item.to}
