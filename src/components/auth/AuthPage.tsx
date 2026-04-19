@@ -330,7 +330,10 @@ export function AuthPage() {
         toast({ title: 'Signup Failed', description: error.message || 'Failed to create account', variant: 'destructive' });
       }
     } else {
-      toast({ title: 'Account Created', description: 'Please check your email to confirm your account.' });
+      await signOut();
+      setSignupForm({ email: '', password: '', username: '' });
+      setStep('auth');
+      toast({ title: 'Account Created', description: 'Please check your email to confirm, then sign in.' });
     }
   };
 
