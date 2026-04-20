@@ -7,6 +7,7 @@ import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { TutorialProvider } from "@/contexts/TutorialContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AuthPage } from "@/components/auth/AuthPage";
+import { LandingPage } from "@/pages/LandingPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { SessionsPage } from "@/pages/SessionsPage";
 import { NewSessionPage } from "@/pages/NewSessionPage";
@@ -45,6 +46,28 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <MainLayout>{children}</MainLayout>;
 }
 
+function HomeRoute() {
+  const { user, homegame, loading } = useAuthContext();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (user && homegame) {
+    return (
+      <MainLayout>
+        <DashboardPage />
+      </MainLayout>
+    );
+  }
+
+  return <LandingPage />;
+}
+
 function AuthRoute() {
   const { user, homegame, homegames, loading } = useAuthContext();
 
@@ -64,14 +87,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/auth" element={<AuthRoute />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/" element={<HomeRoute />} />
       <Route
         path="/sessions"
         element={
