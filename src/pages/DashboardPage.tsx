@@ -13,6 +13,7 @@ import {
 import { formatProfit, formatCurrency } from '@/lib/settlement';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { PokerChipSpade } from '@/components/icons/PokerChipSpade';
+import { getIconSrc } from '@/lib/homegameIcons';
 import { HomegameWithRole } from '@/types/database';
 
 export function DashboardPage() {
@@ -185,9 +186,11 @@ function HomegameCard({ homegame, isActive, stats, onClick, loading }: HomegameC
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-              <PokerChipSpade className="w-5 h-5 text-primary" />
-            </div>
+            <img
+              src={getIconSrc(homegame.icon_id)}
+              alt={homegame.name}
+              className="w-10 h-10 rounded-lg object-cover flex-shrink-0 shadow-[0_0_10px_rgba(200,155,60,0.35)]"
+            />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold truncate">{homegame.name}</h3>
