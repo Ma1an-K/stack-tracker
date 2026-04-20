@@ -248,7 +248,7 @@ select:-webkit-autofill {
 
 /* Main content bottom padding: nav icon row height, collapses to pb-6 on desktop */
 .main-pb {
-  padding-bottom: 96px;
+  padding-bottom: 86px;
 }
 @media (min-width: 768px) {
   .main-pb {

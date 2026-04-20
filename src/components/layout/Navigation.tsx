@@ -27,7 +27,7 @@ const mobileNavRight = [
 
 export function Navigation() {
   const nav = (
-    <nav className="fixed bottom-0 left-0 right-0 border-t z-50 h-[84px] bg-[rgb(10,13,24)] border-[rgba(200,155,60,0.22)] shadow-[0_-4px_28px_rgba(200,155,60,0.07)] rounded-b-[2rem] md:rounded-none md:top-12 md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background md:shadow-none">
+    <nav className="fixed bottom-0 left-0 right-0 border-t z-50 h-[76px] bg-[rgb(10,13,24)] border-[rgba(200,155,60,0.22)] shadow-[0_-4px_28px_rgba(200,155,60,0.07)] rounded-b-[1.75rem] md:rounded-none md:top-12 md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background md:shadow-none">
       {/* Mobile navigation */}
       <div className="flex md:hidden h-full items-center justify-around">
         {mobileNavLeft.map((item) => (
@@ -44,13 +44,13 @@ export function Navigation() {
                 isActive ? 'bg-gold/15' : ''
               )}>
                 <item.icon className={cn(
-                  'h-6 w-6',
+                  'h-[22px] w-[22px]',
                   isActive
                     ? 'text-gold drop-shadow-[0_0_6px_rgba(200,155,60,0.6)]'
                     : 'text-[rgba(237,232,216,0.55)]'
                 )} />
                 <span className={cn(
-                  'text-[11px]',
+                  'text-[10px]',
                   isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.55)] font-medium'
                 )}>{item.label}</span>
               </div>
@@ -69,8 +69,8 @@ export function Navigation() {
             )
           }
         >
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gold text-background ring-2 ring-gold/20 shadow-[0_6px_22px_rgba(200,155,60,0.55)]">
-            <Plus className="h-6 w-6" strokeWidth={2.5} />
+          <div className="flex items-center justify-center w-11 h-11 rounded-full bg-gold text-background ring-2 ring-gold/20 shadow-[0_6px_22px_rgba(200,155,60,0.55)]">
+            <Plus className="h-[22px] w-[22px]" strokeWidth={2.5} />
           </div>
         </NavLink>
         
@@ -87,13 +87,13 @@ export function Navigation() {
                 isActive ? 'bg-gold/15' : ''
               )}>
                 <item.icon className={cn(
-                  'h-6 w-6',
+                  'h-[22px] w-[22px]',
                   isActive
                     ? 'text-gold drop-shadow-[0_0_6px_rgba(200,155,60,0.6)]'
                     : 'text-[rgba(237,232,216,0.55)]'
                 )} />
                 <span className={cn(
-                  'text-[11px]',
+                  'text-[10px]',
                   isActive ? 'text-gold font-bold' : 'text-[rgba(237,232,216,0.55)] font-medium'
                 )}>{item.label}</span>
               </div>
