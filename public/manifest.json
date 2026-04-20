@@ -1,12 +1,15 @@
 {
-  "name": "Stack Tracker",
+  "name": "Stack Tracker – Poker Homegame Manager",
   "short_name": "Stack Tracker",
-  "description": "Track your poker homegame sessions, standings, and settlements",
+  "description": "The all-in-one poker homegame manager. Track sessions, settle debts, view leaderboards and player stats for your home poker nights.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0d18",
   "theme_color": "#0a0d18",
   "orientation": "portrait",
+  "categories": ["lifestyle", "finance", "games", "social", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192x192.png",
