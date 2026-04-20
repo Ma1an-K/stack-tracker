@@ -49,7 +49,7 @@ export function MembersPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Members</h1>
         <p className="text-muted-foreground">People in {homegame?.name}</p>
@@ -79,50 +79,48 @@ export function MembersPage() {
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {member.profile?.username?.charAt(0).toUpperCase() || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {member.profile?.display_name || member.profile?.username || 'Unknown'}
-                        </span>
-                        {member.user_id === user?.id && (
-                          <Badge variant="outline" className="text-xs">You</Badge>
-                        )}
-                      </div>
-                      <span className="text-sm text-muted-foreground font-mono">
-                        {member.profile?.username}#{member.profile?.discriminator}
+                  <Avatar className="flex-shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {member.profile?.username?.charAt(0).toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium truncate max-w-full">
+                        {member.profile?.display_name || member.profile?.username || 'Unknown'}
                       </span>
+                      {member.user_id === user?.id && (
+                        <Badge variant="outline" className="text-xs flex-shrink-0">You</Badge>
+                      )}
+                      <div className="flex-shrink-0">{getRoleBadge(member.role)}</div>
                     </div>
+                    <span className="text-xs text-muted-foreground font-mono block truncate">
+                      {member.profile?.username}#{member.profile?.discriminator}
+                    </span>
                   </div>
-                  
-                  <div className="flex items-center gap-3">
-                    {getRoleBadge(member.role)}
-                    
+
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
                     {/* Admin toggle - only original owner can do this */}
                     {isOriginalOwner && member.role !== 'owner' && member.user_id !== user?.id && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           {member.role === 'admin' ? (
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="icon"
-                              className="text-primary hover:text-primary/80"
+                              className="h-8 w-8 text-primary hover:text-primary/80"
                               onClick={() => updateMemberRole(member.id, 'member')}
                             >
                               <ShieldOff className="h-4 w-4" />
                             </Button>
                           ) : (
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="icon"
-                              className="text-muted-foreground hover:text-primary"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary"
                               onClick={() => updateMemberRole(member.id, 'admin')}
                             >
                               <Shield className="h-4 w-4" />
@@ -134,12 +132,12 @@ export function MembersPage() {
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    
+
                     {/* Remove member - owners and admins can do this */}
                     {isOwner && member.role !== 'owner' && member.user_id !== user?.id && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
                             <UserMinus className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
