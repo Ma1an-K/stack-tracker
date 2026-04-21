@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.stack-tracker.com/sitemap.xml
+Sitemap: https://stack-tracker.com/sitemap.xml
