@@ -150,8 +150,6 @@ async function createVapidJwt(endpoint: string, vapidPrivateKeyB64: string): Pro
   const xVal = base64UrlEncode(publicKeyBytes.slice(1, 33))
   const yVal = base64UrlEncode(publicKeyBytes.slice(33, 65))
 
-  console.log('JWK d length:', dNormalized.length, 'x length:', xVal.length, 'y length:', yVal.length)
-
   const key = await crypto.subtle.importKey(
     'jwk',
     {
@@ -344,7 +342,7 @@ Deno.serve(async (req) => {
   } catch (err: any) {
     console.error('Error sending push notifications:', err)
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
