@@ -8,6 +8,8 @@ import { TutorialProvider } from "@/contexts/TutorialContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { LandingPage } from "@/pages/LandingPage";
+import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
+import { AboutPage } from "@/pages/AboutPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { SessionsPage } from "@/pages/SessionsPage";
 import { NewSessionPage } from "@/pages/NewSessionPage";
@@ -88,6 +90,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/auth" element={<AuthRoute />} />
       <Route path="/" element={<HomeRoute />} />
+      <Route path="/poker-settlement-calculator" element={<PublicSettlementPage />} />
+      <Route path="/about" element={<AboutPage />} />
       <Route
         path="/sessions"
         element={
