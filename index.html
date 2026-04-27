@@ -2,12 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- Primary SEO -->
     <title>Stack Tracker – Poker Homegame Manager & Session Tracker</title>
     <meta name="description" content="Stack Tracker is the all-in-one poker homegame manager. Track sessions, settle debts, view leaderboards and player stats for your home poker nights." />
-    <meta name="keywords" content="poker homegame manager, poker homegame tracker, home poker night tracker, poker session tracker, poker settlement calculator, poker leaderboard app, poker bankroll tracker, private poker game app, poker stats app, poker ledger" />
     <meta name="author" content="Stack Tracker" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://www.stack-tracker.com/" />
@@ -41,17 +40,21 @@
     <meta property="og:url" content="https://www.stack-tracker.com/" />
     <meta property="og:title" content="Stack Tracker – Poker Homegame Manager & Session Tracker" />
     <meta property="og:description" content="The all-in-one poker homegame manager. Track sessions, settle debts, view leaderboards and player stats for your home poker nights." />
-    <meta property="og:image" content="https://www.stack-tracker.com/icon-512x512.png" />
-    <meta property="og:image:width" content="512" />
-    <meta property="og:image:height" content="512" />
+    <meta property="og:image" content="https://www.stack-tracker.com/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Stack Tracker — Poker Homegame Manager. Track sessions, settle debts." />
+    <meta property="og:locale" content="en_US" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Stack Tracker – Poker Homegame Manager & Session Tracker" />
     <meta name="twitter:description" content="The all-in-one poker homegame manager. Track sessions, settle debts, view leaderboards and player stats for your home poker nights." />
-    <meta name="twitter:image" content="https://www.stack-tracker.com/icon-512x512.png" />
+    <meta name="twitter:image" content="https://www.stack-tracker.com/og-image.png" />
+    <meta name="twitter:image:alt" content="Stack Tracker — Poker Homegame Manager" />
 
-    <!-- Structured data -->
+    <!-- Structured data: WebApplication -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -63,6 +66,7 @@
       "applicationCategory": ["LifestyleApplication", "FinanceApplication", "GameApplication"],
       "operatingSystem": "Web, iOS, Android",
       "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "image": "https://www.stack-tracker.com/og-image.png",
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -79,31 +83,111 @@
       ]
     }
     </script>
+
+    <!-- Structured data: Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Stack Tracker",
+      "url": "https://www.stack-tracker.com/",
+      "logo": "https://www.stack-tracker.com/icon-512x512.png"
+    }
+    </script>
+
+    <!-- Structured data: FAQPage (mirrors visible FAQs on the homepage) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is Stack Tracker free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes — Stack Tracker is completely free for players and homegame owners. No subscriptions, no ads, no card required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need to install anything?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. It works in any modern browser on iPhone, Android, Mac or PC. You can optionally install it as a PWA on your home screen for a full-screen, app-like experience."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the settlement calculator work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "After a session, enter each player's total buy-ins and final stack. Stack Tracker figures out who owes whom with the minimum number of transfers — so instead of six people paying six others, you might only need two payments to settle everything."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I run multiple homegames?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutely. Each homegame has its own members, sessions, leaderboard and stats. Switch between them from the header menu."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my data private?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Homegames are invite-only — only the people with your invite code can see the sessions, standings and settlements for your private poker game."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
 
   <body>
     <div id="root"></div>
     <noscript>
-      <main style="max-width:720px;margin:40px auto;padding:0 24px;font-family:system-ui,-apple-system,sans-serif;color:#ede8d8;">
+      <main style="max-width:760px;margin:40px auto;padding:0 24px;font-family:system-ui,-apple-system,sans-serif;color:#ede8d8;background:#0a0d18;">
         <h1>Stack Tracker — Poker Homegame Manager</h1>
         <p>
           Stack Tracker is a free web app for managing private poker homegames.
           Log every session, track buy-ins and cash-outs, and get automatic
           settlement calculations so nobody owes the wrong amount.
         </p>
+
         <h2>Features</h2>
         <ul>
-          <li>Session tracker for every home poker night</li>
-          <li>Automatic debt settlement calculator</li>
-          <li>Homegame leaderboard and player standings</li>
-          <li>Lifetime profit, sessions played and per-session average</li>
-          <li>Player badges, streaks and achievements</li>
-          <li>Private homegames with invite codes</li>
-          <li>Installable PWA for iOS and Android</li>
+          <li><strong>Session tracker</strong> — log buy-ins, rebuys and cash-outs for every home poker night.</li>
+          <li><strong>Automatic settlement calculator</strong> — works out who pays whom in the fewest possible transfers.</li>
+          <li><strong>Leaderboards and standings</strong> — ranked by profit, ROI and sessions played.</li>
+          <li><strong>Personal poker stats</strong> — lifetime profit, per-session averages, biggest wins and losses.</li>
+          <li><strong>Badges and achievements</strong> — heaters, cold streaks, tournament wins and more.</li>
+          <li><strong>Private homegames</strong> — invite-only, with shareable codes and role-based access.</li>
+          <li><strong>Installable PWA</strong> — add to your iPhone or Android home screen for a native-app feel.</li>
         </ul>
-        <p>
-          Please enable JavaScript to use Stack Tracker.
-        </p>
+
+        <h2>How it works</h2>
+        <ol>
+          <li><strong>Create a homegame.</strong> Name your poker night, pick an icon, and you're ready. Free forever, no card required.</li>
+          <li><strong>Invite your players.</strong> Share an invite code with your regulars. They sign up, join your game, and appear on the leaderboard.</li>
+          <li><strong>Log sessions, settle debts.</strong> After the game, enter buy-ins and cash-outs. Stack Tracker calculates who pays whom — instantly.</li>
+        </ol>
+
+        <h2>Frequently asked questions</h2>
+        <h3>Is Stack Tracker free?</h3>
+        <p>Yes — Stack Tracker is completely free for players and homegame owners. No subscriptions, no ads, no card required.</p>
+        <h3>Do I need to install anything?</h3>
+        <p>No. It works in any modern browser on iPhone, Android, Mac or PC. You can optionally install it as a PWA on your home screen for a full-screen, app-like experience.</p>
+        <h3>How does the settlement calculator work?</h3>
+        <p>After a session, enter each player's total buy-ins and final stack. Stack Tracker figures out who owes whom with the minimum number of transfers — so instead of six people paying six others, you might only need two payments to settle everything.</p>
+        <h3>Can I run multiple homegames?</h3>
+        <p>Absolutely. Each homegame has its own members, sessions, leaderboard and stats. Switch between them from the header menu.</p>
+        <h3>Is my data private?</h3>
+        <p>Yes. Homegames are invite-only — only the people with your invite code can see the sessions, standings and settlements for your private poker game.</p>
+
+        <p style="margin-top:32px;">Please enable JavaScript to use Stack Tracker.</p>
       </main>
     </noscript>
     <script type="module" src="/src/main.tsx"></script>
