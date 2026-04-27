@@ -9,6 +9,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
+import { PublicHandCalculatorPage } from "@/pages/PublicHandCalculatorPage";
 import { AboutPage } from "@/pages/AboutPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { SessionsPage } from "@/pages/SessionsPage";
@@ -91,6 +92,7 @@ function AppRoutes() {
       <Route path="/auth" element={<AuthRoute />} />
       <Route path="/" element={<HomeRoute />} />
       <Route path="/poker-settlement-calculator" element={<PublicSettlementPage />} />
+      <Route path="/poker-hand-calculator" element={<PublicHandCalculatorPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route
         path="/sessions"

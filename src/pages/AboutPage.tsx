@@ -154,6 +154,12 @@ export function AboutPage() {
             >
               Settlement Calculator
             </Link>
+            <Link
+              to="/poker-hand-calculator"
+              className="hover:text-foreground transition-colors"
+            >
+              Hand Calculator
+            </Link>
             <Link to="/auth" className="hover:text-foreground transition-colors">
               Sign In
             </Link>

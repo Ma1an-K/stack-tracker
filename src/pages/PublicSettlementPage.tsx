@@ -178,6 +178,12 @@ export function PublicSettlementPage() {
             <span>Stack Tracker — Poker Homegame Manager</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Link
+              to="/poker-hand-calculator"
+              className="hover:text-foreground transition-colors"
+            >
+              Hand Calculator
+            </Link>
             <Link to="/about" className="hover:text-foreground transition-colors">
               About
             </Link>
