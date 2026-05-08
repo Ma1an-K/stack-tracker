@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -19,8 +20,8 @@
     --popover: 225 22% 7%;
     --popover-foreground: 40 15% 92%;
 
-    /* Primary: rich metallic gold — matches badge frame colour */
-    --primary: 42 75% 52%;
+    /* Primary: antique metallic gold — matches the goldGradient mid stop (#C89B3C) */
+    --primary: 42 56% 51%;
     --primary-foreground: 225 25% 5%;
 
     /* Secondary */
@@ -42,32 +43,32 @@
     /* Borders: very subtle warm-gold tint */
     --border: 38 18% 18%;
     --input: 225 18% 11%;
-    --ring: 42 75% 52%;
+    --ring: 42 56% 51%;
 
     --radius: 0.6rem;
 
     /* Sidebar */
     --sidebar-background: 225 22% 6%;
     --sidebar-foreground: 40 15% 92%;
-    --sidebar-primary: 42 75% 52%;
+    --sidebar-primary: 42 56% 51%;
     --sidebar-primary-foreground: 225 25% 5%;
     --sidebar-accent: 225 18% 12%;
     --sidebar-accent-foreground: 40 15% 92%;
     --sidebar-border: 38 18% 16%;
-    --sidebar-ring: 42 75% 52%;
+    --sidebar-ring: 42 56% 51%;
 
     /* Semantic */
     --success: 155 45% 42%;
-    --warning: 42 75% 52%;
+    --warning: 42 56% 51%;
     --danger: 0 55% 42%;
 
-    /* Gold — rich and saturated like the badge frames */
-    --gold: 42 75% 52%;
+    /* Gold — antique metallic, matches the goldGradient mid stop (#C89B3C) */
+    --gold: 42 56% 51%;
     --gold-foreground: 225 25% 5%;
     --gold-muted: 38 40% 36%;
 
     /* Chart */
-    --chart-1: 42 75% 52%;
+    --chart-1: 42 56% 51%;
     --chart-2: 225 20% 42%;
     --chart-3: 215 25% 32%;
     --chart-4: 225 15% 52%;
@@ -81,7 +82,7 @@
     --card-foreground: 40 15% 92%;
     --popover: 225 22% 7%;
     --popover-foreground: 40 15% 92%;
-    --primary: 42 75% 52%;
+    --primary: 42 56% 51%;
     --primary-foreground: 225 25% 5%;
     --secondary: 225 18% 14%;
     --secondary-foreground: 40 10% 82%;
@@ -93,7 +94,7 @@
     --destructive-foreground: 40 15% 92%;
     --border: 38 18% 18%;
     --input: 225 18% 11%;
-    --ring: 42 75% 52%;
+    --ring: 42 56% 51%;
   }
 }
 
@@ -165,7 +166,7 @@
 
 .card-hover:hover {
   box-shadow:
-    0 0 0 1px hsl(42 75% 52% / 0.25),
+    0 0 0 1px hsl(42 56% 51% / 0.25),
     0 4px 24px -6px hsl(0 0% 0% / 0.8),
     inset 0 1px 0 hsl(42 60% 65% / 0.08);
   border-color: hsl(38 30% 28%);

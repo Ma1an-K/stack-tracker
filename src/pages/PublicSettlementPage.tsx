@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom';
 import { PublicSettlementCalculator } from '@/components/calculator/PublicSettlementCalculator';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import {
+  MarketingNavbar,
+  btnGold,
+  goldGradient,
+} from '@/components/layout/MarketingNavbar';
 
 const TITLE = 'Poker Settlement Calculator – Free, No Signup | Stack Tracker';
 const DESCRIPTION = 'Free poker settlement calculator. Enter each player\'s buy-ins and cash-outs and get the minimum number of payments to settle your home game. No signup required.';
@@ -37,32 +42,15 @@ export function PublicSettlementPage() {
         style={{ background: 'radial-gradient(circle, rgba(200,155,60,0.10) 0%, transparent 65%)' }}
       />
 
-      <header className="relative z-10 px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(1rem,env(safe-area-inset-top))]">
-        <div className="max-w-5xl mx-auto flex items-center justify-between py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <img
-              src="/icon-192x192.png"
-              alt="Stack Tracker logo"
-              className="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(200,155,60,0.45)]"
-            />
-            <span className="font-bold tracking-tight">Stack Tracker</span>
-          </Link>
-          <Link
-            to="/auth"
-            className="text-sm font-medium text-gold hover:underline underline-offset-4"
-          >
-            Sign In
-          </Link>
-        </div>
-      </header>
+      <MarketingNavbar />
 
-      <main className="relative z-10 px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-6 pb-20">
+      <main className="relative z-10 px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-28 pb-20">
         <div className="max-w-3xl mx-auto">
           <p className="text-[11px] uppercase tracking-[0.2em] text-gold/80 font-semibold mb-3">
             Free tool — No signup
           </p>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-[1.1] tracking-tight mb-4">
-            Poker Settlement Calculator
+            Poker <span className={goldGradient}>Settlement</span> Calculator
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground mb-8 leading-relaxed">
             Enter every player's buy-ins and cash-outs and we'll work out the
@@ -156,10 +144,7 @@ export function PublicSettlementPage() {
               Stack Tracker remembers your players, tracks lifetime profit, and
               keeps a leaderboard across every session. Free — no card required.
             </p>
-            <Link
-              to="/auth"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-gold text-background font-semibold min-h-[48px] shadow-[0_6px_22px_rgba(200,155,60,0.45)] hover:bg-gold/90 transition-colors"
-            >
+            <Link to="/auth" className={btnGold}>
               Start tracking your homegame
             </Link>
           </div>
