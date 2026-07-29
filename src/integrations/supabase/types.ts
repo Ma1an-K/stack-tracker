@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       homegame_members: {
@@ -57,6 +82,8 @@ export type Database = {
         Row: {
           created_at: string
           currency: string
+          disabled_badges: string[] | null
+          icon_id: string | null
           id: string
           name: string
           updated_at: string
@@ -65,6 +92,8 @@ export type Database = {
         Insert: {
           created_at?: string
           currency?: string
+          disabled_badges?: string[] | null
+          icon_id?: string | null
           id?: string
           name: string
           updated_at?: string
@@ -73,6 +102,8 @@ export type Database = {
         Update: {
           created_at?: string
           currency?: string
+          disabled_badges?: string[] | null
+          icon_id?: string | null
           id?: string
           name?: string
           updated_at?: string
@@ -376,6 +407,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_claim: {
+        Args: {
+          p_player_id: string
+          p_request_id: string
+          p_target_user_id: string
+        }
+        Returns: undefined
+      }
       generate_invite_code: { Args: never; Returns: string }
       get_user_homegame_id: { Args: never; Returns: string }
       get_user_homegame_ids: { Args: never; Returns: string[] }
@@ -539,6 +578,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       claim_status: ["pending", "approved", "rejected"],
