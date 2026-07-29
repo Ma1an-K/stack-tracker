@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { FUNCTIONS_URL } from '@/lib/functionsUrl';
 import { useAuthContext } from '@/contexts/AuthContext';
 
 const VAPID_PUBLIC_KEY = 'BP9Z5RasNjMn4BQ_bUyAHKoIAH1t7Arh_oAuIZXjuiUULpOUbDBgRB57r998FrM1v9F9hBTY0h9lstgm4Oosu1Q';
@@ -143,10 +144,9 @@ export function usePushNotifications() {
 
   const sendNotification = useCallback(async (homegameId: string, sessionDate: string, homegameName: string) => {
     try {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const { data: { session } } = await supabase.auth.getSession();
       
-      await fetch(`https://${projectId}.supabase.co/functions/v1/send-push-notification`, {
+      await fetch(`${FUNCTIONS_URL}/send-push-notification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

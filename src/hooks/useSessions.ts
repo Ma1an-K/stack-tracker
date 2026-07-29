@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { FUNCTIONS_URL } from '@/lib/functionsUrl';
 import { Session, SessionWithPlayers, SessionPlayerWithDetails } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
 
@@ -86,9 +87,8 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
 
       // Send push notifications to homegame members
       try {
-        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-        const { data: { session: authSession } } = await supabase.auth.getSession();
-        await fetch(`https://${projectId}.supabase.co/functions/v1/send-push-notification`, {
+          const { data: { session: authSession } } = await supabase.auth.getSession();
+        await fetch(`${FUNCTIONS_URL}/send-push-notification`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
