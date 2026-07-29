@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Player, SessionWithPlayers, Settlement, Homegame } from '@/types/database';
+import { Player, Session, SessionWithPlayers, Settlement, Homegame } from '@/types/database';
 import { calculateSettlements } from '@/lib/settlement';
 import { calculateLeaderboard } from '@/lib/leaderboard';
 import { computeHomegameBadges, PlayerBadge } from '@/lib/badges';
@@ -101,7 +101,7 @@ export function usePersonalStats() {
         const homegame = player?.homegame as Homegame;
         return {
           id: sp.session_id,
-          date: (sp.session as any).date,
+          date: (sp.session as Session).date,
           homegameName: homegame?.name || 'Unknown',
           currency: homegame?.currency || '$',
           buyIn: Number(sp.buy_in),
@@ -123,7 +123,7 @@ export function usePersonalStats() {
 
         // Sort sessions chronologically for accurate streak + history
         const sortedSessions = [...mySessions].sort(
-          (a, b) => new Date((a.session as any).date).getTime() - new Date((b.session as any).date).getTime()
+          (a, b) => new Date((a.session as Session).date).getTime() - new Date((b.session as Session).date).getTime()
         );
 
         let totalBuyIn = 0;
@@ -145,7 +145,7 @@ export function usePersonalStats() {
 
         // Session history for chart
         const sessionHistory: SessionDataPoint[] = sortedSessions.map((sp, i) => ({
-          date: (sp.session as any).date,
+          date: (sp.session as Session).date,
           sessionNumber: i + 1,
           profit: profits[i],
           cumProfit: profits.slice(0, i + 1).reduce((a, b) => a + b, 0),
@@ -236,8 +236,8 @@ export function usePersonalStats() {
         
         const pendingSettlements: Settlement[] = [];
         sortedUnsettledSessions.forEach(session => {
-          const sessionPlayers = (session as any).session_players || [];
-          if (sessionPlayers.some((sp: any) => sp.player_id === myPlayer.id)) {
+          const sessionPlayers = (session as SessionWithPlayers).session_players || [];
+          if (sessionPlayers.some(sp => sp.player_id === myPlayer.id)) {
             const settlements = calculateSettlements(sessionPlayers);
             // Filter settlements involving this player
             settlements.forEach(s => {

@@ -67,7 +67,7 @@ export function useInviteCodes(homegameId: string | undefined) {
         description: 'Invite code created',
       });
       return { error: null, code: data };
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error creating invite code:', err);
       toast({
         title: 'Error',

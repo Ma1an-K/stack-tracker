@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Player } from '@/types/database';
+import { ActionError, Player } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -24,10 +24,10 @@ interface PlayerListProps {
   loading: boolean;
   isOwner: boolean;
   currentUserId?: string;
-  onAddPlayer: (name: string) => Promise<{ error: any }>;
-  onUpdatePlayer: (id: string, updates: Partial<Player>) => Promise<{ error: any }>;
-  onDeletePlayer: (id: string) => Promise<{ error: any }>;
-  onRequestClaim?: (playerId: string) => Promise<{ error: any }>;
+  onAddPlayer: (name: string) => Promise<{ error: ActionError }>;
+  onUpdatePlayer: (id: string, updates: Partial<Player>) => Promise<{ error: ActionError }>;
+  onDeletePlayer: (id: string) => Promise<{ error: ActionError }>;
+  onRequestClaim?: (playerId: string) => Promise<{ error: ActionError }>;
   hasRequestedPlayer?: (playerId: string) => boolean;
 }
 

@@ -32,7 +32,7 @@ export function usePlayerClaims(homegameId: string | undefined) {
 
       // Filter to only include requests for players in this homegame
       const filteredRequests = (requestsData || []).filter(
-        (req: any) => req.player?.homegame_id === homegameId
+        req => req.player?.homegame_id === homegameId
       ) as PlayerClaimRequestWithDetails[];
       
       setPendingRequests(filteredRequests);
@@ -97,9 +97,9 @@ export function usePlayerClaims(homegameId: string | undefined) {
       
       await fetchClaimRequests();
       return { error: null };
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error requesting claim:', err);
-      if (err.code === '23505') {
+      if ((err as { code?: string }).code === '23505') {
         toast({
           title: 'Already Requested',
           description: 'You have already submitted a claim for this player.',

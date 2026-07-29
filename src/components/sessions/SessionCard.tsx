@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SessionWithPlayers } from '@/types/database';
+import { ActionError, SessionWithPlayers } from '@/types/database';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,8 +24,8 @@ interface SessionCardProps {
   currency: string;
   homegameName?: string;
   onEdit?: () => void;
-  onDelete?: () => Promise<{ error: any }>;
-  onMarkSettled?: (settled: boolean) => Promise<{ error: any }>;
+  onDelete?: () => Promise<{ error: ActionError }>;
+  onMarkSettled?: (settled: boolean) => Promise<{ error: ActionError }>;
 }
 
 export function SessionCard({

@@ -1,4 +1,4 @@
-import { PlayerClaimRequestWithDetails } from '@/types/database';
+import { ActionError, PlayerClaimRequestWithDetails } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Check, X, Clock, Loader2 } from 'lucide-react';
@@ -7,8 +7,8 @@ import { useState } from 'react';
 interface ClaimRequestsCardProps {
   requests: PlayerClaimRequestWithDetails[];
   loading: boolean;
-  onApprove: (requestId: string, playerId: string, userId: string) => Promise<{ error: any }>;
-  onReject: (requestId: string) => Promise<{ error: any }>;
+  onApprove: (requestId: string, playerId: string, userId: string) => Promise<{ error: ActionError }>;
+  onReject: (requestId: string) => Promise<{ error: ActionError }>;
 }
 
 export function ClaimRequestsCard({

@@ -31,3 +31,4 @@ dist-ssr
 # Local tooling / scratch
 .superpowers/
 supabase/.temp/
+public/landing/phone-mockup.png

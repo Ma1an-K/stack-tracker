@@ -58,9 +58,9 @@ export function usePlayers(homegameId: string | undefined) {
         description: `${name} added to the player list`,
       });
       return { error: null };
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error adding player:', err);
-      if (err.code === '23505') {
+      if ((err as { code?: string }).code === '23505') {
         toast({
           title: 'Error',
           description: 'A player with this name already exists',

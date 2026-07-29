@@ -77,12 +77,14 @@ export function useAuth() {
       }
 
       if (membershipData) {
-        const homegamesWithRoles: HomegameWithRole[] = membershipData
-          .filter((m: any) => m.homegame)
-          .map((m: any) => ({
+        // Cast: the generated Supabase types are behind the schema and omit
+        // icon_id / disabled_badges, which homegames does have.
+        const homegamesWithRoles = membershipData
+          .filter(m => m.homegame)
+          .map(m => ({
             ...m.homegame,
             role: m.role as HomegameRole,
-          }));
+          })) as HomegameWithRole[];
         
         setHomegames(homegamesWithRoles);
         
@@ -173,7 +175,7 @@ export function useAuth() {
       // Refresh user data
       await fetchUserData(user.id);
       
-      return { error: null, homegame };
+      return { error: null, homegame: homegame as Homegame };
     } catch (err) {
       console.error('Error creating homegame:', err);
       return { error: err };

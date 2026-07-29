@@ -28,7 +28,7 @@ export function useHomegameMembers(homegameId: string | undefined) {
 
       if (error) throw error;
       
-      const membersWithProfiles = (data as any[]).map(m => ({
+      const membersWithProfiles = (data as HomegameMemberWithProfile[]).map(m => ({
         ...m,
         profile: m.profile,
       })) as HomegameMemberWithProfile[];

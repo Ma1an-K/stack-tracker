@@ -1,3 +1,8 @@
+// Errors returned by the auth/data actions below. Supabase AuthError and
+// PostgrestError, plain Errors, and values caught from a throw all reach the UI
+// through here, and callers only ever read `message`.
+export type ActionError = { message?: string } | null;
+
 export interface Profile {
   id: string;
   username: string;

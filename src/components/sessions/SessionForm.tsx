@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Player, SessionWithPlayers } from '@/types/database';
+import { ActionError, Player, SessionWithPlayers } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,9 +24,9 @@ interface SessionFormProps {
     date: string,
     players: { player_id: string; buy_in: number; cash_out: number }[],
     notes?: string
-  ) => Promise<{ error: any }>;
+  ) => Promise<{ error: ActionError }>;
   onCancel?: () => void;
-  onAddPlayer?: (name: string) => Promise<{ error: any }>;
+  onAddPlayer?: (name: string) => Promise<{ error: ActionError }>;
 }
 
 export function SessionForm({ players, existingSession, onSubmit, onCancel, onAddPlayer }: SessionFormProps) {

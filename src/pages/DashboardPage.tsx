@@ -14,7 +14,7 @@ import { formatProfit, formatCurrency } from '@/lib/settlement';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { PokerChipSpade } from '@/components/icons/PokerChipSpade';
 import { getIconSrc } from '@/lib/homegameIcons';
-import { HomegameWithRole } from '@/types/database';
+import { HomegameWithRole, Settlement } from '@/types/database';
 
 export function DashboardPage() {
   const { profile, homegames, homegame, selectHomegame } = useAuthContext();
@@ -162,7 +162,7 @@ interface HomegameCardProps {
       sessionsPlayed: number;
       avgProfit: number;
     };
-    pendingSettlements: any[];
+    pendingSettlements: Settlement[];
     leaderboardPosition: number | null;
     totalPlayers: number;
   };

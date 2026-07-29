@@ -339,7 +339,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ sent, failed, total: subscriptions.length }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-  } catch (err: any) {
+  } catch (err) {
     console.error('Error sending push notifications:', err)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
