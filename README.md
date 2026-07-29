@@ -1,73 +1,108 @@
-# Welcome to your Lovable project
+# Stack Tracker
 
-## Project info
+A progressive web app for tracking home poker games — buy-ins, cash-outs,
+settlements, leaderboards and long-run player statistics.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Live:** [stack-tracker.com](https://www.stack-tracker.com)
 
-## How can I edit this code?
+![Stack Tracker](public/landing/app-screenshot.png)
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## What it does
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+A home game generates a surprising amount of bookkeeping: who rebought, who
+left early, who owes whom, and who is actually up over the year. Stack Tracker
+replaces the group chat and the spreadsheet.
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Sessions** — log buy-ins and cash-outs per player, with mid-session rebuys.
+- **Settlements** — reduces everyone's net position to the fewest transfers
+  needed to square up.
+- **Leaderboard** — profit, hourly rate, variance and streaks across all
+  sessions in a homegame.
+- **Personal stats** — per-player history, best and worst sessions, and
+  achievement badges.
+- **Homegames** — multiple independent groups, each with its own members,
+  invite codes and roles.
+- **Push notifications** — Web Push alerts when a session is created or
+  settled.
+- **Installable** — runs as a PWA on iOS and Android home screens.
 
-**Use your preferred IDE**
+Two tools are public and need no account: a
+[settlement calculator](https://www.stack-tracker.com/poker-settlement-calculator)
+and a [hand calculator](https://www.stack-tracker.com/poker-hand-calculator).
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+React 18 · TypeScript · Vite · Tailwind CSS · shadcn/ui · Supabase (Postgres,
+Auth, Realtime, Edge Functions) · deployed on Vercel.
 
-Follow these steps:
+## Worth a look
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+A few parts that were more interesting than standard CRUD:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+**Settlement minimisation** (`src/lib/publicSettlement.ts`) — repeatedly
+matches the largest debtor against the largest creditor, so a nine-player
+session settles in a handful of payments instead of everyone paying everyone.
+Sub-cent residuals are tolerated so floating-point dust doesn't produce
+one-cent transfers.
 
-# Step 3: Install the necessary dependencies.
-npm i
+**Hand evaluator** (`src/lib/poker/`) — a from-scratch 5-to-7 card evaluator
+with side-pot resolution for all-in multiway spots. No poker library
+dependency.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+**Row Level Security** (`supabase/migrations/`) — access control lives in the
+database, not the client. 23 migrations define the schema and roughly 60
+policies; a `shares_homegame_with()` security-definer helper scopes profile
+visibility to people you actually play with, and homegame membership inserts
+are constrained so a known UUID can't be used to grant yourself ownership.
+
+**Prerendered public pages** (`scripts/prerender.mjs`) — the about and
+calculator routes are server-rendered at build time and emitted as static HTML
+so they are indexable, while the authenticated app stays a client-side SPA.
+
+**Security headers** (`vercel.json`) — CSP, HSTS, and frame-ancestors denial
+are set at the edge.
+
+## Running locally
+
+```bash
+npm install
+cp .env.example .env      # fill in your Supabase project URL and anon key
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The Supabase schema is fully reproducible from this repo:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+supabase db reset         # applies all migrations to a local Postgres
+```
 
-**Use GitHub Codespaces**
+Edge functions live in `supabase/functions/` and expect `VAPID_PRIVATE_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY` and `ALLOWED_ORIGIN` in the function environment.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Layout
 
-## What technologies are used for this project?
+```
+src/
+  pages/          route components
+  components/     app components; components/ui is shadcn
+  hooks/          data access — one hook per domain area
+  lib/            pure logic: settlement, leaderboard, badges, poker evaluator
+  integrations/   generated Supabase types and client
+supabase/
+  migrations/     schema + RLS policies
+  functions/      Deno edge functions
+scripts/          build-time prerender
+```
 
-This project is built with:
+## Status
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Live and in regular use by a real home game. Actively developed — React Query
+is installed but not yet adopted, and test coverage is minimal.
 
-## How can I deploy this project?
+## License
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Copyright © 2026 Matan Kimchi. All rights reserved. Published for portfolio and
+evaluation purposes only — see [LICENSE](LICENSE). Please don't reuse or
+redistribute the code without permission.
