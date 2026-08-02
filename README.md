@@ -1,6 +1,6 @@
 # Stack Tracker
 
-A progressive web app for tracking home poker games — buy-ins, cash-outs,
+A progressive web app for tracking home poker games, buy-ins, cash-outs,
 settlements, leaderboards and long-run player statistics.
 
 **Live:** [stack-tracker.com](https://www.stack-tracker.com)
