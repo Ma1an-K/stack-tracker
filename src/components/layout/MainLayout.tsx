@@ -5,6 +5,8 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { useTutorialContext } from '@/contexts/TutorialContext';
 import { TutorialOverlay } from '@/components/tutorial/TutorialOverlay';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
+import { LiveSessionProvider } from '@/contexts/LiveSessionContext';
+import { LiveSessionBar } from '@/components/sessions/LiveSessionBar';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -23,7 +25,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   }, [loading, homegame, currentHomegame, startTour]);
 
   return (
-    <>
+    <LiveSessionProvider>
       <div className="flex flex-col h-full overflow-x-hidden md:block md:relative bg-background">
         <div style={{ position: 'fixed', top: -80, left: -80, width: 380, height: 380, background: 'radial-gradient(circle, rgba(200,155,60,0.08) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
         <div style={{ position: 'fixed', bottom: 40, right: -60, width: 300, height: 300, background: 'radial-gradient(circle, rgba(200,155,60,0.05) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
@@ -33,6 +35,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
         >
           <div className="px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] py-4 md:p-6 min-h-full">
+            <LiveSessionBar />
             {children}
           </div>
         </main>
@@ -48,6 +51,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           installPrompt={installPrompt}
         />
       )}
-    </>
+    </LiveSessionProvider>
   );
 }

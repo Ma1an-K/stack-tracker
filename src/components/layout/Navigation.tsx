@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
-import { Users, Calendar, BarChart3, Plus, Trophy, Calculator, LayoutDashboard } from 'lucide-react';
+import { Users, Calendar, BarChart3, Plus, Trophy, Calculator, LayoutDashboard, Play } from 'lucide-react';
+import { useLiveSession } from '@/contexts/LiveSessionContext';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -26,6 +27,9 @@ const mobileNavRight = [
 ];
 
 export function Navigation() {
+  const { liveSession } = useLiveSession();
+  const isLive = !!liveSession;
+  const plusTo = isLive ? '/live-session' : '/new-session';
   const nav = (
     <nav className="fixed bottom-0 left-0 right-0 border-t z-50 h-[76px] bg-[rgb(10,13,24)] border-[rgba(200,155,60,0.22)] shadow-[0_-4px_28px_rgba(200,155,60,0.07)] rounded-b-[1.75rem] md:rounded-none md:top-12 md:right-auto md:border-t-0 md:border-r md:border-border/50 md:h-[calc(100dvh-3rem)] md:w-56 md:bg-background md:shadow-none">
       {/* Mobile navigation */}
@@ -60,7 +64,7 @@ export function Navigation() {
 
         {/* Center Plus Button */}
         <NavLink
-          to="/new-session"
+          to={plusTo}
           data-tutorial="tutorial-new-session"
           className={({ isActive }) =>
             cn(
@@ -69,8 +73,13 @@ export function Navigation() {
             )
           }
         >
-          <div className="flex items-center justify-center w-11 h-11 rounded-full bg-gold text-background ring-2 ring-gold/20 shadow-[0_6px_22px_rgba(200,155,60,0.55)]">
-            <Plus className="h-[22px] w-[22px]" strokeWidth={2.5} />
+          <div className={cn(
+            'flex items-center justify-center w-11 h-11 rounded-full bg-gold text-background ring-2 shadow-[0_6px_22px_rgba(200,155,60,0.55)]',
+            isLive ? 'ring-gold/40 animate-pulse' : 'ring-gold/20'
+          )}>
+            {isLive
+              ? <Play className="h-[20px] w-[20px] fill-current" />
+              : <Plus className="h-[22px] w-[22px]" strokeWidth={2.5} />}
           </div>
         </NavLink>
         
@@ -126,7 +135,7 @@ export function Navigation() {
         
         {/* New Session button for desktop */}
         <NavLink
-          to="/new-session"
+          to={plusTo}
           data-tutorial="tutorial-new-session"
           className={({ isActive }) =>
             cn(
@@ -137,8 +146,8 @@ export function Navigation() {
             )
           }
         >
-          <Plus className="h-4 w-4" />
-          <span>New Session</span>
+          {isLive ? <Play className="h-4 w-4 fill-current" /> : <Plus className="h-4 w-4" />}
+          <span>{isLive ? 'Live Session' : 'New Session'}</span>
         </NavLink>
       </div>
     </nav>

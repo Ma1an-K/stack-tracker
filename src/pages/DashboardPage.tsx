@@ -15,6 +15,7 @@ import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { PokerChipSpade } from '@/components/icons/PokerChipSpade';
 import { getIconSrc } from '@/lib/homegameIcons';
 import { HomegameWithRole, Settlement } from '@/types/database';
+import { LiveSessionCard } from '@/components/sessions/LiveSessionCard';
 
 export function DashboardPage() {
   const { profile, homegames, homegame, selectHomegame } = useAuthContext();
@@ -37,6 +38,8 @@ export function DashboardPage() {
           </p>
         </div>
       </div>
+
+      <LiveSessionCard />
 
       {/* Quick Stats Summary */}
       {loading ? (

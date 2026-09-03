@@ -27,20 +27,29 @@ interface SessionFormProps {
   ) => Promise<{ error: ActionError }>;
   onCancel?: () => void;
   onAddPlayer?: (name: string) => Promise<{ error: ActionError }>;
+  /** Pre-seed rows (e.g. from a live session). Buy-ins filled, cash-outs left blank. */
+  initialPlayers?: { player_id: string; buy_in: number }[];
+  initialNotes?: string;
 }
 
-export function SessionForm({ players, existingSession, onSubmit, onCancel, onAddPlayer }: SessionFormProps) {
+export function SessionForm({ players, existingSession, onSubmit, onCancel, onAddPlayer, initialPlayers, initialNotes }: SessionFormProps) {
   const isMobile = useIsMobile();
   const [date, setDate] = useState(
     existingSession?.date || format(new Date(), 'yyyy-MM-dd')
   );
-  const [notes, setNotes] = useState(existingSession?.notes || '');
+  const [notes, setNotes] = useState(existingSession?.notes || initialNotes || '');
   const [selectedPlayers, setSelectedPlayers] = useState<PlayerEntry[]>(
     existingSession?.session_players.map(sp => ({
       player_id: sp.player_id,
       buy_in: sp.buy_in.toString(),
       cash_out: sp.cash_out.toString(),
-    })) || []
+    })) ||
+      initialPlayers?.map(p => ({
+        player_id: p.player_id,
+        buy_in: p.buy_in.toString(),
+        cash_out: '',
+      })) ||
+      []
   );
   const [submitting, setSubmitting] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState('');

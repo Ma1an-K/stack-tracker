@@ -319,6 +319,50 @@ export type Database = {
         }
         Relationships: []
       }
+      live_sessions: {
+        Row: {
+          created_at: string
+          default_buy_in: number
+          homegame_id: string
+          id: string
+          notes: string | null
+          players: Json
+          started_at: string
+          started_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_buy_in?: number
+          homegame_id: string
+          id?: string
+          notes?: string | null
+          players?: Json
+          started_at?: string
+          started_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_buy_in?: number
+          homegame_id?: string
+          id?: string
+          notes?: string | null
+          players?: Json
+          started_at?: string
+          started_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_sessions_homegame_id_fkey"
+            columns: ["homegame_id"]
+            isOneToOne: false
+            referencedRelation: "homegames"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_players: {
         Row: {
           buy_in: number

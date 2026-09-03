@@ -21,6 +21,7 @@ import { InviteCodesPage } from "@/pages/InviteCodesPage";
 import { MembersPage } from "@/pages/MembersPage";
 import { CalculatorPage } from "@/pages/CalculatorPage";
 import { BadgePreviewPage } from "@/pages/BadgePreviewPage";
+import { LiveSessionPage } from "@/pages/LiveSessionPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -163,6 +164,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <BadgePreviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/live-session"
+        element={
+          <ProtectedRoute>
+            <LiveSessionPage />
           </ProtectedRoute>
         }
       />

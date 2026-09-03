@@ -91,6 +91,23 @@ export interface SessionWithPlayers extends Session {
   session_players: SessionPlayerWithDetails[];
 }
 
+export interface LiveSessionPlayer {
+  player_id: string;
+  buy_in: number;
+}
+
+export interface LiveSession {
+  id: string;
+  homegame_id: string;
+  started_by: string | null;
+  started_at: string;
+  default_buy_in: number;
+  notes: string | null;
+  players: LiveSessionPlayer[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PlayerStats {
   player: Player;
   totalBuyIn: number;

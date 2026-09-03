@@ -4,6 +4,8 @@ import { usePlayers } from '@/hooks/usePlayers';
 import { useSessions } from '@/hooks/useSessions';
 import { SessionCard } from '@/components/sessions/SessionCard';
 import { SessionForm } from '@/components/sessions/SessionForm';
+import { LiveSessionCard } from '@/components/sessions/LiveSessionCard';
+import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { SessionWithPlayers } from '@/types/database';
 import { Loader2, Calendar } from 'lucide-react';
 import {
@@ -18,6 +20,7 @@ export function SessionsPage() {
   const { players } = usePlayers(homegame?.id);
   const { sessions, loading, updateSession, deleteSession, markSettled } = useSessions(homegame?.id);
   const [editingSession, setEditingSession] = useState<SessionWithPlayers | null>(null);
+  const { liveSession } = useLiveSession();
 
   if (loading) {
     return (
@@ -34,6 +37,13 @@ export function SessionsPage() {
         <h1 className="text-lg font-semibold">Sessions</h1>
         <span className="text-sm text-muted-foreground ml-auto tabular-nums">{sessions.length} total</span>
       </div>
+
+      {liveSession && (
+        <div className="space-y-2">
+          <span className="section-header">In Progress</span>
+          <LiveSessionCard />
+        </div>
+      )}
 
       {sessions.length === 0 ? (
         <div className="text-center py-12">
