@@ -169,6 +169,7 @@ export type Database = {
           homegame_id: string
           id: string
           notes: string | null
+          payments: Json
           players: Json
           started_at: string
           started_by: string | null
@@ -180,6 +181,7 @@ export type Database = {
           homegame_id: string
           id?: string
           notes?: string | null
+          payments?: Json
           players?: Json
           started_at?: string
           started_by?: string | null
@@ -191,6 +193,7 @@ export type Database = {
           homegame_id?: string
           id?: string
           notes?: string | null
+          payments?: Json
           players?: Json
           started_at?: string
           started_by?: string | null
@@ -202,6 +205,55 @@ export type Database = {
             columns: ["homegame_id"]
             isOneToOne: false
             referencedRelation: "homegames"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          from_player_id: string
+          id: string
+          session_id: string
+          to_player_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          from_player_id: string
+          id?: string
+          session_id: string
+          to_player_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          from_player_id?: string
+          id?: string
+          session_id?: string
+          to_player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_payments_from_player_id_fkey"
+            columns: ["from_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_payments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_payments_to_player_id_fkey"
+            columns: ["to_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
             referencedColumns: ["id"]
           },
         ]

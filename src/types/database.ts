@@ -87,14 +87,41 @@ export interface SessionPlayerWithDetails extends SessionPlayer {
   player: Player;
 }
 
+export interface SessionPayment {
+  id: string;
+  session_id: string;
+  from_player_id: string;
+  to_player_id: string;
+  amount: number;
+  created_at: string;
+}
+
+export interface SessionPaymentWithDetails extends SessionPayment {
+  from_player: Player;
+  to_player: Player;
+}
+
+/** Shape used when creating/updating a session and when stored on a live session. */
+export interface SessionPaymentInput {
+  from_player_id: string;
+  to_player_id: string;
+  amount: number;
+}
+
 export interface SessionWithPlayers extends Session {
   session_players: SessionPlayerWithDetails[];
+  /** Payments made during the game. Absent/empty when none were recorded. */
+  session_payments?: SessionPaymentWithDetails[];
 }
 
 export interface LiveSessionPlayer {
   player_id: string;
   buy_in: number;
+  /** Set when the player has left the table. Undefined while still seated. */
+  cash_out?: number;
 }
+
+export type LiveSessionPayment = SessionPaymentInput;
 
 export interface LiveSession {
   id: string;
@@ -104,6 +131,7 @@ export interface LiveSession {
   default_buy_in: number;
   notes: string | null;
   players: LiveSessionPlayer[];
+  payments: LiveSessionPayment[];
   created_at: string;
   updated_at: string;
 }
