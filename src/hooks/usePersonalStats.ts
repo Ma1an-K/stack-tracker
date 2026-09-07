@@ -4,6 +4,7 @@ import { Player, Session, SessionWithPlayers, Settlement, Homegame } from '@/typ
 import { calculateSettlements } from '@/lib/settlement';
 import { calculateLeaderboard } from '@/lib/leaderboard';
 import { computeHomegameBadges, PlayerBadge } from '@/lib/badges';
+import { fetchPaymentsForSessions, attachPayments } from '@/lib/sessionPayments';
 
 export interface PersonalStats {
   totalProfit: number;
@@ -184,6 +185,10 @@ export function usePersonalStats() {
 
         if (unsettledError) throw unsettledError;
 
+        const unsettledBase = (unsettledSessions ?? []) as unknown as SessionWithPlayers[];
+        const paymentsBySession = await fetchPaymentsForSessions(unsettledBase.map(s => s.id));
+        const unsettledWithPayments = attachPayments(unsettledBase, paymentsBySession);
+
         // Get all sessions for leaderboard calculation
         const { data: allSessions, error: allSessionsError } = await supabase
           .from('sessions')
@@ -230,15 +235,15 @@ export function usePersonalStats() {
 
         // Calculate settlements for unsettled sessions involving this player
         // Sort by most recent first
-        const sortedUnsettledSessions = (unsettledSessions || []).sort((a, b) => 
+        const sortedUnsettledSessions = unsettledWithPayments.sort((a, b) =>
           new Date(b.date).getTime() - new Date(a.date).getTime()
         );
-        
+
         const pendingSettlements: Settlement[] = [];
         sortedUnsettledSessions.forEach(session => {
-          const sessionPlayers = (session as SessionWithPlayers).session_players || [];
+          const sessionPlayers = session.session_players || [];
           if (sessionPlayers.some(sp => sp.player_id === myPlayer.id)) {
-            const settlements = calculateSettlements(sessionPlayers);
+            const settlements = calculateSettlements(sessionPlayers, session.session_payments ?? []);
             // Filter settlements involving this player
             settlements.forEach(s => {
               if (s.from.id === myPlayer.id || s.to.id === myPlayer.id) {
