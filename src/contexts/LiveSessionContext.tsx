@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Json } from '@/integrations/supabase/types';
-import { ActionError, LiveSession, LiveSessionPlayer } from '@/types/database';
+import { ActionError, LiveSession, LiveSessionPlayer, LiveSessionPayment } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
 
 interface LiveSessionContextType {
@@ -14,6 +14,12 @@ interface LiveSessionContextType {
   setBuyIn: (playerId: string, total: number) => Promise<{ error: ActionError }>;
   addPlayer: (playerId: string, buyIn: number) => Promise<{ error: ActionError }>;
   removePlayer: (playerId: string) => Promise<{ error: ActionError }>;
+  /** Player leaves the table: lock their chip count. Buy-in becomes read-only in the UI. */
+  cashOut: (playerId: string, amount: number) => Promise<{ error: ActionError }>;
+  /** Undo a cash-out (miscount, or they sat back down). */
+  rejoin: (playerId: string) => Promise<{ error: ActionError }>;
+  addPayment: (payment: LiveSessionPayment) => Promise<{ error: ActionError }>;
+  removePayment: (index: number) => Promise<{ error: ActionError }>;
   updateNotes: (notes: string) => Promise<{ error: ActionError }>;
   /** Deletes the draft. Used both for "discard" and after the session is logged for real. */
   finish: () => Promise<{ error: ActionError }>;
@@ -23,6 +29,13 @@ interface LiveSessionContextType {
 const LiveSessionContext = createContext<LiveSessionContextType | undefined>(undefined);
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// Rows fetched before the payments column exists have no `payments`; treat as empty.
+const normalise = (row: unknown): LiveSession | null => {
+  if (!row) return null;
+  const r = row as LiveSession;
+  return { ...r, payments: Array.isArray(r.payments) ? r.payments : [] };
+};
 
 export function LiveSessionProvider({ children }: { children: ReactNode }) {
   const { user, homegame } = useAuthContext();
@@ -43,7 +56,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
         .eq('homegame_id', homegameId)
         .maybeSingle();
       if (error) throw error;
-      setLiveSession(data as unknown as LiveSession | null);
+      setLiveSession(normalise(data));
     } catch (err) {
       console.error('Error fetching live session:', err);
     } finally {
@@ -80,7 +93,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
         .select()
         .single();
       if (error) throw error;
-      setLiveSession(data as unknown as LiveSession);
+      setLiveSession(normalise(data));
       return { error: null };
     } catch (err) {
       console.error('Error starting live session:', err);
@@ -128,8 +141,69 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
     return persistPlayers([...players, { player_id: playerId, buy_in: round2(buyIn) }]);
   };
 
-  const removePlayer = (playerId: string) =>
-    persistPlayers((liveSession?.players ?? []).filter(p => p.player_id !== playerId));
+  const removePlayer = async (playerId: string) => {
+    if (!liveSession) return { error: new Error('No live session') };
+    const players = liveSession.players.filter(p => p.player_id !== playerId);
+    const payments = liveSession.payments.filter(
+      p => p.from_player_id !== playerId && p.to_player_id !== playerId
+    );
+    const previous = liveSession;
+    setLiveSession({ ...liveSession, players, payments });
+    const { error } = await supabase
+      .from('live_sessions')
+      .update({ players: players as unknown as Json, payments: payments as unknown as Json })
+      .eq('id', liveSession.id);
+    if (error) {
+      console.error('Error updating live session:', error);
+      setLiveSession(previous);
+      toast({ title: 'Not saved', description: 'Check your connection and try again', variant: 'destructive' });
+      return { error };
+    }
+    return { error: null };
+  };
+
+  const cashOut = (playerId: string, amount: number) =>
+    persistPlayers(
+      (liveSession?.players ?? []).map(p =>
+        p.player_id === playerId ? { ...p, cash_out: round2(Math.max(0, amount)) } : p
+      )
+    );
+
+  const rejoin = (playerId: string) =>
+    persistPlayers(
+      (liveSession?.players ?? []).map(p => {
+        if (p.player_id !== playerId) return p;
+        const rest: LiveSessionPlayer = { ...p };
+        delete rest.cash_out;
+        return rest;
+      })
+    );
+
+  const persistPayments = async (payments: LiveSessionPayment[]) => {
+    if (!liveSession) return { error: new Error('No live session') };
+    const previous = liveSession;
+    setLiveSession({ ...liveSession, payments });
+    const { error } = await supabase
+      .from('live_sessions')
+      .update({ payments: payments as unknown as Json })
+      .eq('id', liveSession.id);
+    if (error) {
+      console.error('Error updating live session payments:', error);
+      setLiveSession(previous);
+      toast({ title: 'Not saved', description: 'Check your connection and try again', variant: 'destructive' });
+      return { error };
+    }
+    return { error: null };
+  };
+
+  const addPayment = (payment: LiveSessionPayment) =>
+    persistPayments([
+      ...(liveSession?.payments ?? []),
+      { ...payment, amount: round2(payment.amount) },
+    ]);
+
+  const removePayment = (index: number) =>
+    persistPayments((liveSession?.payments ?? []).filter((_, i) => i !== index));
 
   const updateNotes = async (notes: string) => {
     if (!liveSession) return { error: new Error('No live session') };
@@ -169,6 +243,10 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
         setBuyIn,
         addPlayer,
         removePlayer,
+        cashOut,
+        rejoin,
+        addPayment,
+        removePayment,
         updateNotes,
         finish,
         refetch: fetchLiveSession,
