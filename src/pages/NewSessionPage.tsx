@@ -3,6 +3,7 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useSessions } from '@/hooks/useSessions';
+import { SessionPaymentInput } from '@/types/database';
 import { SessionForm } from '@/components/sessions/SessionForm';
 import { LiveSessionCard } from '@/components/sessions/LiveSessionCard';
 import { PlusCircle, AlertCircle, Radio, ChevronRight, Flag } from 'lucide-react';
@@ -24,9 +25,10 @@ export function NewSessionPage() {
   const handleSubmit = async (
     date: string,
     players: { player_id: string; buy_in: number; cash_out: number }[],
-    notes?: string
+    notes: string | undefined,
+    payments: SessionPaymentInput[]
   ) => {
-    const result = await createSession(date, players, notes);
+    const result = await createSession(date, players, notes, payments);
     if (!result.error) {
       if (fromLive) await finish();
       navigate('/');
@@ -72,7 +74,7 @@ export function NewSessionPage() {
 
       {fromLive ? (
         <p className="text-sm text-muted-foreground -mt-2">
-          Buy-ins are carried over from the live session. Enter everyone's cash-out, then log it.
+          Buy-ins, early cash-outs and payments are carried over from the live session. Enter the remaining cash-outs, then log it.
         </p>
       ) : liveSession ? (
         <LiveSessionCard />
@@ -96,6 +98,7 @@ export function NewSessionPage() {
         onSubmit={handleSubmit}
         onAddPlayer={isOwner ? addPlayer : undefined}
         initialPlayers={fromLive ? liveSession?.players : undefined}
+        initialPayments={fromLive ? liveSession?.payments ?? [] : undefined}
         initialNotes={fromLive ? liveSession?.notes ?? undefined : undefined}
       />
     </div>

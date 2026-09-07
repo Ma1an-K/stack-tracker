@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ActionError, Player, SessionWithPlayers } from '@/types/database';
+import { ActionError, Player, SessionPaymentInput, SessionWithPlayers } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2, UserPlus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2, UserPlus, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -17,22 +18,31 @@ interface PlayerEntry {
   cash_out: string;
 }
 
+interface PaymentEntry {
+  key: number; // stable key for React while editing
+  from_player_id: string;
+  to_player_id: string;
+  amount: string;
+}
+
 interface SessionFormProps {
   players: Player[];
   existingSession?: SessionWithPlayers;
   onSubmit: (
     date: string,
     players: { player_id: string; buy_in: number; cash_out: number }[],
-    notes?: string
+    notes: string | undefined,
+    payments: SessionPaymentInput[]
   ) => Promise<{ error: ActionError }>;
   onCancel?: () => void;
   onAddPlayer?: (name: string) => Promise<{ error: ActionError }>;
-  /** Pre-seed rows (e.g. from a live session). Buy-ins filled, cash-outs left blank. */
-  initialPlayers?: { player_id: string; buy_in: number }[];
+  /** Pre-seed rows (e.g. from a live session). Buy-ins filled, cash-outs left blank unless already cashed out. */
+  initialPlayers?: { player_id: string; buy_in: number; cash_out?: number }[];
+  initialPayments?: SessionPaymentInput[];
   initialNotes?: string;
 }
 
-export function SessionForm({ players, existingSession, onSubmit, onCancel, onAddPlayer, initialPlayers, initialNotes }: SessionFormProps) {
+export function SessionForm({ players, existingSession, onSubmit, onCancel, onAddPlayer, initialPlayers, initialPayments, initialNotes }: SessionFormProps) {
   const isMobile = useIsMobile();
   const [date, setDate] = useState(
     existingSession?.date || format(new Date(), 'yyyy-MM-dd')
@@ -47,10 +57,19 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
       initialPlayers?.map(p => ({
         player_id: p.player_id,
         buy_in: p.buy_in.toString(),
-        cash_out: '',
+        cash_out: p.cash_out !== undefined ? p.cash_out.toString() : '',
       })) ||
       []
   );
+  const [payments, setPayments] = useState<PaymentEntry[]>(() => {
+    const source = existingSession?.session_payments?.map(p => ({
+      from_player_id: p.from_player_id,
+      to_player_id: p.to_player_id,
+      amount: Number(p.amount),
+    })) ?? initialPayments ?? [];
+    return source.map((p, i) => ({ key: i, ...p, amount: p.amount.toString() }));
+  });
+  const [nextPaymentKey, setNextPaymentKey] = useState(payments.length);
   const [submitting, setSubmitting] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState('');
   const [addingPlayer, setAddingPlayer] = useState(false);
@@ -70,6 +89,20 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
 
   const removePlayer = (playerId: string) => {
     setSelectedPlayers(selectedPlayers.filter(p => p.player_id !== playerId));
+    setPayments(payments.filter(p => p.from_player_id !== playerId && p.to_player_id !== playerId));
+  };
+
+  const addPayment = () => {
+    setPayments([...payments, { key: nextPaymentKey, from_player_id: '', to_player_id: '', amount: '' }]);
+    setNextPaymentKey(nextPaymentKey + 1);
+  };
+
+  const updatePayment = (key: number, field: 'from_player_id' | 'to_player_id' | 'amount', value: string) => {
+    setPayments(payments.map(p => (p.key === key ? { ...p, [field]: value } : p)));
+  };
+
+  const removePayment = (key: number) => {
+    setPayments(payments.filter(p => p.key !== key));
   };
 
   const updatePlayer = (playerId: string, field: 'buy_in' | 'cash_out', value: string) => {
@@ -149,6 +182,22 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
       return;
     }
 
+    const badPayment = payments.find(
+      p =>
+        !p.from_player_id ||
+        !p.to_player_id ||
+        p.from_player_id === p.to_player_id ||
+        !(parseFloat(p.amount) > 0)
+    );
+    if (badPayment) {
+      toast({
+        title: 'Error',
+        description: 'Each payment needs a payer, a different recipient, and an amount above 0',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSubmitting(true);
     const { error } = await onSubmit(
       date,
@@ -157,7 +206,12 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
         buy_in: parseFloat(p.buy_in),
         cash_out: parseFloat(p.cash_out),
       })),
-      notes || undefined
+      notes || undefined,
+      payments.map(p => ({
+        from_player_id: p.from_player_id,
+        to_player_id: p.to_player_id,
+        amount: Math.round(parseFloat(p.amount) * 100) / 100,
+      }))
     );
     setSubmitting(false);
 
@@ -379,6 +433,107 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
           )}
         </CardContent>
       </Card>
+
+      {selectedPlayers.length >= 2 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <span className="section-header">Payments made</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addPayment}
+                className={cn("border-dashed", isMobile ? "h-9" : "h-8")}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Add Payment
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Cash that already changed hands during the game, like someone paying their loss before leaving. These are subtracted from the settlements.
+            </p>
+            {payments.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4 text-sm">
+                No payments recorded
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {payments.map(entry => (
+                  <div
+                    key={entry.key}
+                    className="flex flex-wrap items-end gap-2 p-3 rounded-lg bg-muted/30"
+                  >
+                    <div className="flex-1 min-w-[120px]">
+                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">From</Label>
+                      <Select
+                        value={entry.from_player_id}
+                        onValueChange={v => updatePayment(entry.key, 'from_player_id', v)}
+                      >
+                        <SelectTrigger className={cn("bg-background/50", isMobile ? "h-10" : "h-9")}>
+                          <SelectValue placeholder="Payer" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedPlayers.map(p => (
+                            <SelectItem key={p.player_id} value={p.player_id}>
+                              {getPlayerName(p.player_id)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <ArrowRight className="h-4 w-4 mb-2.5 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-[120px]">
+                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">To</Label>
+                      <Select
+                        value={entry.to_player_id}
+                        onValueChange={v => updatePayment(entry.key, 'to_player_id', v)}
+                      >
+                        <SelectTrigger className={cn("bg-background/50", isMobile ? "h-10" : "h-9")}>
+                          <SelectValue placeholder="Recipient" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedPlayers
+                            .filter(p => p.player_id !== entry.from_player_id)
+                            .map(p => (
+                              <SelectItem key={p.player_id} value={p.player_id}>
+                                {getPlayerName(p.player_id)}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-24">
+                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Amount</Label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={entry.amount}
+                        onChange={e => updatePayment(entry.key, 'amount', e.target.value)}
+                        className={cn("bg-background/50", isMobile ? "h-10" : "h-9")}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePayment(entry.key)}
+                      className="text-muted-foreground hover:text-destructive h-8 w-8 mb-0.5"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex gap-3">
         {onCancel && (

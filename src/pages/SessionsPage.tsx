@@ -78,8 +78,8 @@ export function SessionsPage() {
             <SessionForm
               players={players}
               existingSession={editingSession}
-              onSubmit={(date, playerData, notes) =>
-                updateSession(editingSession.id, date, playerData, notes)
+              onSubmit={(date, playerData, notes, payments) =>
+                updateSession(editingSession.id, date, playerData, notes, payments)
               }
               onCancel={() => setEditingSession(null)}
             />
