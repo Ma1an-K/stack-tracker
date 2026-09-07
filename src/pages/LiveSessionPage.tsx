@@ -24,7 +24,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Plus, Minus, Trash2, Users, Clock, Flag, Radio, UserPlus, Play, ArrowLeft } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Plus, Minus, Trash2, Users, Clock, Flag, Radio, UserPlus, Play, ArrowLeft, LogOut, Undo2, ArrowRight } from 'lucide-react';
 import { LivePulse } from '@/components/sessions/LivePulse';
 
 /* ------------------------------------------------------------------ */
@@ -140,12 +141,18 @@ function TrackerView({ players }: { players: Player[] }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { homegame } = useAuthContext();
-  const { liveSession, totalPot, addBuyIn, setBuyIn, addPlayer, removePlayer } = useLiveSession();
+  const { liveSession, totalPot, addBuyIn, setBuyIn, addPlayer, removePlayer, cashOut, rejoin, addPayment, removePayment } = useLiveSession();
   const elapsed = useElapsed(liveSession?.started_at);
 
   const [customFor, setCustomFor] = useState<Player | null>(null);
   const [customAmount, setCustomAmount] = useState('');
   const [addOpen, setAddOpen] = useState(false);
+  const [cashOutFor, setCashOutFor] = useState<Player | null>(null);
+  const [cashOutAmount, setCashOutAmount] = useState('');
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [payFrom, setPayFrom] = useState('');
+  const [payTo, setPayTo] = useState('');
+  const [payAmount, setPayAmount] = useState('');
 
   if (!liveSession) return null;
 
@@ -155,6 +162,37 @@ function TrackerView({ players }: { players: Player[] }) {
   const nameOf = (id: string) => players.find(p => p.id === id)?.name ?? 'Unknown';
   const seated = liveSession.players;
   const bench = players.filter(p => p.is_active && !seated.some(sp => sp.player_id === p.id));
+
+  const payments = liveSession.payments ?? [];
+  const lossOf = (sp: LiveSessionPlayer) =>
+    sp.cash_out === undefined ? 0 : Number(sp.buy_in) - Number(sp.cash_out);
+
+  const openPayment = (from = '', amount = '') => {
+    setPayFrom(from);
+    setPayTo('');
+    setPayAmount(amount);
+    setPaymentOpen(true);
+  };
+
+  const submitCashOut = async () => {
+    if (!cashOutFor) return;
+    const amount = parseFloat(cashOutAmount) || 0;
+    const sp = seated.find(p => p.player_id === cashOutFor.id);
+    const { error } = await cashOut(cashOutFor.id, amount);
+    setCashOutFor(null);
+    if (!error && sp) {
+      const loss = Number(sp.buy_in) - amount;
+      // Losers usually pay on the way out — offer to record it straight away.
+      if (loss > 0) openPayment(cashOutFor.id, loss.toFixed(2));
+    }
+  };
+
+  const submitPayment = async () => {
+    const amount = parseFloat(payAmount) || 0;
+    if (!payFrom || !payTo || payFrom === payTo || amount <= 0) return;
+    const { error } = await addPayment({ from_player_id: payFrom, to_player_id: payTo, amount });
+    if (!error) setPaymentOpen(false);
+  };
 
   return (
     <div className="space-y-4">
@@ -195,50 +233,107 @@ function TrackerView({ players }: { players: Player[] }) {
         <CardContent className="space-y-2">
           {seated.map(sp => {
             const player = players.find(p => p.id === sp.player_id);
+            const left = sp.cash_out !== undefined;
             return (
-              <div key={sp.player_id} className="rounded-lg bg-muted/30 p-3">
+              <div key={sp.player_id} className={cn('rounded-lg bg-muted/30 p-3', left && 'opacity-80')}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-medium">{nameOf(sp.player_id)}</span>
-                  <button
-                    type="button"
-                    className="text-lg font-bold tabular-nums text-gold"
-                    onClick={() => { if (player) { setCustomFor(player); setCustomAmount(''); } }}
-                  >
-                    {formatCurrency(Number(sp.buy_in), currency)}
-                  </button>
+                  <span className="flex items-center gap-2 truncate text-sm font-medium">
+                    {nameOf(sp.player_id)}
+                    {left && (
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                        Left
+                      </span>
+                    )}
+                  </span>
+                  {left ? (
+                    <span className="text-sm tabular-nums">
+                      <span className="text-muted-foreground">{formatCurrency(Number(sp.buy_in), currency)} → </span>
+                      <span className="font-bold text-gold">{formatCurrency(Number(sp.cash_out), currency)}</span>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-lg font-bold tabular-nums text-gold"
+                      onClick={() => { if (player) { setCustomFor(player); setCustomAmount(''); } }}
+                    >
+                      {formatCurrency(Number(sp.buy_in), currency)}
+                    </button>
+                  )}
                 </div>
-                <div className="mt-2.5 flex items-center gap-1.5">
-                  {chips.map(amt => (
+                {left ? (
+                  <div className="mt-2.5 flex items-center gap-1.5">
+                    <span className={cn('flex-1 text-xs tabular-nums', lossOf(sp) > 0 ? 'text-destructive' : 'text-success')}>
+                      {lossOf(sp) > 0 ? `Down ${formatCurrency(lossOf(sp), currency)}` : `Up ${formatCurrency(-lossOf(sp), currency)}`}
+                    </span>
                     <Button
-                      key={amt}
+                      variant="secondary"
+                      size="sm"
+                      className="h-9 text-xs"
+                      onClick={() => openPayment(sp.player_id, lossOf(sp) > 0 ? lossOf(sp).toFixed(2) : '')}
+                    >
+                      Record payment
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 text-xs text-muted-foreground"
+                      onClick={() => { if (player) { setCashOutFor(player); setCashOutAmount(String(sp.cash_out)); } }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 text-muted-foreground"
+                      onClick={() => rejoin(sp.player_id)}
+                      aria-label={`${nameOf(sp.player_id)} rejoins`}
+                    >
+                      <Undo2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-2.5 flex items-center gap-1.5">
+                    {chips.map(amt => (
+                      <Button
+                        key={amt}
+                        variant="secondary"
+                        size="sm"
+                        className="h-9 flex-1 text-xs"
+                        onClick={() => addBuyIn(sp.player_id, amt)}
+                      >
+                        <Plus className="mr-0.5 h-3 w-3" />
+                        {amt}
+                      </Button>
+                    ))}
+                    <Button
                       variant="secondary"
                       size="sm"
                       className="h-9 flex-1 text-xs"
-                      onClick={() => addBuyIn(sp.player_id, amt)}
+                      onClick={() => { if (player) { setCustomFor(player); setCustomAmount(''); } }}
                     >
-                      <Plus className="mr-0.5 h-3 w-3" />
-                      {amt}
+                      Other
                     </Button>
-                  ))}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="h-9 flex-1 text-xs"
-                    onClick={() => { if (player) { setCustomFor(player); setCustomAmount(''); } }}
-                  >
-                    Other
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 shrink-0 text-muted-foreground"
-                    onClick={() => addBuyIn(sp.player_id, -base)}
-                    disabled={Number(sp.buy_in) <= 0}
-                    aria-label={`Remove ${base} from ${nameOf(sp.player_id)}`}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 text-muted-foreground"
+                      onClick={() => addBuyIn(sp.player_id, -base)}
+                      disabled={Number(sp.buy_in) <= 0}
+                      aria-label={`Remove ${base} from ${nameOf(sp.player_id)}`}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 text-muted-foreground"
+                      onClick={() => { if (player) { setCashOutFor(player); setCashOutAmount(''); } }}
+                      aria-label={`${nameOf(sp.player_id)} cashes out`}
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -247,6 +342,43 @@ function TrackerView({ players }: { players: Player[] }) {
             <span className="text-sm text-muted-foreground">Total on the table</span>
             <span className="font-semibold tabular-nums">{formatCurrency(totalPot, currency)}</span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <span className="section-header">Payments</span>
+            <Button variant="outline" size="sm" className="h-8 border-dashed" onClick={() => openPayment()}>
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              Record Payment
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {payments.length === 0 ? (
+            <p className="py-2 text-center text-xs text-muted-foreground">
+              Cash that changes hands mid-game (like someone paying up before leaving) gets subtracted from the final settlement.
+            </p>
+          ) : (
+            payments.map((p, i) => (
+              <div key={i} className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2.5 text-sm">
+                <span className="font-medium">{nameOf(p.from_player_id)}</span>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="font-medium">{nameOf(p.to_player_id)}</span>
+                <span className="ml-auto font-semibold tabular-nums text-gold">{formatCurrency(Number(p.amount), currency)}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => removePayment(i)}
+                  aria-label="Remove payment"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
@@ -337,6 +469,93 @@ function TrackerView({ players }: { players: Player[] }) {
               </Button>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cash out (player leaving) */}
+      <Dialog open={!!cashOutFor} onOpenChange={o => !o && setCashOutFor(null)}>
+        <DialogContent className="sm:max-w-xs">
+          <DialogHeader>
+            <DialogTitle>{cashOutFor?.name} cashes out</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Chips on the table</Label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={cashOutAmount}
+              onChange={e => setCashOutAmount(e.target.value)}
+              autoFocus
+              className="h-11 text-lg"
+            />
+            <p className="text-xs text-muted-foreground">
+              Locks their result. You can edit it until the session ends.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button className="w-full" disabled={cashOutAmount === ''} onClick={submitCashOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Cash out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Record a payment */}
+      <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Record payment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">From</Label>
+              <Select value={payFrom} onValueChange={setPayFrom}>
+                <SelectTrigger className="h-10"><SelectValue placeholder="Who paid" /></SelectTrigger>
+                <SelectContent>
+                  {seated.map(sp => (
+                    <SelectItem key={sp.player_id} value={sp.player_id}>{nameOf(sp.player_id)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">To</Label>
+              <Select value={payTo} onValueChange={setPayTo}>
+                <SelectTrigger className="h-10"><SelectValue placeholder="Who received it" /></SelectTrigger>
+                <SelectContent>
+                  {seated.filter(sp => sp.player_id !== payFrom).map(sp => (
+                    <SelectItem key={sp.player_id} value={sp.player_id}>{nameOf(sp.player_id)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Amount</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={payAmount}
+                onChange={e => setPayAmount(e.target.value)}
+                className="h-11 text-lg"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              className="w-full"
+              disabled={!payFrom || !payTo || payFrom === payTo || !(parseFloat(payAmount) > 0)}
+              onClick={submitPayment}
+            >
+              Save payment
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
