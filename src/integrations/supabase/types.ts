@@ -209,55 +209,6 @@ export type Database = {
           },
         ]
       }
-      session_payments: {
-        Row: {
-          amount: number
-          created_at: string
-          from_player_id: string
-          id: string
-          session_id: string
-          to_player_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          from_player_id: string
-          id?: string
-          session_id: string
-          to_player_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          from_player_id?: string
-          id?: string
-          session_id?: string
-          to_player_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_payments_from_player_id_fkey"
-            columns: ["from_player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_payments_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_payments_to_player_id_fkey"
-            columns: ["to_player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       player_claim_requests: {
         Row: {
           created_at: string
@@ -414,6 +365,55 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      session_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          from_player_id: string
+          id: string
+          session_id: string
+          to_player_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          from_player_id: string
+          id?: string
+          session_id: string
+          to_player_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          from_player_id?: string
+          id?: string
+          session_id?: string
+          to_player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_payments_from_player_id_fkey"
+            columns: ["from_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_payments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_payments_to_player_id_fkey"
+            columns: ["to_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_players: {
         Row: {
