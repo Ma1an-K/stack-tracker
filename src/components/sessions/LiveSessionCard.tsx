@@ -10,7 +10,7 @@ import { LivePulse } from './LivePulse';
 
 /** Resume card for the dashboard and sessions list. Renders nothing when no game is live. */
 export function LiveSessionCard() {
-  const { liveSession, totalPot } = useLiveSession();
+  const { liveSession, totalBuyIn } = useLiveSession();
   const { homegame } = useAuthContext();
 
   if (!liveSession) return null;
@@ -31,9 +31,9 @@ export function LiveSessionCard() {
           </div>
           <div className="shrink-0 text-right">
             <div className="text-xl font-bold tabular-nums text-gold">
-              {formatCurrency(totalPot, homegame?.currency)}
+              {formatCurrency(totalBuyIn, homegame?.currency)}
             </div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">on the table</div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">bought in</div>
           </div>
         </div>
         <Button asChild className="mt-3 h-10 w-full">

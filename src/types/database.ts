@@ -111,7 +111,7 @@ export interface SessionPaymentInput {
 export interface SessionWithPlayers extends Session {
   session_players: SessionPlayerWithDetails[];
   /** Payments made during the game. Absent/empty when none were recorded. */
-  session_payments?: SessionPaymentWithDetails[];
+  session_payments: SessionPaymentWithDetails[];
 }
 
 export interface LiveSessionPlayer {

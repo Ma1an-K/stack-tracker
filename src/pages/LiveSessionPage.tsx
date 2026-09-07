@@ -141,7 +141,7 @@ function TrackerView({ players }: { players: Player[] }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { homegame } = useAuthContext();
-  const { liveSession, totalPot, addBuyIn, setBuyIn, addPlayer, removePlayer, cashOut, rejoin, addPayment, removePayment } = useLiveSession();
+  const { liveSession, totalPot, totalBuyIn, seatedCount, addBuyIn, setBuyIn, addPlayer, removePlayer, cashOut, rejoin, addPayment, removePayment } = useLiveSession();
   const elapsed = useElapsed(liveSession?.started_at);
 
   const [customFor, setCustomFor] = useState<Player | null>(null);
@@ -176,7 +176,7 @@ function TrackerView({ players }: { players: Player[] }) {
 
   const submitCashOut = async () => {
     if (!cashOutFor) return;
-    const amount = parseFloat(cashOutAmount) || 0;
+    const amount = Math.round(Math.max(0, parseFloat(cashOutAmount) || 0) * 100) / 100;
     const sp = seated.find(p => p.player_id === cashOutFor.id);
     const { error } = await cashOut(cashOutFor.id, amount);
     setCashOutFor(null);
@@ -188,7 +188,7 @@ function TrackerView({ players }: { players: Player[] }) {
   };
 
   const submitPayment = async () => {
-    const amount = parseFloat(payAmount) || 0;
+    const amount = Math.round((parseFloat(payAmount) || 0) * 100) / 100;
     if (!payFrom || !payTo || payFrom === payTo || amount <= 0) return;
     const { error } = await addPayment({ from_player_id: payFrom, to_player_id: payTo, amount });
     if (!error) setPaymentOpen(false);
@@ -206,7 +206,7 @@ function TrackerView({ players }: { players: Player[] }) {
               </div>
               <div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{elapsed}</span>
-                <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{seated.length}</span>
+                <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{seatedCount}</span>
                 <span>{format(parseISO(liveSession.started_at), 'h:mm a')}</span>
               </div>
             </div>
@@ -339,7 +339,11 @@ function TrackerView({ players }: { players: Player[] }) {
           })}
 
           <div className="flex items-center justify-between border-t border-border/50 pt-3">
-            <span className="text-sm text-muted-foreground">Total on the table</span>
+            <span className="text-sm text-muted-foreground">Total buy-ins</span>
+            <span className="font-semibold tabular-nums">{formatCurrency(totalBuyIn, currency)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">On the table</span>
             <span className="font-semibold tabular-nums">{formatCurrency(totalPot, currency)}</span>
           </div>
         </CardContent>
@@ -550,7 +554,7 @@ function TrackerView({ players }: { players: Player[] }) {
           <DialogFooter>
             <Button
               className="w-full"
-              disabled={!payFrom || !payTo || payFrom === payTo || !(parseFloat(payAmount) > 0)}
+              disabled={!payFrom || !payTo || payFrom === payTo || !(Math.round((parseFloat(payAmount) || 0) * 100) / 100 > 0)}
               onClick={submitPayment}
             >
               Save payment

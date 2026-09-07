@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { FUNCTIONS_URL } from '@/lib/functionsUrl';
 import { Session, SessionWithPlayers, SessionPlayerWithDetails, SessionPaymentInput } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
-import { fetchPaymentsForSessions, attachPayments } from '@/lib/sessionPayments';
 
 interface SessionPlayerInput {
   player_id: string;
@@ -32,15 +31,19 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
           session_players (
             *,
             player:players (*)
+          ),
+          session_payments (
+            *,
+            from_player:players!session_payments_from_player_id_fkey (*),
+            to_player:players!session_payments_to_player_id_fkey (*)
           )
         `)
         .eq('homegame_id', homegameId)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .order('created_at', { referencedTable: 'session_payments', ascending: true });
 
       if (error) throw error;
-      const base = (data ?? []) as unknown as SessionWithPlayers[];
-      const payments = await fetchPaymentsForSessions(base.map(s => s.id));
-      setSessions(attachPayments(base, payments));
+      setSessions(data as unknown as SessionWithPlayers[]);
     } catch (err) {
       console.error('Error fetching sessions:', err);
       toast({
@@ -99,14 +102,9 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
             amount: p.amount,
           })));
         if (paymentsError) {
-          // The session and its players are already saved; don't report a
-          // failure that would lead to a duplicate session on retry.
-          console.error('Error saving session payments:', paymentsError);
-          toast({
-            title: 'Session logged, but payments were not saved',
-            description: 'You can add them again by editing the session.',
-            variant: 'destructive',
-          });
+          // Roll back so a retry can't create a duplicate session. Cascade removes players.
+          await supabase.from('sessions').delete().eq('id', sessionData.id);
+          throw paymentsError;
         }
       }
 
@@ -190,7 +188,7 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
         .from('session_payments')
         .delete()
         .eq('session_id', sessionId);
-      if (deletePaymentsError && payments.length > 0) throw deletePaymentsError;
+      if (deletePaymentsError) throw deletePaymentsError;
 
       if (payments.length > 0) {
         const { error: paymentsError } = await supabase

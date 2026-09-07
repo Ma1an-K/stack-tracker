@@ -7,7 +7,7 @@ import { LivePulse } from './LivePulse';
 
 /** Thin resume strip pinned to the top of every page while a game is running. */
 export function LiveSessionBar() {
-  const { liveSession, totalPot } = useLiveSession();
+  const { liveSession, totalBuyIn } = useLiveSession();
   const { homegame } = useAuthContext();
   const { pathname } = useLocation();
 
@@ -22,7 +22,7 @@ export function LiveSessionBar() {
       <span className="min-w-0 flex-1 truncate text-xs">
         <span className="font-semibold text-gold">Session in progress</span>
         <span className="text-muted-foreground">
-          {' '}· {liveSession.players.length} players · {formatCurrency(totalPot, homegame?.currency)} in
+          {' '}· {liveSession.players.length} players · {formatCurrency(totalBuyIn, homegame?.currency)} in
         </span>
       </span>
       <span className="flex shrink-0 items-center gap-0.5 text-xs font-medium text-gold">

@@ -4,7 +4,6 @@ import { Player, Session, SessionWithPlayers, Settlement, Homegame } from '@/typ
 import { calculateSettlements } from '@/lib/settlement';
 import { calculateLeaderboard } from '@/lib/leaderboard';
 import { computeHomegameBadges, PlayerBadge } from '@/lib/badges';
-import { fetchPaymentsForSessions, attachPayments } from '@/lib/sessionPayments';
 
 export interface PersonalStats {
   totalProfit: number;
@@ -178,16 +177,17 @@ export function usePersonalStats() {
           .from('sessions')
           .select(`
             *,
-            session_players(*, player:players(*))
+            session_players(*, player:players(*)),
+            session_payments (
+              *,
+              from_player:players!session_payments_from_player_id_fkey (*),
+              to_player:players!session_payments_to_player_id_fkey (*)
+            )
           `)
           .eq('homegame_id', homegame.id)
           .eq('is_settled', false);
 
         if (unsettledError) throw unsettledError;
-
-        const unsettledBase = (unsettledSessions ?? []) as unknown as SessionWithPlayers[];
-        const paymentsBySession = await fetchPaymentsForSessions(unsettledBase.map(s => s.id));
-        const unsettledWithPayments = attachPayments(unsettledBase, paymentsBySession);
 
         // Get all sessions for leaderboard calculation
         const { data: allSessions, error: allSessionsError } = await supabase
@@ -235,7 +235,7 @@ export function usePersonalStats() {
 
         // Calculate settlements for unsettled sessions involving this player
         // Sort by most recent first
-        const sortedUnsettledSessions = unsettledWithPayments.sort((a, b) =>
+        const sortedUnsettledSessions = ((unsettledSessions || []) as SessionWithPlayers[]).sort((a, b) =>
           new Date(b.date).getTime() - new Date(a.date).getTime()
         );
 
