@@ -39,7 +39,8 @@ export function SessionCard({
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const settlements = calculateSettlements(session.session_players);
+  const payments = session.session_payments ?? [];
+  const settlements = calculateSettlements(session.session_players, payments);
   const totalPot = session.session_players.reduce(
     (sum, sp) => sum + Number(sp.buy_in),
     0
@@ -50,11 +51,20 @@ export function SessionCard({
     const lines: string[] = [`🃏 ${homegameName ? homegameName + ' — ' : ''}${dateStr}`];
 
     // Settlements
+    if (payments.length > 0) {
+      lines.push('', '✅ Paid during game:');
+      payments.forEach(p => {
+        lines.push(`  ${p.from_player.name} → ${p.to_player.name}: ${currency}${Number(p.amount).toFixed(2)}`);
+      });
+    }
+
     if (settlements.length > 0) {
-      lines.push('', '💸 Settlements:');
+      lines.push('', payments.length > 0 ? '💸 Remaining settlements:' : '💸 Settlements:');
       settlements.forEach(s => {
         lines.push(`  ${s.from.name} → ${s.to.name}: ${currency}${s.amount.toFixed(2)}`);
       });
+    } else if (payments.length > 0) {
+      lines.push('', '💸 All settled during the game');
     }
 
     return lines.join('\n');
@@ -160,25 +170,56 @@ export function SessionCard({
             </div>
           </div>
 
-          {/* Settlements */}
-          {settlements.length > 0 && (
+          {/* Paid during game */}
+          {payments.length > 0 && (
             <div className="space-y-3">
-              <span className="section-header">Settlements</span>
+              <span className="section-header">Paid during game</span>
               <div className="space-y-2">
-                {settlements.map((settlement, i) => (
+                {payments.map(p => (
                   <div
-                    key={i}
+                    key={p.id}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/30 text-sm"
                   >
-                    <span className="font-medium">{settlement.from.name}</span>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
+                    <span className="font-medium">{p.from_player.name}</span>
                     <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="font-medium">{settlement.to.name}</span>
-                    <span className="ml-auto font-semibold text-gold tabular-nums">
-                      {formatCurrency(settlement.amount, currency)}
+                    <span className="font-medium">{p.to_player.name}</span>
+                    <span className="ml-auto font-semibold tabular-nums text-muted-foreground">
+                      {formatCurrency(Number(p.amount), currency)}
                     </span>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Remaining settlements */}
+          {(settlements.length > 0 || payments.length > 0) && (
+            <div className="space-y-3">
+              <span className="section-header">
+                {payments.length > 0 ? 'Remaining settlements' : 'Settlements'}
+              </span>
+              {settlements.length > 0 ? (
+                <div className="space-y-2">
+                  {settlements.map((settlement, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/30 text-sm"
+                    >
+                      <span className="font-medium">{settlement.from.name}</span>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="font-medium">{settlement.to.name}</span>
+                      <span className="ml-auto font-semibold text-gold tabular-nums">
+                        {formatCurrency(settlement.amount, currency)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground px-3 py-2.5 rounded-lg bg-muted/30">
+                  All settled during the game
+                </p>
+              )}
             </div>
           )}
 
