@@ -90,7 +90,11 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
         .from('session_players')
         .insert(sessionPlayers);
 
-      if (playersError) throw playersError;
+      if (playersError) {
+        // Roll back so a retry can't create a duplicate session.
+        await supabase.from('sessions').delete().eq('id', sessionData.id);
+        throw playersError;
+      }
 
       if (payments.length > 0) {
         const { error: paymentsError } = await supabase
