@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FUNCTIONS_URL } from '@/lib/functionsUrl';
-import { Session, SessionWithPlayers, SessionPlayerWithDetails } from '@/types/database';
+import { Session, SessionWithPlayers, SessionPlayerWithDetails, SessionPaymentInput } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+import { fetchPaymentsForSessions, attachPayments } from '@/lib/sessionPayments';
 
 interface SessionPlayerInput {
   player_id: string;
@@ -37,7 +38,9 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
         .order('date', { ascending: false });
 
       if (error) throw error;
-      setSessions(data as unknown as SessionWithPlayers[]);
+      const base = (data ?? []) as unknown as SessionWithPlayers[];
+      const payments = await fetchPaymentsForSessions(base.map(s => s.id));
+      setSessions(attachPayments(base, payments));
     } catch (err) {
       console.error('Error fetching sessions:', err);
       toast({
@@ -53,7 +56,8 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
   const createSession = async (
     date: string,
     players: SessionPlayerInput[],
-    notes?: string
+    notes?: string,
+    payments: SessionPaymentInput[] = []
   ) => {
     if (!homegameId) return { error: new Error('No homegame') };
 
@@ -84,6 +88,18 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
         .insert(sessionPlayers);
 
       if (playersError) throw playersError;
+
+      if (payments.length > 0) {
+        const { error: paymentsError } = await supabase
+          .from('session_payments')
+          .insert(payments.map(p => ({
+            session_id: sessionData.id,
+            from_player_id: p.from_player_id,
+            to_player_id: p.to_player_id,
+            amount: p.amount,
+          })));
+        if (paymentsError) throw paymentsError;
+      }
 
       // Send push notifications to homegame members
       try {
@@ -126,7 +142,8 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
     sessionId: string,
     date: string,
     players: SessionPlayerInput[],
-    notes?: string
+    notes?: string,
+    payments: SessionPaymentInput[] = []
   ) => {
     try {
       // Update session
@@ -158,6 +175,25 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
         .insert(sessionPlayers);
 
       if (playersError) throw playersError;
+
+      // Replace payments the same way players are replaced.
+      const { error: deletePaymentsError } = await supabase
+        .from('session_payments')
+        .delete()
+        .eq('session_id', sessionId);
+      if (deletePaymentsError && payments.length > 0) throw deletePaymentsError;
+
+      if (payments.length > 0) {
+        const { error: paymentsError } = await supabase
+          .from('session_payments')
+          .insert(payments.map(p => ({
+            session_id: sessionId,
+            from_player_id: p.from_player_id,
+            to_player_id: p.to_player_id,
+            amount: p.amount,
+          })));
+        if (paymentsError) throw paymentsError;
+      }
 
       toast({
         title: 'Success',
