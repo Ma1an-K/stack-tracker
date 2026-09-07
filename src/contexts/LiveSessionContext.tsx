@@ -147,6 +147,9 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
     const payments = liveSession.payments.filter(
       p => p.from_player_id !== playerId && p.to_player_id !== playerId
     );
+    // No payments referenced this player: single-column write, identical to
+    // the pre-payments behaviour (and safe before the payments column exists).
+    if (payments.length === liveSession.payments.length) return persistPlayers(players);
     const previous = liveSession;
     setLiveSession({ ...liveSession, players, payments });
     const { error } = await supabase

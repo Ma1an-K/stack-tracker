@@ -98,7 +98,16 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
             to_player_id: p.to_player_id,
             amount: p.amount,
           })));
-        if (paymentsError) throw paymentsError;
+        if (paymentsError) {
+          // The session and its players are already saved; don't report a
+          // failure that would lead to a duplicate session on retry.
+          console.error('Error saving session payments:', paymentsError);
+          toast({
+            title: 'Session logged, but payments were not saved',
+            description: 'You can add them again by editing the session.',
+            variant: 'destructive',
+          });
+        }
       }
 
       // Send push notifications to homegame members

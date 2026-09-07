@@ -14,7 +14,11 @@ CREATE INDEX session_payments_session_id ON public.session_payments(session_id);
 
 ALTER TABLE public.session_payments ENABLE ROW LEVEL SECURITY;
 
--- Mirrors live_sessions: any member of the session's homegame can read/write.
+-- Member-level read/write for all four operations, matching live_sessions
+-- (payments are recorded by whoever is driving the live game), not
+-- session_players, whose update/delete are owner-only. Swap
+-- is_homegame_member for is_homegame_owner on the UPDATE and DELETE policies
+-- below if payments should be owner-managed.
 CREATE POLICY "Members can view session_payments" ON public.session_payments
   FOR SELECT USING (
     session_id IN (
