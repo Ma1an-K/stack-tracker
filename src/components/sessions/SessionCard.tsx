@@ -128,7 +128,7 @@ export function SessionCard({
           <div className="flex items-center gap-2">
             <span className="truncate font-semibold">{format(parseISO(session.date), 'EEEE')}</span>
             {session.is_settled && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-success/12 px-2 py-0.5 text-[0.6875rem] font-semibold text-success">
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[0.6875rem] font-semibold text-success">
                 <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                 Settled
               </span>
