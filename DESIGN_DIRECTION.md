@@ -132,3 +132,64 @@ highlight, a coherent type scale, and much better text contrast (muted text 7:1)
 - Keeping the last-rendered data in memory for the session (not persisted) is acceptable "UI-layer caching": hooks still fetch on every mount exactly as before.
 - `?mode=signup` on `/auth` only chooses which already-existing step the page opens on; it does not change auth logic.
 - Navigating to `/sessions` after logging (instead of `/`) is a UX change of *where the user lands*, not of what the route does.
+
+## 11. Pre-delivery checklist (skill `references/pro-rules.md`), as applied
+
+| Item | Status |
+|---|---|
+| No emoji as structural icons | Lucide only in UI chrome; removed the emoji from tour title/controls. Share *messages* keep their emoji (content, not UI). Badge dialog keeps an emoji fallback only when art is missing |
+| One icon family / stroke | Lucide throughout; active tab uses a heavier stroke as state |
+| Pressed feedback, no layout shift | `active:scale-[0.97]`/`.pressable` (transform only) on buttons, tabs, chips, cards |
+| Touch targets ≥ 44 px | Buttons 44/48 px, icon buttons 44×44, inputs 48 px, tab items 48 px, name chips 44 px, select/dropdown items 44 px; card picker cells ~80×40 on phones; small visual close dots get expanded hit areas |
+| Semantic tokens, no ad-hoc hex | Tailwind `green/red/amber/yellow-*` and the `rgba(200,155,60,…)` / `rgb(10,13,24)` literals replaced by tokens in app and marketing pages (playing-card face colour and the landing phone mock-up are the deliberate exceptions) |
+| Disabled states | `disabled:opacity-45` + no pointer events; the session form's disabled Log button now has a live status line saying why |
+| Labels for icon controls | Header buttons, tab bar, session toggle (`aria-expanded`), trash/remove/role buttons, card remove, toast close all labelled |
+| Dark contrast ≥ 4.5:1 | ivory 15.8:1, muted 7.3:1, gold 8.1:1, profit 7.9:1, loss ≥ 4.5:1 on card/secondary (computed, §3) |
+| Scrim legibility | Overlay `bg-black/70` + 2 px blur under every sheet |
+| Safe areas | Header `env(safe-area-inset-top)`, tab bar + sheets + sticky bars `env(safe-area-inset-bottom)`, side insets on header/main/tab bar, toasts below the notch |
+| Content not hidden behind fixed bars | `<main>` padding accounts for header and tab bar; sticky action bars sit inside that padding (verified in headless Chrome that sticky offsets respect scroll-container padding) |
+| Reduced motion | Global `prefers-reduced-motion` collapse; shimmer, pings and page-enter all neutralised |
+| Form labels / errors | Every field has a visible label; balance errors shown inline near the submit button (existing toasts kept as a second channel) |
+| Password managers / paste | Auth inputs use real `autocomplete` values, no paste blocking |
+| Not verified in a browser | Per the brief the app was not run against the live backend; 375 px / landscape / largest-text checks are left to the orchestrator's screenshot harness |
+
+## 12. Tap counts after
+
+Same rules as the audit (start on signed-in Home, owner, homegame selected; 1 tap = a press or focusing an input; typing, keyboard Next/Done and scrolling are free; autofocus costs 0; N = players, M = players still seated). Where the audit's own step list and total disagreed I re-added the steps and show both.
+
+| # | Flow | After (steps) | Before → After |
+|---|---|---|---|
+| 1 | Log a finished session (manual) | Home **Log a result** or **+** (1) → each chip (N) **or Add everyone (1)** → focus first Buy-in (1), keyboard Next walks buy-in → cash-out → next row → **Log session** (1) | 3N+2 = **20** → N+3 = **9**, or **4** with Add everyone (strict per-field count without Next: 3N+2, unchanged) |
+| 1b | …then see who owes whom | Lands on Sessions with the new session already expanded | **+2 → 0** |
+| 2 | Start a live game | Home **Start live game** (1) → (optional preset buy-in, 1) → chips (N) **or Everyone (1)** → **Start session** (1) | steps add to N+3 = 9 (audit total says 8) → N+2 = **8**, or **3** with Everyone; custom buy-in +1 via preset instead of focus+type |
+| 2a | Live rebuy (standard) | Resume strip / ▶ (1) → **+50** (1) | 2 → **2** (1 on screen), now 44 px labelled buttons |
+| 2b | Live rebuy (custom) | ▶ (1) → Other or tap the buy-in figure (1) → type (autofocus) → Add to buy-in (1) | 3 → **3** |
+| 2c | Late arrival (existing player) | ▶ (1) → Add player, always visible (1) → name chip (1) | 3 → **3** (no longer hidden; empty bench explains and links to Players) |
+| 2d | Player leaves early and pays | ▶ (1) → **Cash out Name** (1) → type (autofocus) → Cash out (1) → payment sheet auto-opens prefilled → **To** chip (1) → Save (1) | 6 → **5** (chips replace the To select) |
+| 2e | End live game | ▶ (1) → End session & cash out (1) → focus first remaining cash-out (1) + Next → Log session (1) | M+3 = **9** → **4** with Next (M+3 strict) and lands on the result |
+| 3 | View a session's settlements | Sessions (1) → tap anywhere on the card header (1) | 2 → **2** (target 32 px → full-width 72 px row); **0** right after logging |
+| 3a | Mark settled / Share / Edit | flow 3 + 1 | 3 → **3** (actions in a visible 2-column footer, settle shows progress) |
+| 4 | Check leaderboard | Standings (1); time frame +1; head-to-head row +1 | 1 → **1** |
+| 5 | Check my stats | Stats (1), or tap the lifetime hero on Home (1) | 1 → **1** (Mark sent is 44 px) |
+| 6 | Switch homegame | Header name (1) → pick in sheet (1); or tap another homegame card on Home (1) | 2 → **2** (1 via Home), cards now say Current/Switch |
+| 7 | Create invite (owner) | Home **Invite** (1) → Create invite code (1) → **Share invite** (1) → pick chat app in the OS sheet | 4 + manual paste → **3** + OS share (pre-written message). Via Club: 4 |
+| 8 | Join another game | Header name (1) → Join with code (1) → (autofocused) type → Join (1) | 4 → **3** |
+| 9 | Sidepot / hand calculator | Club (1) → Calculator (1) [members: Home Calc shortcut (1)] → hole/board cards 2 taps each (18) → 2 stacks (2) | ≈21 → **≈22 owners / ≈21 members**; each card target ~26×34 → ~80×40 px. Regression of 1 tap for owners (Calc left the tab bar) |
+| 10 | New owner onboarding | Get started (1) → opens on Create account (0) → 3 fields (3) → Create (1) → email round trip → link lands on Landing with a **Continue** banner (1) → setup, game name autofocused → Create game (1) → tour | 9 → **7** + email (+ tour) |
+| 10b | New player with code | as 10 but setup: Join with code (1) → focus code (1) → Join (1) | 10 → **9** + email |
+| 11 | Sign in (returning) | focus email (1) + password (1) → Sign in (1); after sign-up the email is prefilled | 3 → **3** (2 right after sign-up) |
+| 12 | Notifications / Edit profile | Club (1) → row/tile (1) | 2 → **2** |
+
+## 13. Known gaps / things that felt forced
+
+- **Players and Calculator left the tab bar** to respect the skill's "bottom nav ≤ 5". Players sits in the header (so the tours can still spotlight it); Calculator is one extra tap for owners (Club sheet), members get it on Home. If the owner uses the calculator mid-hand a lot, swapping Stats for Calc would be the alternative.
+- **Stale-while-revalidate is in-memory only** (per tab, cleared on reload) and keyed by homegame; first visit to each tab after launch still shows a skeleton. Route chunks are prefetched on idle so code is never the wait.
+- **"Expand the session just logged"** relies on `createSession` returning the new row (it does today); if it didn't, it falls back to expanding the newest-dated card.
+- **Session Edit/Delete/Mark settled are still shown to every member** (audit #26): hiding them would change who can do what, which is a permission decision, not a UI one.
+- **"Mark sent" is still device-local** (#27); the UI now says so but cannot sync it without a backend change.
+- **Creating a brand-new player from inside the live game** (draft spec) needs `addPlayer` + seat in one step; I kept the live screen to its existing context and link to Players instead.
+- **Invite share message links to `/auth?mode=signup`** and asks the player to type the code; real deep-link join (`?code=`) would need AuthPage to call `joinHomegame` automatically, which is auth flow logic.
+- **iOS keyboard handling** uses a `visualViewport` inset for sheets; behaviour on very old iOS versions without `visualViewport` falls back to the previous (sheet may sit under the keyboard).
+- **Light mode** was deliberately not built (dark-only product); the skill's light-mode checklist rows don't apply.
+- **Montserrat** (the skill's body pick) was swapped for Inter for density and figure legibility; recorded in §2.
+- Not run in a browser against data (brief rule); visual QA happens in the orchestrator's mocked harness.
