@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { logError } from '@/lib/errorLog';
 
 const RELOAD_FLAG = 'st:chunk-reload';
 
@@ -34,7 +35,10 @@ export class RouteErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: unknown, info: ErrorInfo) {
     console.error('Screen failed to render:', error, info.componentStack);
-    if (!isChunkLoadError(error)) return;
+    // This boundary sits inside the top-level ErrorBoundary, so report the crash here too.
+    const chunk = isChunkLoadError(error);
+    logError({ kind: 'crash', action: chunk ? 'chunk_load' : 'render', error });
+    if (!chunk) return;
     try {
       if (!sessionStorage.getItem(RELOAD_FLAG)) {
         sessionStorage.setItem(RELOAD_FLAG, '1');
