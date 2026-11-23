@@ -284,7 +284,7 @@ function Hero() {
               </a>
             </div>
 
-            <p className="opacity-0 animate-[fade-in_0.7s_ease-out_0.85s_forwards] text-foreground/35 text-sm">
+            <p className="opacity-0 animate-[fade-in_0.7s_ease-out_0.85s_forwards] text-foreground/60 text-sm">
               No credit card. No ads. Install on iPhone or Android.
             </p>
           </div>
@@ -327,7 +327,7 @@ function FeatureCard({
       <h3 className="text-foreground font-semibold text-base mb-2.5 tracking-tight">
         {title}
       </h3>
-      <p className="text-foreground/45 text-sm leading-relaxed">{body}</p>
+      <p className="text-foreground/60 text-sm leading-relaxed">{body}</p>
     </div>
   );
 }
@@ -601,7 +601,7 @@ function Footer() {
             <span className="text-foreground/80 font-semibold text-sm tracking-tight">
               Stack Tracker
             </span>
-            <span className="text-foreground/30 text-sm">
+            <span className="text-foreground/60 text-sm">
               · Poker Homegame Manager
             </span>
           </div>
@@ -609,43 +609,43 @@ function Footer() {
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
             <a
               href="#features"
-              className="text-foreground/45 hover:text-gold transition-colors"
+              className="text-foreground/60 hover:text-gold transition-colors"
             >
               Features
             </a>
             <a
               href="#how-it-works"
-              className="text-foreground/45 hover:text-gold transition-colors"
+              className="text-foreground/60 hover:text-gold transition-colors"
             >
               How It Works
             </a>
             <a
               href="#faq"
-              className="text-foreground/45 hover:text-gold transition-colors"
+              className="text-foreground/60 hover:text-gold transition-colors"
             >
               FAQ
             </a>
             <Link
               to="/poker-settlement-calculator"
-              className="text-foreground/45 hover:text-gold transition-colors"
+              className="text-foreground/60 hover:text-gold transition-colors"
             >
               Settlement Calculator
             </Link>
             <Link
               to="/poker-hand-calculator"
-              className="text-foreground/45 hover:text-gold transition-colors"
+              className="text-foreground/60 hover:text-gold transition-colors"
             >
               Hand Calculator
             </Link>
             <Link
               to="/about"
-              className="text-foreground/45 hover:text-gold transition-colors"
+              className="text-foreground/60 hover:text-gold transition-colors"
             >
               About
             </Link>
             <Link
               to="/auth"
-              className="text-foreground/45 hover:text-gold transition-colors"
+              className="text-foreground/60 hover:text-gold transition-colors"
             >
               Sign In
             </Link>
@@ -654,7 +654,7 @@ function Footer() {
 
         <div className={`${goldDivider} my-8 opacity-60`} />
 
-        <p className="text-foreground/30 text-xs">
+        <p className="text-foreground/60 text-xs">
           &copy; {new Date().getFullYear()} Stack Tracker. All rights reserved.
         </p>
       </div>
