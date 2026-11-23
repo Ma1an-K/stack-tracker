@@ -47,6 +47,39 @@ export interface RecentSession {
   profit: number;
 }
 
+// The three per-homegame queries are independent, so they run in parallel.
+function fetchHomegameData(homegameId: string) {
+  return Promise.all([
+    // Unsettled sessions for this homegame to calculate pending settlements
+    supabase
+      .from('sessions')
+      .select(`
+        *,
+        session_players(*, player:players(*)),
+        session_payments (
+          *,
+          from_player:players!session_payments_from_player_id_fkey (*),
+          to_player:players!session_payments_to_player_id_fkey (*)
+        )
+      `)
+      .eq('homegame_id', homegameId)
+      .eq('is_settled', false),
+    // All sessions for leaderboard calculation
+    supabase
+      .from('sessions')
+      .select(`
+        *,
+        session_players(*, player:players(*))
+      `)
+      .eq('homegame_id', homegameId),
+    // All players for leaderboard
+    supabase
+      .from('players')
+      .select('*')
+      .eq('homegame_id', homegameId),
+  ]);
+}
+
 export function usePersonalStats() {
   const [homegameStats, setHomegameStats] = useState<HomegameStats[]>([]);
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
@@ -60,7 +93,10 @@ export function usePersonalStats() {
 
   const fetchPersonalStats = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // getSession() reads the stored session locally (no network round trip);
+      // RLS still enforces auth server-side on every query below.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) {
         setLoading(false);
         return;
@@ -84,14 +120,29 @@ export function usePersonalStats() {
 
       const playerIds = myPlayers.map(p => p.id);
 
+      // Everything below depends only on myPlayers, so start every query now
+      // and let them run concurrently instead of one after another. Results
+      // are still consumed (and errors still thrown) in the original order.
+      const sessionPlayersPromise = Promise.resolve(
+        supabase
+          .from('session_players')
+          .select(`
+            *,
+            session:sessions(*)
+          `)
+          .in('player_id', playerIds)
+      );
+
+      const homegameQueries = new Map<string, ReturnType<typeof fetchHomegameData>>();
+      for (const myPlayer of myPlayers) {
+        const homegame = myPlayer.homegame as Homegame;
+        if (homegame && !homegameQueries.has(homegame.id)) {
+          homegameQueries.set(homegame.id, fetchHomegameData(homegame.id));
+        }
+      }
+
       // Get all session_players for my players
-      const { data: sessionPlayersData, error: spError } = await supabase
-        .from('session_players')
-        .select(`
-          *,
-          session:sessions(*)
-        `)
-        .in('player_id', playerIds);
+      const { data: sessionPlayersData, error: spError } = await sessionPlayersPromise;
 
       if (spError) throw spError;
 
@@ -172,40 +223,16 @@ export function usePersonalStats() {
         const netProfit = totalCashOut - totalBuyIn;
         const sessionsPlayed = mySessions.length;
 
-        // Get unsettled sessions for this homegame to calculate pending settlements
-        const { data: unsettledSessions, error: unsettledError } = await supabase
-          .from('sessions')
-          .select(`
-            *,
-            session_players(*, player:players(*)),
-            session_payments (
-              *,
-              from_player:players!session_payments_from_player_id_fkey (*),
-              to_player:players!session_payments_to_player_id_fkey (*)
-            )
-          `)
-          .eq('homegame_id', homegame.id)
-          .eq('is_settled', false);
+        // Unsettled sessions (pending settlements), all sessions and all
+        // players (leaderboard) for this homegame -- already in flight.
+        const [
+          { data: unsettledSessions, error: unsettledError },
+          { data: allSessions, error: allSessionsError },
+          { data: allPlayersInHomegame, error: allPlayersError },
+        ] = await homegameQueries.get(homegame.id)!;
 
         if (unsettledError) throw unsettledError;
-
-        // Get all sessions for leaderboard calculation
-        const { data: allSessions, error: allSessionsError } = await supabase
-          .from('sessions')
-          .select(`
-            *,
-            session_players(*, player:players(*))
-          `)
-          .eq('homegame_id', homegame.id);
-
         if (allSessionsError) throw allSessionsError;
-
-        // Get all players for leaderboard
-        const { data: allPlayersInHomegame, error: allPlayersError } = await supabase
-          .from('players')
-          .select('*')
-          .eq('homegame_id', homegame.id);
-
         if (allPlayersError) throw allPlayersError;
 
         // Calculate leaderboard position

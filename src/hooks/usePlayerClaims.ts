@@ -19,15 +19,30 @@ export function usePlayerClaims(homegameId: string | undefined) {
     if (!homegameId) return;
     
     try {
-      // Fetch pending requests for this homegame (for owners)
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('player_claim_requests')
-        .select(`
-          *,
-          player:players(*),
-          profile:profiles!player_claim_requests_user_id_fkey(*)
-        `)
-        .eq('status', 'pending');
+      // The homegame's pending requests (for owners) and the current user's
+      // own requests are independent, so fetch them in parallel. The user id
+      // comes from the locally stored session (no network round trip).
+      const [
+        { data: requestsData, error: requestsError },
+        myRequestsResult,
+      ] = await Promise.all([
+        supabase
+          .from('player_claim_requests')
+          .select(`
+            *,
+            player:players(*),
+            profile:profiles!player_claim_requests_user_id_fkey(*)
+          `)
+          .eq('status', 'pending'),
+        supabase.auth.getSession().then(({ data: { session } }) =>
+          session?.user
+            ? supabase
+                .from('player_claim_requests')
+                .select('*')
+                .eq('user_id', session.user.id)
+            : null
+        ),
+      ]);
 
       if (requestsError) throw requestsError;
 
@@ -38,13 +53,9 @@ export function usePlayerClaims(homegameId: string | undefined) {
       
       setPendingRequests(filteredRequests);
 
-      // Fetch current user's requests
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: myRequestsData, error: myError } = await supabase
-          .from('player_claim_requests')
-          .select('*')
-          .eq('user_id', user.id);
+      // Current user's requests
+      if (myRequestsResult) {
+        const { data: myRequestsData, error: myError } = myRequestsResult;
 
         if (myError) throw myError;
         setMyRequests(myRequestsData || []);
@@ -58,7 +69,9 @@ export function usePlayerClaims(homegameId: string | undefined) {
 
   const requestClaim = async (playerId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Local session read (no round trip); RLS enforces auth server-side.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('Not authenticated');
 
       // Attempt direct claim - RLS will only allow if user is owner/admin
@@ -153,7 +166,9 @@ export function usePlayerClaims(homegameId: string | undefined) {
 
   const rejectClaim = async (requestId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Local session read (no round trip); RLS enforces auth server-side.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase

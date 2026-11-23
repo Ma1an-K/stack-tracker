@@ -45,15 +45,17 @@ export function useInviteCodes(homegameId: string | undefined) {
         ? new Date(Date.now() + options.expiresInDays * 24 * 60 * 60 * 1000).toISOString()
         : null;
 
-      const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) throw new Error('Not authenticated');
+      // Local session read (no round trip); RLS enforces auth server-side.
+      const { data: authData } = await supabase.auth.getSession();
+      const user = authData.session?.user;
+      if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('invite_codes')
         .insert({
           homegame_id: homegameId,
           code: codeData,
-          created_by: authData.user.id,
+          created_by: user.id,
           max_uses: options?.maxUses || null,
           expires_at: expiresAt,
         })
