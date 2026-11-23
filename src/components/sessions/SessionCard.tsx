@@ -27,6 +27,8 @@ interface SessionCardProps {
   onMarkSettled?: (settled: boolean) => Promise<{ error: ActionError }>;
   /** Open on first render (e.g. the session that was just logged). */
   defaultExpanded?: boolean;
+  /** Rows are remembered data being refreshed: hold off Edit/Delete/Settle until they're current. */
+  actionsDisabled?: boolean;
 }
 
 export function SessionCard({
@@ -37,6 +39,7 @@ export function SessionCard({
   onDelete,
   onMarkSettled,
   defaultExpanded = false,
+  actionsDisabled = false,
 }: SessionCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [settling, setSettling] = useState(false);
@@ -251,14 +254,14 @@ export function SessionCard({
               <Button
                 variant={session.is_settled ? 'secondary' : 'default'}
                 onClick={handleMarkSettled}
-                disabled={settling}
+                disabled={settling || actionsDisabled}
               >
                 {settling ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
                 {session.is_settled ? 'Unsettle' : 'Mark settled'}
               </Button>
             )}
             {onEdit && (
-              <Button variant="ghost" onClick={onEdit}>
+              <Button variant="ghost" onClick={onEdit} disabled={actionsDisabled}>
                 <Edit />
                 Edit
               </Button>
@@ -266,7 +269,7 @@ export function SessionCard({
             {onDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" className="text-destructive hover:text-destructive">
+                  <Button variant="ghost" className="text-destructive hover:text-destructive" disabled={actionsDisabled}>
                     <Trash2 />
                     Delete
                   </Button>

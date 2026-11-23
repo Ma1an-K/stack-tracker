@@ -88,6 +88,7 @@ export function SessionsPage() {
               onEdit={() => setEditingSession(session)}
               onDelete={() => deleteSession(session.id)}
               onMarkSettled={(settled) => markSettled(session.id, settled)}
+              actionsDisabled={isRefreshing}
             />
           ))}
         </div>

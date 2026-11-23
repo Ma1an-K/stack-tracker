@@ -16,6 +16,20 @@ const cache = new Map<string, unknown>();
 
 const SWITCH_GIVE_UP_MS = 6000;
 
+/**
+ * Forget remembered page data (all of it, or keys starting with `prefix`).
+ * Call after a mutation made on one screen that changes what other screens
+ * show (logging a session, adding a player, approving a claim), so they wait
+ * for fresh data instead of painting pre-mutation rows.
+ */
+export function clearStale(prefix?: string) {
+  if (!prefix) {
+    cache.clear();
+    return;
+  }
+  for (const key of [...cache.keys()]) if (key.startsWith(prefix)) cache.delete(key);
+}
+
 export function useStaleWhileLoading<T>(key: string | null | undefined, value: T, loading: boolean) {
   const [, force] = useState(0);
   const prevKey = useRef(key);

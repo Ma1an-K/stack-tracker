@@ -10,6 +10,7 @@ import { Radio, NotebookPen, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
 import { PageSkeleton } from '@/components/common/PageSkeleton';
+import { clearStale } from '@/hooks/useStaleWhileLoading';
 import { EmptyState } from '@/components/common/EmptyState';
 
 export function NewSessionPage() {
@@ -25,6 +26,12 @@ export function NewSessionPage() {
   // live buy-ins and close the draft once the real session is logged.
   const fromLive = searchParams.get('from') === 'live' && !!liveSession;
 
+  const addPlayerFresh = async (name: string) => {
+    const result = await addPlayer(name);
+    if (!result.error) clearStale();
+    return result;
+  };
+
   const handleSubmit = async (
     date: string,
     players: { player_id: string; buy_in: number; cash_out: number }[],
@@ -33,6 +40,7 @@ export function NewSessionPage() {
   ) => {
     const result = await createSession(date, players, notes, payments);
     if (!result.error) {
+      clearStale();
       if (fromLive) await finish();
       // Land on the result: Sessions opens the newest card with its settlement.
       const newId = (result as { session?: { id?: string } }).session?.id;
@@ -114,7 +122,7 @@ export function NewSessionPage() {
         players={activePlayers}
         currency={currency}
         onSubmit={handleSubmit}
-        onAddPlayer={isOwner ? addPlayer : undefined}
+        onAddPlayer={isOwner ? addPlayerFresh : undefined}
         initialPlayers={fromLive ? liveSession?.players : undefined}
         initialPayments={fromLive ? liveSession?.payments ?? [] : undefined}
         initialNotes={fromLive ? liveSession?.notes ?? undefined : undefined}

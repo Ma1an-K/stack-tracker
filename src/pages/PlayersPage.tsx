@@ -1,7 +1,7 @@
 import { useAuthContext } from '@/contexts/AuthContext';
 import { usePlayers } from '@/hooks/usePlayers';
 import { usePlayerClaims } from '@/hooks/usePlayerClaims';
-import { useStaleWhileLoading } from '@/hooks/useStaleWhileLoading';
+import { clearStale, useStaleWhileLoading } from '@/hooks/useStaleWhileLoading';
 import { PlayerList } from '@/components/players/PlayerList';
 import { ClaimRequestsCard } from '@/components/players/ClaimRequestsCard';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -27,8 +27,15 @@ export function PlayersPage() {
   const handleApproveClaim = async (requestId: string, playerId: string, userId: string) => {
     const result = await approveClaim(requestId, playerId, userId);
     if (!result.error) {
+      clearStale();
       refetchPlayers();
     }
+    return result;
+  };
+
+  const handleAddPlayer = async (name: string) => {
+    const result = await addPlayer(name);
+    if (!result.error) clearStale();
     return result;
   };
 
@@ -69,7 +76,7 @@ export function PlayersPage() {
         loading={isFirstLoad}
         isOwner={isOwner}
         currentUserId={user?.id}
-        onAddPlayer={addPlayer}
+        onAddPlayer={handleAddPlayer}
         onUpdatePlayer={updatePlayer}
         onDeletePlayer={deletePlayer}
         onRequestClaim={handleRequestClaim}
