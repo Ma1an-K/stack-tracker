@@ -152,7 +152,7 @@ function SetupView({ players, onStart }: { players: Player[]; onStart: (p: LiveS
         </div>
       </section>
 
-      <div className="sticky bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+0.75rem)] z-10 -mx-1 rounded-2xl border border-border/70 bg-[hsl(var(--popover)/0.92)] p-2.5 shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.95)] backdrop-blur-xl md:bottom-4">
+      <div className="sticky bottom-0 z-10 -mx-1 rounded-2xl border border-border/70 bg-[hsl(var(--popover)/0.92)] p-2.5 shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.95)] backdrop-blur-xl ">
         <p role="status" className="mb-2 text-center text-[0.8125rem] font-medium text-muted-foreground tabular-nums">
           {selected.length < 2
             ? `Pick ${2 - selected.length} more player${selected.length === 1 ? '' : 's'}`
@@ -429,7 +429,7 @@ function TrackerView({ players }: { players: Player[] }) {
         Every tap saves instantly. Close the app and pick up where you left off.
       </p>
 
-      <div className="sticky bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+0.75rem)] z-10 -mx-1 rounded-2xl border border-border/70 bg-[hsl(var(--popover)/0.92)] p-2.5 shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.95)] backdrop-blur-xl md:bottom-4">
+      <div className="sticky bottom-0 z-10 -mx-1 rounded-2xl border border-border/70 bg-[hsl(var(--popover)/0.92)] p-2.5 shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.95)] backdrop-blur-xl ">
         <Button
           size="lg"
           className="w-full"

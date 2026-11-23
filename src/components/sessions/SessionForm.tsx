@@ -232,7 +232,6 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
         : !isBalanced
           ? { tone: 'bad', text: `Off by ${money(diff)}: cash-outs ${diff > 0 ? 'short' : 'over'}` }
           : { tone: 'good', text: `Balanced · ${money(totalBuyIn)} in play` };
-  const inDialog = !!onCancel;
   const fieldH = isMobile ? 'h-12' : 'h-11';
 
   return (
@@ -495,7 +494,7 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
       <div
         className={cn(
           'sticky z-10 -mx-1 rounded-2xl border border-border/70 bg-[hsl(var(--popover)/0.92)] p-2.5 shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.95)] backdrop-blur-xl',
-          inDialog ? 'bottom-0' : 'bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+0.75rem)] md:bottom-4'
+          'bottom-0'
         )}
       >
         <p
