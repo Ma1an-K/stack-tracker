@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { PageSkeleton } from "@/components/common/PageSkeleton";
 import { SplashScreen } from "@/components/common/SplashScreen";
+import { RouteErrorBoundary } from "@/components/common/RouteErrorBoundary";
 
 // Signed-in screens are code-split; the public, prerendered pages stay eager so
 // hydration of their static HTML is synchronous.
@@ -87,9 +88,11 @@ function AppShell() {
 
   return (
     <MainLayout>
-      <Suspense fallback={<PageSkeleton />}>
-        <Outlet />
-      </Suspense>
+      <RouteErrorBoundary resetKey={pathname}>
+        <Suspense fallback={<PageSkeleton />}>
+          <Outlet />
+        </Suspense>
+      </RouteErrorBoundary>
     </MainLayout>
   );
 }
