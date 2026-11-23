@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(13);
+select plan(19);
 
 select has_table('public', 'error_log', 'error_log table exists');
 
@@ -62,9 +62,20 @@ select throws_ok(
 
 -- Back to superuser: only the two valid rows landed.
 reset role;
+select ok(has_table_privilege('service_role', 'public.error_log', 'select'), 'service_role can select');
+select ok(has_table_privilege('service_role', 'public.error_log', 'update'), 'service_role can update');
+select ok(has_table_privilege('service_role', 'public.error_log', 'delete'), 'service_role can delete');
+
 select is((select count(*)::int from public.error_log), 2, 'only the two valid rows were stored');
 select is((select count(*)::int from public.error_log where user_id = '00000000-0000-0000-0000-0000000000a1'), 2,
   'user_id defaulted to the caller');
+
+-- service_role (admin tool): read, mark fixed, prune.
+set local role service_role;
+select lives_ok($$select count(*) from public.error_log$$, 'service_role can read the log');
+select lives_ok($$update public.error_log set fixed_at = now()$$, 'service_role can set fixed_at');
+select lives_ok($$delete from public.error_log where created_at < now() - interval '90 days'$$, 'service_role can prune old rows');
+reset role;
 
 select * from finish();
 rollback;

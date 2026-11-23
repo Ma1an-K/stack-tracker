@@ -31,3 +31,7 @@ CREATE POLICY "Members can log their own errors"
     user_id = auth.uid()
     AND (homegame_id IS NULL OR public.is_homegame_member(auth.uid(), homegame_id))
   );
+
+-- The local admin tool (service role) reads rows, sets fixed_at and prunes old rows.
+-- BYPASSRLS does not bypass GRANTs, so grant explicitly.
+GRANT SELECT, UPDATE, DELETE ON public.error_log TO service_role;
