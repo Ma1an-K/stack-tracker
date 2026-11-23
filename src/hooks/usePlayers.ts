@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLog';
 
 export function usePlayers(homegameId: string | undefined) {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -38,7 +39,7 @@ export function usePlayers(homegameId: string | undefined) {
   };
 
   const addPlayer = async (name: string) => {
-    if (!homegameId) return { error: new Error('No homegame') };
+    if (!homegameId) return { error: new Error('No homegame'), player: null };
 
     try {
       const { data, error } = await supabase
@@ -57,10 +58,13 @@ export function usePlayers(homegameId: string | undefined) {
         title: 'Success',
         description: `${name} added to the player list`,
       });
-      return { error: null };
+      return { error: null, player: data as Player };
     } catch (err) {
       console.error('Error adding player:', err);
-      if ((err as { code?: string }).code === '23505') {
+      const isDuplicate = (err as { code?: string }).code === '23505';
+      // Duplicates are a user mistake, not a bug: toast only, don't log.
+      if (!isDuplicate) logError({ kind: 'save_failed', action: 'usePlayers.addPlayer', error: err, homegameId });
+      if (isDuplicate) {
         toast({
           title: 'Error',
           description: 'A player with this name already exists',
@@ -73,7 +77,7 @@ export function usePlayers(homegameId: string | undefined) {
           variant: 'destructive',
         });
       }
-      return { error: err };
+      return { error: err, player: null };
     }
   };
 
@@ -95,6 +99,7 @@ export function usePlayers(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error updating player:', err);
+      logError({ kind: 'save_failed', action: 'usePlayers.updatePlayer', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to update player',
@@ -121,6 +126,7 @@ export function usePlayers(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error deleting player:', err);
+      logError({ kind: 'save_failed', action: 'usePlayers.deletePlayer', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to delete player. They may have session history.',

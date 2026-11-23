@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FUNCTIONS_URL } from '@/lib/functionsUrl';
 import { Session, SessionWithPlayers, SessionPlayerWithDetails, SessionPaymentInput } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLog';
 
 interface SessionPlayerInput {
   player_id: string;
@@ -140,6 +141,7 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
       return { error: null, session: sessionData };
     } catch (err) {
       console.error('Error creating session:', err);
+      logError({ kind: 'save_failed', action: 'useSessions.createSession', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to create session',
@@ -215,6 +217,7 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
       return { error: null };
     } catch (err) {
       console.error('Error updating session:', err);
+      logError({ kind: 'save_failed', action: 'useSessions.updateSession', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to update session',
@@ -241,6 +244,7 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
       return { error: null };
     } catch (err) {
       console.error('Error deleting session:', err);
+      logError({ kind: 'save_failed', action: 'useSessions.deleteSession', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to delete session',
@@ -265,6 +269,7 @@ export function useSessions(homegameId: string | undefined, homegameName?: strin
       return { error: null };
     } catch (err) {
       console.error('Error updating session:', err);
+      logError({ kind: 'save_failed', action: 'useSessions.markSettled', error: err, homegameId });
       return { error: err };
     }
   };

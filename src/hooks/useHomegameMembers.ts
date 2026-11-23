@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { HomegameMemberWithProfile, HomegameRole } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLog';
 
 export function useHomegameMembers(homegameId: string | undefined) {
   const [members, setMembers] = useState<HomegameMemberWithProfile[]>([]);
@@ -58,6 +59,7 @@ export function useHomegameMembers(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error removing member:', err);
+      logError({ kind: 'save_failed', action: 'useHomegameMembers.removeMember', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to remove member',
@@ -87,6 +89,7 @@ export function useHomegameMembers(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error updating member role:', err);
+      logError({ kind: 'save_failed', action: 'useHomegameMembers.updateMemberRole', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to update member role',

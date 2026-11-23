@@ -39,6 +39,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      error_log: {
+        Row: {
+          action: string | null
+          app_version: string | null
+          created_at: string
+          fixed_at: string | null
+          homegame_id: string | null
+          id: string
+          kind: string
+          message: string
+          page: string | null
+          stack: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          app_version?: string | null
+          created_at?: string
+          fixed_at?: string | null
+          homegame_id?: string | null
+          id?: string
+          kind: string
+          message: string
+          page?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          app_version?: string | null
+          created_at?: string
+          fixed_at?: string | null
+          homegame_id?: string | null
+          id?: string
+          kind?: string
+          message?: string
+          page?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_log_homegame_id_fkey"
+            columns: ["homegame_id"]
+            isOneToOne: false
+            referencedRelation: "homegames"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homegame_members: {
         Row: {
           created_at: string

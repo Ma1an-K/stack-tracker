@@ -22,6 +22,7 @@ import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { PageSkeleton } from "@/components/common/PageSkeleton";
 import { SplashScreen } from "@/components/common/SplashScreen";
 import { RouteErrorBoundary } from "@/components/common/RouteErrorBoundary";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Signed-in screens are code-split; the public, prerendered pages stay eager so
 // hydration of their static HTML is synchronous.
@@ -104,6 +105,9 @@ function AuthRoute() {
   return <AuthPage />;
 }
 
+// Dev-server only: __ADMIN_ENABLED__ is false in every build, so this (and the page) is tree-shaken out.
+const AdminPage = __ADMIN_ENABLED__ ? lazy(() => import("./pages/AdminPage")) : null;
+
 function AppRoutes() {
   return (
     <Routes>
@@ -124,6 +128,9 @@ function AppRoutes() {
         <Route path="/badge-preview" element={<BadgePreviewPage />} />
         <Route path="/live-session" element={<LiveSessionPage />} />
       </Route>
+      {__ADMIN_ENABLED__ && AdminPage && (
+        <Route path="/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
+      )}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -212,7 +219,9 @@ const App = () => (
         <AuthProvider>
           <TutorialProvider>
             <PasswordResetDialog />
-            <AppRoutes />
+            <ErrorBoundary>
+              <AppRoutes />
+            </ErrorBoundary>
           </TutorialProvider>
         </AuthProvider>
       </BrowserRouter>

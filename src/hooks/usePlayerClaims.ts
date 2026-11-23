@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PlayerClaimRequest, PlayerClaimRequestWithDetails, ClaimStatus } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLog';
 
 export function usePlayerClaims(homegameId: string | undefined) {
   const [pendingRequests, setPendingRequests] = useState<PlayerClaimRequestWithDetails[]>([]);
@@ -99,7 +100,10 @@ export function usePlayerClaims(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error requesting claim:', err);
-      if ((err as { code?: string }).code === '23505') {
+      const isDuplicate = (err as { code?: string }).code === '23505';
+      // Duplicates are a user mistake, not a bug: toast only, don't log.
+      if (!isDuplicate) logError({ kind: 'save_failed', action: 'usePlayerClaims.requestClaim', error: err, homegameId });
+      if (isDuplicate) {
         toast({
           title: 'Already Requested',
           description: 'You have already submitted a claim for this player.',
@@ -137,6 +141,7 @@ export function usePlayerClaims(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error approving claim:', err);
+      logError({ kind: 'save_failed', action: 'usePlayerClaims.approveClaim', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to approve claim',
@@ -171,6 +176,7 @@ export function usePlayerClaims(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error rejecting claim:', err);
+      logError({ kind: 'save_failed', action: 'usePlayerClaims.rejectClaim', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to reject claim',
@@ -198,6 +204,7 @@ export function usePlayerClaims(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error cancelling request:', err);
+      logError({ kind: 'save_failed', action: 'usePlayerClaims.cancelRequest', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to cancel request',

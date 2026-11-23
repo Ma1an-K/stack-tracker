@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { InviteCode } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLog';
 
 export function useInviteCodes(homegameId: string | undefined) {
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
@@ -69,6 +70,7 @@ export function useInviteCodes(homegameId: string | undefined) {
       return { error: null, code: data };
     } catch (err) {
       console.error('Error creating invite code:', err);
+      logError({ kind: 'save_failed', action: 'useInviteCodes.createInviteCode', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to create invite code',
@@ -95,6 +97,7 @@ export function useInviteCodes(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error deactivating invite code:', err);
+      logError({ kind: 'save_failed', action: 'useInviteCodes.deactivateInviteCode', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to deactivate invite code',
@@ -121,6 +124,7 @@ export function useInviteCodes(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error deleting invite code:', err);
+      logError({ kind: 'save_failed', action: 'useInviteCodes.deleteInviteCode', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to delete invite code',

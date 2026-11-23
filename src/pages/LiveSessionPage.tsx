@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { usePlayers } from '@/hooks/usePlayers';
+import { useHomegameMembers } from '@/hooks/useHomegameMembers';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { formatCurrency } from '@/lib/settlement';
 import { cn } from '@/lib/utils';
@@ -23,10 +24,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Plus, Minus, Trash2, Users, Clock, Flag, Radio, UserPlus, Play, ArrowLeft, LogOut, Undo2, ArrowRight, Pencil, Check, CheckCheck } from 'lucide-react';
+import { Loader2, Plus, MoreHorizontal, Trash2, Users, Clock, Flag, Radio, UserPlus, Play, ArrowLeft, LogOut, Undo2, ArrowRight, Check, CheckCheck } from 'lucide-react';
 import { PageSkeleton } from '@/components/common/PageSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LivePulse } from '@/components/sessions/LivePulse';
+import { BuyInField } from '@/components/sessions/BuyInField';
+import { AddPlayerDialog } from '@/components/sessions/AddPlayerDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -171,10 +175,16 @@ function SetupView({ players, onStart }: { players: Player[]; onStart: (p: LiveS
 /* Tracker — the running game                                          */
 /* ------------------------------------------------------------------ */
 
-function TrackerView({ players }: { players: Player[] }) {
+function TrackerView({
+  players,
+  createPlayer,
+}: {
+  players: Player[];
+  createPlayer: (name: string) => Promise<{ error: unknown | null; player: Player | null }>;
+}) {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const { homegame } = useAuthContext();
+  const { homegame, isOwner } = useAuthContext();
+  const { members } = useHomegameMembers(homegame?.id);
   const { liveSession, totalPot, totalBuyIn, seatedCount, addBuyIn, setBuyIn, addPlayer, removePlayer, cashOut, rejoin, addPayment, removePayment } = useLiveSession();
   const elapsed = useElapsed(liveSession?.started_at);
 
@@ -195,6 +205,7 @@ function TrackerView({ players }: { players: Player[] }) {
   const chips = [base, base * 2];
   const nameOf = (id: string) => players.find(p => p.id === id)?.name ?? 'Unknown';
   const seated = liveSession.players;
+  const ownerName = members.find(m => m.role === 'owner')?.profile?.username ?? null;
   const bench = players.filter(p => p.is_active && !seated.some(sp => sp.player_id === p.id));
 
   const payments = liveSession.payments ?? [];
@@ -287,15 +298,12 @@ function TrackerView({ players }: { players: Player[] }) {
                     <span className="font-semibold text-gold">{formatCurrency(Number(sp.cash_out), currency)}</span>
                   </span>
                 ) : (
-                  <button
-                    type="button"
-                    className="pressable -mr-1 flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-lg font-semibold tabular-nums text-gold hover:bg-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => openCustom(player)}
-                    aria-label={`${name} buy-in ${formatCurrency(Number(sp.buy_in), currency)}. Edit`}
-                  >
-                    {formatCurrency(Number(sp.buy_in), currency)}
-                    <Pencil className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
-                  </button>
+                  <BuyInField
+                    value={Number(sp.buy_in)}
+                    currency={currency}
+                    label={`Buy-in total for ${name}`}
+                    onCommit={t => setBuyIn(sp.player_id, t)}
+                  />
                 )}
               </div>
               {left ? (
@@ -339,8 +347,7 @@ function TrackerView({ players }: { players: Player[] }) {
                       disabled={Number(sp.buy_in) <= 0}
                       aria-label={`Remove ${base} from ${name}`}
                     >
-                      <Minus className="!size-3.5" aria-hidden="true" />
-                      {base}
+                      {`\u2212${base}`}
                     </Button>
                     {chips.map(amt => (
                       <Button
@@ -362,16 +369,37 @@ function TrackerView({ players }: { players: Player[] }) {
                       Other
                     </Button>
                   </div>
-                  <div className="mt-1 flex justify-end">
+                  <div className="-mb-1 -mr-1 mt-1 flex items-center justify-end gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="-mb-1 -mr-1 text-muted-foreground"
+                      className="text-muted-foreground"
                       onClick={() => { if (player) { setCashOutFor(player); setCashOutAmount(''); } }}
                     >
                       <LogOut />
                       Cash out {name.split(' ')[0]}
                     </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 text-muted-foreground"
+                          aria-label={`More options for ${name}`}
+                        >
+                          <MoreHorizontal />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={() => removePlayer(sp.player_id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Remove from session
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </>
               )}
@@ -441,7 +469,7 @@ function TrackerView({ players }: { players: Player[] }) {
         </Button>
       </div>
 
-      {/* Custom amount / set exact total */}
+      {/* Custom amount (the exact total is edited inline on the row) */}
       <Dialog open={!!customFor} onOpenChange={o => !o && setCustomFor(null)}>
         <DialogContent className="sm:max-w-xs">
           <DialogHeader>
@@ -476,59 +504,22 @@ function TrackerView({ players }: { players: Player[] }) {
             >
               Add to buy-in
             </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              className="w-full"
-              disabled={!customAmount}
-              onClick={() => { if (customFor) setBuyIn(customFor.id, parseFloat(customAmount) || 0); setCustomFor(null); }}
-            >
-              Set total to this
-            </Button>
-            {customFor && (
-              <Button
-                variant="ghost"
-                className="w-full text-muted-foreground hover:text-destructive"
-                onClick={() => { removePlayer(customFor.id); setCustomFor(null); }}
-              >
-                <Trash2 />
-                Remove from session
-              </Button>
-            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Late arrival */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Add player</DialogTitle>
-          </DialogHeader>
-          {bench.length > 0 ? (
-            <>
-              <p className="text-sm text-muted-foreground">Joins with a {formatCurrency(base, currency)} buy-in. Adjust after.</p>
-              <div className="flex flex-wrap gap-2">
-                {bench.map(p => (
-                  <NameChip key={p.id} on={false} onClick={() => { addPlayer(p.id, base); setAddOpen(false); }}>
-                    {p.name}
-                  </NameChip>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Everyone on the roster is already seated. New players are added on the Players screen; the live game keeps running.</p>
-              <Button asChild variant="secondary" className="w-full">
-                <Link to="/players">
-                  <UserPlus />
-                  Go to Players
-                </Link>
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Late arrival: seat someone from the bench, or (owner/admin) create and seat a new player */}
+      <AddPlayerDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        bench={bench}
+        canCreate={isOwner}
+        ownerName={ownerName}
+        baseBuyIn={base}
+        currency={currency}
+        onSeat={id => addPlayer(id, base)}
+        onCreate={createPlayer}
+      />
 
       {/* Cash out (player leaving) */}
       <Dialog open={!!cashOutFor} onOpenChange={o => !o && setCashOutFor(null)}>
@@ -666,7 +657,7 @@ export function LiveSessionPage() {
   const navigate = useNavigate();
   const { homegame } = useAuthContext();
   const { liveSession, loading, start } = useLiveSession();
-  const { players, activePlayers, loading: playersLoading } = usePlayers(homegame?.id);
+  const { players, activePlayers, loading: playersLoading, addPlayer } = usePlayers(homegame?.id);
 
   // Back must never leave the app on a deep link or cold PWA start.
   const goBack = () => {
@@ -691,7 +682,7 @@ export function LiveSessionPage() {
       </header>
 
       {liveSession ? (
-        <TrackerView players={players} />
+        <TrackerView players={players} createPlayer={addPlayer} />
       ) : activePlayers.length < 2 ? (
         <EmptyState
           icon={Users}
