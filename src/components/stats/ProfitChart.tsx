@@ -3,6 +3,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { format, parseISO } from 'date-fns';
 import { SessionDataPoint } from '@/hooks/usePersonalStats';
 import { formatProfit } from '@/lib/settlement';
+import { usePrefersReducedMotion } from '@/hooks/useMediaQuery';
 
 interface ProfitChartProps {
   data: SessionDataPoint[];
@@ -22,9 +23,20 @@ export function ProfitChart({ data, currency = '$', height = 160 }: ProfitChartP
     return data.filter(d => d.sessionNumber % step === 0 || d.sessionNumber === data.length).map(d => d.sessionNumber);
   }, [data]);
 
+  const reduceMotion = usePrefersReducedMotion();
+
+  // Text version of the chart for screen readers: span, where it ended, extremes.
+  const summary = useMemo(() => {
+    if (data.length < 2) return '';
+    const values = data.map(d => d.cumProfit);
+    const last = values[values.length - 1];
+    return `Cumulative profit over ${data.length} sessions, now ${formatProfit(last, currency)}. Highest ${formatProfit(Math.max(...values), currency)}, lowest ${formatProfit(Math.min(...values), currency)}.`;
+  }, [data, currency]);
+
   if (data.length < 2) return null;
 
   return (
+    <div role="img" aria-label={summary}>
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 6, right: 4, left: 0, bottom: 0 }}>
         <defs>
@@ -47,7 +59,7 @@ export function ProfitChart({ data, currency = '$', height = 160 }: ProfitChartP
           axisLine={false}
           width={52}
           tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-          tickFormatter={v => `${currency}${Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
+          tickFormatter={v => `${v < 0 ? '−' : ''}${currency}${Math.abs(v) >= 1000 ? `${(Math.abs(v) / 1000).toFixed(1)}k` : Math.abs(v)}`}
         />
         <Tooltip
           contentStyle={{
@@ -73,9 +85,11 @@ export function ProfitChart({ data, currency = '$', height = 160 }: ProfitChartP
           strokeWidth={2}
           fill={`url(#${gradientId})`}
           dot={false}
+          isAnimationActive={!reduceMotion}
           activeDot={{ r: 5, fill: colour, stroke: 'hsl(var(--background))', strokeWidth: 2 }}
         />
       </AreaChart>
     </ResponsiveContainer>
+    </div>
   );
 }

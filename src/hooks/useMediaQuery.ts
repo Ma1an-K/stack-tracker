@@ -21,3 +21,5 @@ export function useMediaQuery(query: string) {
 }
 
 export const useIsDesktop = () => useMediaQuery('(min-width: 768px)');
+
+export const usePrefersReducedMotion = () => useMediaQuery('(prefers-reduced-motion: reduce)');
