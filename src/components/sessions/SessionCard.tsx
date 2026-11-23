@@ -134,15 +134,16 @@ export function SessionCard({
               </span>
             )}
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
-            <span>{session.session_players.length} players</span>
-            <span aria-hidden="true">·</span>
-            <span className="font-medium tabular-nums text-gold">{formatCurrency(totalPot, currency)}</span>
+          <div className="mt-0.5 flex min-w-0 items-center gap-2 whitespace-nowrap text-[0.8125rem] text-muted-foreground">
+            <span className="shrink-0">{session.session_players.length} players</span>
+            <span aria-hidden="true" className="shrink-0">·</span>
+            <span className="shrink-0 font-medium tabular-nums text-gold">{formatCurrency(totalPot, currency)}</span>
             {!expanded && top && topProfit > 0 && (
               <>
-                <span aria-hidden="true" className="hidden min-[380px]:inline">·</span>
-                <span className="hidden truncate min-[380px]:inline">
-                  {top.player.name} <span className="profit tabular-nums">{formatProfit(topProfit, currency)}</span>
+                <span aria-hidden="true" className="hidden shrink-0 min-[420px]:inline">·</span>
+                <span className="hidden min-w-0 items-center gap-1 min-[420px]:flex">
+                  <span className="truncate">{top.player.name}</span>
+                  <span className="profit shrink-0 tabular-nums">{formatProfit(topProfit, currency)}</span>
                 </span>
               </>
             )}

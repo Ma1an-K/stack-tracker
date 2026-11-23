@@ -56,7 +56,7 @@ Tailwind `green-*`/`red-*`/`amber-*`/`yellow-*` and dead `dark:` variants remove
 
 ## 4. Type
 
-- **Cormorant Garamond** 500/600/700 (display: page titles, hero figures, auth/landing headlines, empty-state titles). Lining numerals via `font-variant-numeric: lining-nums`.
+- **Fraunces** (variable, optical sizing on), rendered at 500 (display: page titles, hero figures, auth/landing headlines, empty-state titles). Replaced Cormorant Garamond on 2026-11-23 after owner feedback: the Google Fonts build of Cormorant has no lining-figure feature, so `lining-nums` was ignored and money figures rendered in old-style numerals ("4860" with rising/falling digits). Fraunces figures are lining by default.
 - **Inter** 400/500/600/700 (UI, body, all figures with `tabular-nums`).
 - Loaded with `<link rel="preconnect">` + one `<link rel="stylesheet">` in `index.html` (Google Fonts, `display=swap`), replacing the two render-blocking CSS `@import`s and dropping Playfair (CSP-compatible: fonts.googleapis.com / fonts.gstatic.com).
 - Scale (mobile): display-xl 40/44 (auth, landing hero), page title 30/34 serif, section title 13 px uppercase Inter 600 tracking 0.14em gold, body 15/22, small 13/18, micro 11/14 (minimum; no more 9–10 px text). Hero figure 44 px serif lining tabular.

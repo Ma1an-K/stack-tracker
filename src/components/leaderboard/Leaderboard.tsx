@@ -101,8 +101,9 @@ export function Leaderboard({ sessions, players, currency, titleAside }: Leaderb
                     <span className="truncate font-medium">{stat.player.name}</span>
                     {isMe && <span className="shrink-0 rounded-full bg-gold/15 px-1.5 py-px text-[0.625rem] font-semibold uppercase tracking-wide text-gold">You</span>}
                   </span>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {stat.sessionsPlayed} session{stat.sessionsPlayed !== 1 ? 's' : ''} · {formatProfit(stat.avgProfit, currency)} avg
+                  <span className="flex flex-wrap gap-x-1 text-xs text-muted-foreground tabular-nums">
+                    <span className="whitespace-nowrap">{stat.sessionsPlayed} session{stat.sessionsPlayed !== 1 ? 's' : ''}</span>
+                    <span className="whitespace-nowrap">· {formatProfit(stat.avgProfit, currency)} avg</span>
                   </span>
                 </span>
 

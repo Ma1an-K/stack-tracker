@@ -1,4 +1,4 @@
-/* Fonts are loaded via <link> in index.html (Cormorant Garamond + Inter). */
+/* Fonts are loaded via <link> in index.html (Fraunces + Inter). */
 
 @tailwind base;
 @tailwind components;
@@ -147,9 +147,16 @@
 
   /* Editorial display face */
   .font-display {
-    font-family: 'Cormorant Garamond', 'Cormorant', Georgia, serif;
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
     font-variant-numeric: lining-nums;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
+  }
+  /* Fraunces reads heavy at 600+; keep display text at a refined 500. */
+  .font-display.font-semibold,
+  .font-display.font-bold,
+  .page-title {
+    font-weight: 500;
   }
 
   .page-title {
