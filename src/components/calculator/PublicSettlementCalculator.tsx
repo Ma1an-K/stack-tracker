@@ -78,7 +78,7 @@ export function PublicSettlementCalculator() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-[rgba(200,155,60,0.18)] bg-card/40 backdrop-blur-sm p-5 sm:p-6">
+      <div className="rounded-2xl border border-[hsl(var(--gold)/0.18)] bg-card/40 backdrop-blur-sm p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div>
             <h2 className="text-lg font-semibold">Players</h2>
@@ -91,7 +91,7 @@ export function PublicSettlementCalculator() {
             <select
               value={currencyCode}
               onChange={e => setCurrencyCode(e.target.value)}
-              className="bg-background border border-[rgba(200,155,60,0.25)] rounded-md px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-gold"
+              className="bg-background border border-[hsl(var(--gold)/0.25)] rounded-md px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-gold"
             >
               {CURRENCIES.map(c => (
                 <option key={c.code} value={c.code}>
@@ -114,7 +114,7 @@ export function PublicSettlementCalculator() {
           {players.map((p, idx) => (
             <div
               key={p.id}
-              className="grid grid-cols-1 sm:grid-cols-[1fr_120px_120px_40px] gap-2 sm:gap-3 sm:items-center p-3 rounded-lg bg-background/60 border border-[rgba(200,155,60,0.12)]"
+              className="grid grid-cols-1 sm:grid-cols-[1fr_120px_120px_40px] gap-2 sm:gap-3 sm:items-center p-3 rounded-lg bg-background/60 border border-[hsl(var(--gold)/0.12)]"
             >
               <input
                 type="text"
@@ -122,7 +122,7 @@ export function PublicSettlementCalculator() {
                 onChange={e => updatePlayer(p.id, { name: e.target.value })}
                 placeholder={`Player ${idx + 1}`}
                 aria-label={`Player ${idx + 1} name`}
-                className="bg-transparent border border-transparent focus:border-[rgba(200,155,60,0.35)] focus:outline-none rounded-md px-2 py-2 text-base sm:text-sm"
+                className="bg-transparent border border-transparent focus:border-[hsl(var(--gold)/0.35)] focus:outline-none rounded-md px-2 py-2 text-base sm:text-sm"
               />
               <div className="grid grid-cols-2 sm:contents gap-2">
                 <label className="sm:hidden text-xs text-muted-foreground self-center">Buy-in</label>
@@ -157,7 +157,7 @@ export function PublicSettlementCalculator() {
           <button
             type="button"
             onClick={addPlayer}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[rgba(200,155,60,0.3)] text-gold font-medium hover:bg-gold/10 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[hsl(var(--gold)/0.3)] text-gold font-medium hover:bg-gold/10 transition-colors"
           >
             <Plus className="h-4 w-4" />
             Add player
@@ -165,7 +165,7 @@ export function PublicSettlementCalculator() {
           <button
             type="button"
             onClick={() => setSubmitted(true)}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-gold text-background font-semibold shadow-[0_4px_18px_rgba(200,155,60,0.4)] hover:bg-gold/90 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-gold text-background font-semibold shadow-[0_4px_18px_hsl(var(--gold)/0.4)] hover:bg-gold/90 transition-colors"
           >
             <CalculatorIcon className="h-4 w-4" />
             Calculate settlements
@@ -185,17 +185,17 @@ export function PublicSettlementCalculator() {
       {showResults && (
         <div className="space-y-4">
           {imbalanceWarning && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
+            <div className="rounded-lg border border-gold/30 bg-gold/5 px-4 py-3 text-sm text-gold">
               {imbalanceWarning}
             </div>
           )}
 
-          <div className="rounded-2xl border border-[rgba(200,155,60,0.18)] bg-card/40 p-5 sm:p-6">
+          <div className="rounded-2xl border border-[hsl(var(--gold)/0.18)] bg-card/40 p-5 sm:p-6">
             <h2 className="text-lg font-semibold mb-1">Per-player profit</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Cash-out minus buy-in for each player.
             </p>
-            <div className="divide-y divide-[rgba(200,155,60,0.12)]">
+            <div className="divide-y divide-[hsl(var(--gold)/0.12)]">
               {result.results
                 .slice()
                 .sort((a, b) => b.profit - a.profit)
@@ -208,7 +208,7 @@ export function PublicSettlementCalculator() {
                     <span
                       className={
                         r.profit > 0
-                          ? 'text-emerald-400 font-semibold'
+                          ? 'text-success font-semibold'
                           : r.profit < 0
                           ? 'text-rose-400 font-semibold'
                           : 'text-muted-foreground'
@@ -222,7 +222,7 @@ export function PublicSettlementCalculator() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[rgba(200,155,60,0.18)] bg-card/40 p-5 sm:p-6">
+          <div className="rounded-2xl border border-[hsl(var(--gold)/0.18)] bg-card/40 p-5 sm:p-6">
             <h2 className="text-lg font-semibold mb-1">Settlements</h2>
             <p className="text-sm text-muted-foreground mb-4">
               {result.transfers.length === 0
@@ -235,7 +235,7 @@ export function PublicSettlementCalculator() {
               {result.transfers.map((t, i) => (
                 <li
                   key={i}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-background/60 border border-[rgba(200,155,60,0.12)] text-sm"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-background/60 border border-[hsl(var(--gold)/0.12)] text-sm"
                 >
                   <span className="font-medium">{t.fromName}</span>
                   <ArrowRight className="h-4 w-4 text-gold flex-shrink-0" />
@@ -284,7 +284,7 @@ function NumberField({ value, symbol, onChange, ariaLabel }: NumberFieldProps) {
           setText(Number.isFinite(parsed) ? String(parsed) : '');
         }}
         placeholder="0"
-        className="w-full bg-background/80 border border-[rgba(200,155,60,0.18)] focus:border-gold focus:outline-none rounded-md pl-7 pr-2 py-2 text-base sm:text-sm text-right tabular-nums"
+        className="w-full bg-background/80 border border-[hsl(var(--gold)/0.18)] focus:border-gold focus:outline-none rounded-md pl-7 pr-2 py-2 text-base sm:text-sm text-right tabular-nums"
       />
     </div>
   );

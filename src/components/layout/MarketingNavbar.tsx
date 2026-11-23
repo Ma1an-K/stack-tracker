@@ -3,16 +3,16 @@ import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 
 export const goldGradient =
-  'bg-gradient-to-br from-[#F0D27B] via-[#C89B3C] to-[#8A6A23] bg-clip-text text-transparent';
+  'gold-fill bg-clip-text text-transparent';
 
 export const btnGold =
-  'inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-[#F0D27B] via-[#C89B3C] to-[#8A6A23] text-background font-semibold px-6 py-3 min-h-[48px] shadow-[0_8px_28px_-6px_rgba(200,155,60,0.55)] ring-1 ring-inset ring-[rgba(255,235,180,0.25)] hover:brightness-110 transition-[filter,transform] duration-200 active:scale-[0.98]';
+  'inline-flex items-center justify-center gap-2 rounded-lg gold-fill text-background font-semibold px-6 py-3 min-h-[48px] shadow-[0_8px_28px_-6px_hsl(var(--gold)/0.55)] ring-1 ring-inset ring-[rgba(255,235,180,0.25)] hover:brightness-110 transition-[filter,transform] duration-200 active:scale-[0.98]';
 
 export const btnGoldOutline =
-  'inline-flex items-center justify-center gap-2 rounded-lg border border-[rgba(200,155,60,0.4)] text-gold font-semibold px-6 py-3 min-h-[48px] hover:bg-[rgba(200,155,60,0.08)] hover:border-[rgba(200,155,60,0.6)] transition-colors duration-200';
+  'inline-flex items-center justify-center gap-2 rounded-lg border border-[hsl(var(--gold)/0.4)] text-gold font-semibold px-6 py-3 min-h-[48px] hover:bg-[hsl(var(--gold)/0.08)] hover:border-[hsl(var(--gold)/0.6)] transition-colors duration-200';
 
 export const goldDivider =
-  'h-px w-full bg-gradient-to-r from-transparent via-[rgba(200,155,60,0.35)] to-transparent';
+  'h-px w-full bg-gradient-to-r from-transparent via-[hsl(var(--gold)/0.35)] to-transparent';
 
 export function MarketingNavbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -40,7 +40,7 @@ export function MarketingNavbar() {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter,border-color] duration-500 ${
         scrolled
-          ? 'bg-[rgba(10,13,24,0.78)] backdrop-blur-xl border-b border-[rgba(200,155,60,0.1)]'
+          ? 'bg-[hsl(var(--background)/0.78)] backdrop-blur-xl border-b border-[hsl(var(--gold)/0.1)]'
           : 'bg-transparent border-b border-transparent'
       }`}
     >
@@ -49,7 +49,7 @@ export function MarketingNavbar() {
           <img
             src="/icon-192x192.png"
             alt="Stack Tracker logo"
-            className="w-9 h-9 rounded-lg shadow-[0_0_18px_rgba(200,155,60,0.35)] group-hover:shadow-[0_0_28px_rgba(200,155,60,0.55)] transition-shadow duration-300"
+            className="w-9 h-9 rounded-lg shadow-[0_0_18px_hsl(var(--gold)/0.35)] group-hover:shadow-[0_0_28px_hsl(var(--gold)/0.55)] transition-shadow duration-300"
           />
           <span className="text-foreground font-semibold tracking-tight text-[17px]">
             Stack Tracker
@@ -85,7 +85,7 @@ export function MarketingNavbar() {
           >
             Sign In
           </Link>
-          <Link to="/auth" className={`${btnGold} px-5 py-2.5 min-h-0 text-sm`}>
+          <Link to="/auth?mode=signup" className={`${btnGold} px-5 py-2.5 min-h-0 text-sm`}>
             Get Started
             <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
           </Link>
@@ -102,7 +102,7 @@ export function MarketingNavbar() {
       </nav>
 
       {open && (
-        <div className="lg:hidden bg-[rgba(10,13,24,0.96)] backdrop-blur-xl border-b border-[rgba(200,155,60,0.1)] px-6 pb-6 animate-fade-in">
+        <div className="lg:hidden bg-[hsl(var(--background)/0.96)] backdrop-blur-xl border-b border-[hsl(var(--gold)/0.1)] px-6 pb-6 animate-fade-in">
           <div className="flex flex-col gap-1 pt-2">
             {links.map((l) =>
               'href' in l ? (
@@ -133,7 +133,7 @@ export function MarketingNavbar() {
             >
               Sign In
             </Link>
-            <Link to="/auth" className={`${btnGold} mt-2`} onClick={() => setOpen(false)}>
+            <Link to="/auth?mode=signup" className={`${btnGold} mt-2`} onClick={() => setOpen(false)}>
               Get Started — Free
             </Link>
           </div>

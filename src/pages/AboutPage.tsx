@@ -30,7 +30,7 @@ export function AboutPage() {
     <div className="min-h-dvh bg-background text-foreground overflow-x-hidden">
       <div
         className="pointer-events-none fixed -top-24 -left-16 w-[380px] h-[380px] z-0"
-        style={{ background: 'radial-gradient(circle, rgba(200,155,60,0.10) 0%, transparent 65%)' }}
+        style={{ background: 'radial-gradient(circle, hsl(var(--gold)/0.10) 0%, transparent 65%)' }}
       />
 
       <header className="relative z-10 px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(1rem,env(safe-area-inset-top))]">
@@ -39,7 +39,7 @@ export function AboutPage() {
             <img
               src="/icon-192x192.png"
               alt="Stack Tracker logo"
-              className="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(200,155,60,0.45)]"
+              className="w-8 h-8 rounded-lg shadow-[0_0_12px_hsl(var(--gold)/0.45)]"
             />
             <span className="font-bold tracking-tight">Stack Tracker</span>
           </Link>
@@ -119,7 +119,7 @@ export function AboutPage() {
             </p>
           </div>
 
-          <div className="mt-12 rounded-2xl border border-[rgba(200,155,60,0.25)] bg-card/40 p-6 sm:p-8 text-center">
+          <div className="mt-12 rounded-2xl border border-[hsl(var(--gold)/0.25)] bg-card/40 p-6 sm:p-8 text-center">
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-2">
               Try it for your next session
             </h2>
@@ -127,8 +127,8 @@ export function AboutPage() {
               Free forever. Setup takes under a minute.
             </p>
             <Link
-              to="/auth"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-gold text-background font-semibold min-h-[48px] shadow-[0_6px_22px_rgba(200,155,60,0.45)] hover:bg-gold/90 transition-colors"
+              to="/auth?mode=signup"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-lg gold-fill text-background font-semibold min-h-[48px] shadow-[0_6px_22px_hsl(var(--gold)/0.45)] hover:bg-gold/90 transition-colors"
             >
               Get Started — Free
             </Link>
@@ -136,7 +136,7 @@ export function AboutPage() {
         </article>
       </main>
 
-      <footer className="relative z-10 px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] py-8 border-t border-[rgba(200,155,60,0.18)] pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <footer className="relative z-10 px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] py-8 border-t border-[hsl(var(--gold)/0.18)] pb-[max(2rem,env(safe-area-inset-bottom))]">
         <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <Link to="/" className="flex items-center gap-2 hover:text-foreground transition-colors">
             <img

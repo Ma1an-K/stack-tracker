@@ -27,11 +27,11 @@ import {
 
 /* ---------- shared style tokens (kept inline to avoid global CSS edits) ---------- */
 
-const display = 'font-[family-name:Playfair_Display,Georgia,serif]';
+const display = 'font-display';
 const eyebrow =
   'inline-flex items-center gap-2 text-gold text-[11px] font-semibold tracking-[0.22em] uppercase';
 const glassCard =
-  'rounded-xl border border-[rgba(200,155,60,0.16)] bg-[rgba(20,24,38,0.55)] backdrop-blur-md transition-[border-color,box-shadow,transform] duration-300 hover:border-[rgba(200,155,60,0.34)] hover:shadow-[0_8px_40px_-12px_rgba(200,155,60,0.25)]';
+  'rounded-xl border border-[hsl(var(--gold)/0.16)] bg-[hsl(var(--card)/0.55)] backdrop-blur-md transition-[border-color,box-shadow,transform] duration-300 hover:border-[hsl(var(--gold)/0.34)] hover:shadow-[0_8px_40px_-12px_hsl(var(--gold)/0.25)]';
 
 /* ---------- in-view hook (SSR-safe) ---------- */
 
@@ -160,7 +160,7 @@ function PhoneMockup() {
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] h-[460px] rounded-full opacity-40 blur-3xl pointer-events-none"
         style={{
           background:
-            'radial-gradient(circle, rgba(200,155,60,0.5) 0%, transparent 65%)',
+            'radial-gradient(circle, hsl(var(--gold)/0.5) 0%, transparent 65%)',
         }}
       />
       <div
@@ -235,7 +235,7 @@ function Hero() {
           className="absolute top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] rounded-full opacity-[0.18] blur-3xl"
           style={{
             background:
-              'radial-gradient(circle, rgba(200,155,60,0.45) 0%, transparent 65%)',
+              'radial-gradient(circle, hsl(var(--gold)/0.45) 0%, transparent 65%)',
           }}
         />
       </div>
@@ -271,7 +271,7 @@ function Hero() {
             </p>
 
             <div className="opacity-0 animate-[slide-up_0.7s_cubic-bezier(0.4,0,0.2,1)_0.6s_forwards] flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
-              <Link to="/auth" className={`${btnGold} text-base px-7 py-3.5`}>
+              <Link to="/auth?mode=signup" className={`${btnGold} text-base px-7 py-3.5`}>
                 Get Started — Free
                 <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
               </Link>
@@ -415,7 +415,7 @@ function StepRow({
           >
             {n}
           </span>
-          <div className="relative z-10 w-14 h-14 rounded-full border-2 border-gold/40 bg-background flex items-center justify-center shadow-[0_0_24px_-4px_rgba(200,155,60,0.4)]">
+          <div className="relative z-10 w-14 h-14 rounded-full border-2 border-gold/40 bg-background flex items-center justify-center shadow-[0_0_24px_-4px_hsl(var(--gold)/0.4)]">
             <span className={`${display} text-gold text-lg font-bold`}>{n}</span>
           </div>
         </div>
@@ -450,7 +450,7 @@ function HowItWorks() {
         className="absolute top-0 right-0 w-[560px] h-[560px] rounded-full opacity-[0.08] blur-3xl pointer-events-none"
         style={{
           background:
-            'radial-gradient(circle, rgba(200,155,60,0.5) 0%, transparent 70%)',
+            'radial-gradient(circle, hsl(var(--gold)/0.5) 0%, transparent 70%)',
         }}
       />
 
@@ -524,7 +524,7 @@ function FAQ() {
               <AccordionItem
                 key={i}
                 value={`faq-${i}`}
-                className="border-b border-[rgba(200,155,60,0.12)] last:border-b-0"
+                className="border-b border-[hsl(var(--gold)/0.12)] last:border-b-0"
               >
                 <AccordionTrigger
                   className={`${display} text-foreground hover:text-gold py-5 text-lg lg:text-xl font-medium tracking-tight hover:no-underline [&[data-state=open]>svg]:text-gold`}
@@ -572,7 +572,7 @@ function FinalCTA() {
           <p className="text-foreground/55 text-lg leading-relaxed mb-10">
             Free forever for players and organisers. Setup takes under a minute.
           </p>
-          <Link to="/auth" className={`${btnGold} px-8 py-4 text-base`}>
+          <Link to="/auth?mode=signup" className={`${btnGold} px-8 py-4 text-base`}>
             Get Started — Free
             <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
           </Link>
@@ -588,7 +588,7 @@ function FinalCTA() {
 
 function Footer() {
   return (
-    <footer className="relative py-12 lg:py-14 border-t border-[rgba(200,155,60,0.08)] pb-[max(2rem,env(safe-area-inset-bottom))]">
+    <footer className="relative py-12 lg:py-14 border-t border-[hsl(var(--gold)/0.08)] pb-[max(2rem,env(safe-area-inset-bottom))]">
       <div className="max-w-[1280px] mx-auto px-5 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-start md:items-center">
           <div className="flex items-center gap-2.5">

@@ -106,10 +106,10 @@ export function HeadToHead({ open, onOpenChange, myPlayer, opponent, sessions, c
   if (!myPlayer || !stats) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Swords className="h-5 w-5 text-muted-foreground" />
+              <Swords className="h-5 w-5 text-gold" aria-hidden="true" />
               Head to Head
             </DialogTitle>
           </DialogHeader>
@@ -124,10 +124,10 @@ export function HeadToHead({ open, onOpenChange, myPlayer, opponent, sessions, c
   if (myPlayer.id === opponent.id) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Swords className="h-5 w-5 text-muted-foreground" />
+              <Swords className="h-5 w-5 text-gold" aria-hidden="true" />
               Head to Head
             </DialogTitle>
           </DialogHeader>
@@ -145,10 +145,10 @@ export function HeadToHead({ open, onOpenChange, myPlayer, opponent, sessions, c
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Swords className="h-5 w-5 text-muted-foreground" />
+            <Swords className="h-5 w-5 text-gold" aria-hidden="true" />
             Head to Head
           </DialogTitle>
         </DialogHeader>
@@ -176,7 +176,7 @@ export function HeadToHead({ open, onOpenChange, myPlayer, opponent, sessions, c
               <div className="flex h-3 rounded-full overflow-hidden bg-muted">
                 {myWinPct > 0 && (
                   <div
-                    className="bg-emerald-500 transition-all"
+                    className="bg-success transition-all"
                     style={{ width: `${myWinPct}%` }}
                   />
                 )}
@@ -188,7 +188,7 @@ export function HeadToHead({ open, onOpenChange, myPlayer, opponent, sessions, c
                 )}
                 {oppWinPct > 0 && (
                   <div
-                    className="bg-red-500 transition-all"
+                    className="bg-destructive transition-all"
                     style={{ width: `${oppWinPct}%` }}
                   />
                 )}
@@ -224,7 +224,7 @@ export function HeadToHead({ open, onOpenChange, myPlayer, opponent, sessions, c
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center gap-1.5 mb-2">
                     <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Recent Sessions</span>
+                    <span className="section-header">Recent sessions</span>
                   </div>
                   <div className="space-y-1.5">
                     {stats.recentResults.slice(0, 10).map((r, i) => (

@@ -46,7 +46,7 @@ export function PublicHandCalculatorPage() {
     <div className="min-h-dvh bg-background text-foreground overflow-x-hidden">
       <div
         className="pointer-events-none fixed -top-24 -left-16 w-[380px] h-[380px] z-0"
-        style={{ background: 'radial-gradient(circle, rgba(200,155,60,0.10) 0%, transparent 65%)' }}
+        style={{ background: 'radial-gradient(circle, hsl(var(--gold)/0.10) 0%, transparent 65%)' }}
       />
 
       <MarketingNavbar />
@@ -69,7 +69,7 @@ export function PublicHandCalculatorPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-[rgba(200,155,60,0.18)] bg-card/40 backdrop-blur-sm p-5 sm:p-6 mb-12">
+          <div className="rounded-2xl border border-[hsl(var(--gold)/0.18)] bg-card/40 backdrop-blur-sm p-5 sm:p-6 mb-12">
             <SidepotCalculator />
           </div>
 
@@ -184,7 +184,7 @@ export function PublicHandCalculatorPage() {
             </div>
           </section>
 
-          <div className="mt-16 max-w-3xl rounded-2xl border border-[rgba(200,155,60,0.25)] bg-gradient-to-br from-card/60 to-background/40 p-6 sm:p-8 text-center">
+          <div className="mt-16 max-w-3xl rounded-2xl border border-[hsl(var(--gold)/0.25)] bg-gradient-to-br from-card/60 to-background/40 p-6 sm:p-8 text-center">
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-2">
               Run a regular poker night?
             </h2>
@@ -192,14 +192,14 @@ export function PublicHandCalculatorPage() {
               Stack Tracker remembers your players, tracks lifetime profit, and
               keeps a leaderboard across every session. Free — no card required.
             </p>
-            <Link to="/auth" className={btnGold}>
+            <Link to="/auth?mode=signup" className={btnGold}>
               Start tracking your homegame
             </Link>
           </div>
         </div>
       </main>
 
-      <footer className="relative z-10 px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] py-8 border-t border-[rgba(200,155,60,0.18)] pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <footer className="relative z-10 px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] py-8 border-t border-[hsl(var(--gold)/0.18)] pb-[max(2rem,env(safe-area-inset-bottom))]">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <Link to="/" className="flex items-center gap-2 hover:text-foreground transition-colors">
             <img

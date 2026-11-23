@@ -1,10 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, ReactNode } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useTutorialContext } from '@/contexts/TutorialContext';
 import { toast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Link2, MailCheck, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { PokerChipSpade } from '@/components/icons/PokerChipSpade';
+import { SplashScreen } from '@/components/common/SplashScreen';
+import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -22,238 +28,47 @@ const signupSchema = z.object({
 
 type Step = 'auth' | 'signup' | 'setup' | 'forgot';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// ─── Shared screen chrome (same tokens as the rest of the app) ───────────────
 
-const S: Record<string, React.CSSProperties> = {
-  screen: {
-    position: 'fixed',
-    inset: 0,
-    background: '#090b10',
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '52px 28px 44px',
-    overflow: 'hidden',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", sans-serif',
-    boxSizing: 'border-box',
-  },
-  glowTopLeft: {
-    position: 'absolute',
-    top: -60,
-    left: -60,
-    width: 280,
-    height: 280,
-    background: 'radial-gradient(circle, rgba(200,155,60,0.10) 0%, transparent 65%)',
-    pointerEvents: 'none',
-  },
-  glowBottomRight: {
-    position: 'absolute',
-    bottom: 40,
-    right: -40,
-    width: 220,
-    height: 220,
-    background: 'radial-gradient(circle, rgba(200,155,60,0.055) 0%, transparent 65%)',
-    pointerEvents: 'none',
-  },
-  suit: {
-    fontSize: 24,
-    color: '#c89b3c',
-    textShadow:
-      '0 0 8px rgba(200,155,60,0.7), 0 0 20px rgba(200,155,60,0.3), 0 0 40px rgba(200,155,60,0.12)',
-    marginBottom: 14,
-    lineHeight: 1,
-    display: 'block',
-    position: 'relative',
-    zIndex: 1,
-  },
-  headline: {
-    color: '#f2e8ce',
-    fontSize: 48,
-    fontWeight: 800,
-    lineHeight: 1.25,
-    letterSpacing: '-0.4px',
-    marginBottom: 6,
-    position: 'relative',
-    zIndex: 1,
-  },
-  appTag: {
-    color: '#2e2416',
-    fontSize: '10px',
-    letterSpacing: '2.5px',
-    textTransform: 'uppercase',
-    fontWeight: 500,
-    position: 'relative',
-    zIndex: 1,
-  },
-  spacer: { flex: 1, maxHeight: 120 },
-  divider: {
-    height: 1,
-    flexShrink: 0,
-    background:
-      'linear-gradient(90deg, rgba(200,155,60,0.45) 0%, rgba(200,155,60,0.08) 60%, transparent 100%)',
-    boxShadow: '0 0 6px rgba(200,155,60,0.15)',
-    marginBottom: 22,
-    position: 'relative',
-    zIndex: 1,
-  },
-  btnPrimary: {
-    marginTop: 20,
-    width: '100%',
-    height: 44,
-    background: 'linear-gradient(135deg, #d4a942 0%, #b8872e 100%)',
-    borderRadius: 11,
-    color: '#0a0c14',
-    fontSize: 13,
-    fontWeight: 500,
-    letterSpacing: '0.3px',
-    border: 'none',
-    boxShadow:
-      '0 4px 16px rgba(200,155,60,0.38), 0 1px 3px rgba(200,155,60,0.22), inset 0 1px 0 rgba(255,255,255,0.14)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    cursor: 'pointer',
-    position: 'relative',
-    zIndex: 1,
-    flexShrink: 0,
-  },
-  btnSecondary: {
-    marginTop: 8,
-    width: '100%',
-    height: 42,
-    background: 'transparent',
-    border: '1px solid rgba(200,155,60,0.18)',
-    borderRadius: 11,
-    color: 'rgba(200,155,60,0.65)',
-    fontSize: 13,
-    fontWeight: 400,
-    letterSpacing: '0.3px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    position: 'relative',
-    zIndex: 1,
-    flexShrink: 0,
-  },
-  micro: {
-    color: '#2e2416',
-    fontSize: '11px',
-    textAlign: 'center',
-    marginTop: 14,
-    position: 'relative',
-    zIndex: 1,
-  },
-  microSpan: {
-    color: '#5a4530',
-    cursor: 'pointer',
-  },
-  hint: {
-    color: '#2e2416',
-    fontSize: '7.5px',
-    lineHeight: 1.6,
-    marginTop: 10,
-    position: 'relative',
-    zIndex: 1,
-  },
-};
-
-function lbl(first = false): React.CSSProperties {
-  return {
-    color: '#4a3d26',
-    fontSize: '7.5px',
-    textTransform: 'uppercase',
-    letterSpacing: '1.5px',
-    marginBottom: 6,
-    marginTop: first ? 0 : 16,
-    fontWeight: 600,
-    position: 'relative',
-    zIndex: 1,
-  };
-}
-
-function inp(focused: boolean): React.CSSProperties {
-  return {
-    display: 'block',
-    width: '100%',
-    height: 34,
-    border: 'none',
-    borderBottom: focused ? '1px solid rgba(200,155,60,0.5)' : '1px solid #1e1a12',
-    boxShadow: focused ? '0 1px 0 rgba(200,155,60,0.28)' : 'none',
-    background: 'transparent',
-    color: '#f2e8ce',
-    fontSize: 14,
-    outline: 'none',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.2s, box-shadow 0.2s',
-    position: 'relative',
-    zIndex: 1,
-  };
-}
-
-// ─── Toggle tile helpers ──────────────────────────────────────────────────────
-
-function toggleStyle(active: boolean): React.CSSProperties {
-  return active
-    ? {
-        flex: 1,
-        height: 64,
-        borderRadius: 11,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
-        border: '1px solid rgba(200,155,60,0.32)',
-        background: 'rgba(200,155,60,0.07)',
-        boxShadow: '0 0 14px rgba(200,155,60,0.07), inset 0 1px 0 rgba(200,155,60,0.1)',
-        cursor: 'pointer',
-      }
-    : {
-        flex: 1,
-        height: 64,
-        borderRadius: 11,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
-        border: '1px solid rgba(180,190,200,0.14)',
-        background: 'rgba(180,190,200,0.04)',
-        cursor: 'pointer',
-      };
-}
-
-function toggleIconStyle(active: boolean): React.CSSProperties {
-  return {
-    fontSize: 16,
-    color: active ? '#c89b3c' : '#5a6a78',
-    textShadow: active ? '0 0 8px rgba(200,155,60,0.5)' : 'none',
-  };
-}
-
-function toggleLblStyle(active: boolean): React.CSSProperties {
-  return {
-    fontSize: '7.5px',
-    letterSpacing: '0.5px',
-    fontWeight: 600,
-    color: active ? '#c89b3c' : '#5a6a78',
-  };
-}
-
-// ─── Shared screen chrome ─────────────────────────────────────────────────────
-
-function ScreenChrome({ glyph, headline }: { glyph: string; headline: React.ReactNode }) {
+function AuthScreen({ eyebrow, headline, children }: { eyebrow?: string; headline: ReactNode; children: ReactNode }) {
   return (
-    <>
-      <div style={S.glowTopLeft} />
-      <div style={S.glowBottomRight} />
-      <span style={S.suit}>{glyph}</span>
-      <div style={S.headline}>{headline}</div>
-      <div style={S.appTag}>Stack Tracker</div>
-      <div style={{ ...S.divider, marginTop: 10, marginBottom: 0 }} />
-      <div style={S.spacer} />
-    </>
+    <div className="fixed inset-0 overflow-y-auto bg-background">
+      <div aria-hidden="true" className="pointer-events-none fixed -left-28 -top-28 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.12)_0%,transparent_65%)]" />
+      <div aria-hidden="true" className="pointer-events-none fixed -right-24 bottom-0 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.06)_0%,transparent_65%)]" />
+      <main className="relative mx-auto flex min-h-full w-full max-w-sm flex-col px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+2.5rem)] page-enter">
+        <Link to="/" className="mb-10 flex items-center gap-2.5 self-start rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Stack Tracker home">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/40 bg-card shadow-[0_0_24px_-6px_hsl(var(--gold)/0.6)]">
+            <PokerChipSpade className="h-5 w-5 text-gold" />
+          </span>
+          <span className="text-[0.75rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Stack Tracker</span>
+        </Link>
+        {eyebrow && <p className="section-header mb-2">{eyebrow}</p>}
+        <h1 className="font-display text-[2.6rem] font-semibold leading-[1.02] text-foreground">{headline}</h1>
+        <div aria-hidden="true" className="gold-hairline mb-8 mt-6 h-px w-24 bg-left" />
+        <div className="flex flex-1 flex-col">{children}</div>
+      </main>
+    </div>
+  );
+}
+
+function Field({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function TextLink({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex min-h-[44px] items-center font-medium text-gold underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+    >
+      {children}
+    </button>
   );
 }
 
@@ -273,9 +88,11 @@ export function AuthPage() {
   } = useAuthContext();
   const { startTour } = useTutorialContext();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<Step>('auth');
-  const [focused, setFocused] = useState<string | null>(null);
+  // Landing-page "Get started" links pass ?mode=signup so new visitors open on Create Account.
+  const [step, setStep] = useState<Step>(() => (searchParams.get('mode') === 'signup' && !user ? 'signup' : 'auth'));
+  const [confirmEmail, setConfirmEmail] = useState<string | null>(null);
 
   const [forgotEmail, setForgotEmail] = useState('');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -331,6 +148,8 @@ export function AuthPage() {
       }
     } else {
       await signOut();
+      setConfirmEmail(signupForm.email);
+      setLoginForm({ email: signupForm.email, password: '' });
       setSignupForm({ email: '', password: '', username: '' });
       setStep('auth');
       toast({ title: 'Account Created', description: 'Please check your email to confirm, then sign in.' });
@@ -394,58 +213,56 @@ export function AuthPage() {
 
   // ─── Loading ──────────────────────────────────────────────────────────────────
 
-  if (authLoading) {
-    return (
-      <div style={{ ...S.screen, alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: '#c89b3c' }} />
-      </div>
-    );
-  }
+  if (authLoading) return <SplashScreen />;
 
   // ─── Sign In ──────────────────────────────────────────────────────────────────
 
   if (step === 'auth') {
     return (
-      <div style={S.screen}>
-        <ScreenChrome glyph="♠" headline={<>Track every hand.<br />Settle every debt.</>} />
-        <form onSubmit={handleLogin} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Email</div>
-          <input
-            type="email"
-            value={loginForm.email}
-            onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-            onFocus={() => setFocused('login-email')}
-            onBlur={() => setFocused(null)}
-            style={inp(focused === 'login-email')}
-            required
-            autoComplete="email"
-          />
-          <div style={lbl()}>Password</div>
-          <input
-            type="password"
-            value={loginForm.password}
-            onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-            onFocus={() => setFocused('login-password')}
-            onBlur={() => setFocused(null)}
-            style={inp(focused === 'login-password')}
-            required
-            autoComplete="current-password"
-          />
-          <button type="submit" style={S.btnPrimary} disabled={loading}>
-            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Sign In
-          </button>
+      <AuthScreen eyebrow="Welcome back" headline={<>Track every hand.<br />Settle every debt.</>}>
+        {confirmEmail && (
+          <div role="status" className="mb-6 flex gap-3 rounded-xl border border-gold/35 bg-gold/[0.07] p-3.5 text-sm">
+            <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden="true" />
+            <p>
+              <span className="font-semibold">Check your inbox.</span>{' '}
+              <span className="text-muted-foreground">We sent a confirmation link to {confirmEmail}. Confirm it, then sign in here.</span>
+            </p>
+          </div>
+        )}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <Field id="login-email" label="Email">
+            <Input
+              id="login-email"
+              type="email"
+              inputMode="email"
+              value={loginForm.email}
+              onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+              required
+              autoComplete="email"
+            />
+          </Field>
+          <Field id="login-password" label="Password">
+            <Input
+              id="login-password"
+              type="password"
+              value={loginForm.password}
+              onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+              required
+              autoComplete="current-password"
+            />
+          </Field>
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="animate-spin" />}
+            Sign in
+          </Button>
         </form>
-        <button type="button" style={S.btnSecondary} onClick={() => setStep('signup')}>
-          Create Account
-        </button>
-        <div style={S.micro}>
-          Forgot password?{' '}
-          <span style={S.microSpan} onClick={() => setStep('forgot')}>
-            Reset it
-          </span>
-        </div>
-      </div>
+        <Button type="button" variant="secondary" size="lg" className="mt-3 w-full" onClick={() => setStep('signup')}>
+          Create account
+        </Button>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Forgot password? <TextLink onClick={() => setStep('forgot')}>Reset it</TextLink>
+        </p>
+      </AuthScreen>
     );
   }
 
@@ -453,52 +270,51 @@ export function AuthPage() {
 
   if (step === 'signup') {
     return (
-      <div style={S.screen}>
-        <ScreenChrome glyph="♠" headline="Join the table." />
-        <form onSubmit={handleSignup} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Username</div>
-          <input
-            type="text"
-            value={signupForm.username}
-            onChange={(e) => setSignupForm({ ...signupForm, username: e.target.value })}
-            onFocus={() => setFocused('signup-username')}
-            onBlur={() => setFocused(null)}
-            style={inp(focused === 'signup-username')}
-            required
-            maxLength={20}
-            autoComplete="username"
-          />
-          <div style={lbl()}>Email</div>
-          <input
-            type="email"
-            value={signupForm.email}
-            onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
-            onFocus={() => setFocused('signup-email')}
-            onBlur={() => setFocused(null)}
-            style={inp(focused === 'signup-email')}
-            required
-            autoComplete="email"
-          />
-          <div style={lbl()}>Password</div>
-          <input
-            type="password"
-            value={signupForm.password}
-            onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
-            onFocus={() => setFocused('signup-password')}
-            onBlur={() => setFocused(null)}
-            style={inp(focused === 'signup-password')}
-            required
-            autoComplete="new-password"
-          />
-          <button type="submit" style={S.btnPrimary} disabled={loading}>
-            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Create Account
-          </button>
+      <AuthScreen eyebrow="Free forever" headline="Join the table.">
+        <form onSubmit={handleSignup} className="space-y-4">
+          <Field id="signup-username" label="Username">
+            <Input
+              id="signup-username"
+              type="text"
+              value={signupForm.username}
+              onChange={(e) => setSignupForm({ ...signupForm, username: e.target.value })}
+              required
+              maxLength={20}
+              autoComplete="username"
+              autoCapitalize="none"
+            />
+          </Field>
+          <Field id="signup-email" label="Email">
+            <Input
+              id="signup-email"
+              type="email"
+              inputMode="email"
+              value={signupForm.email}
+              onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+              required
+              autoComplete="email"
+            />
+          </Field>
+          <Field id="signup-password" label="Password">
+            <Input
+              id="signup-password"
+              type="password"
+              value={signupForm.password}
+              onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
+              required
+              autoComplete="new-password"
+            />
+            <p className="text-xs text-muted-foreground">At least 6 characters.</p>
+          </Field>
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="animate-spin" />}
+            Create account
+          </Button>
         </form>
-        <button type="button" style={S.btnSecondary} onClick={() => setStep('auth')}>
-          Back to Sign In
-        </button>
-      </div>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Already have an account? <TextLink onClick={() => setStep('auth')}>Sign in</TextLink>
+        </p>
+      </AuthScreen>
     );
   }
 
@@ -506,96 +322,102 @@ export function AuthPage() {
 
   if (step === 'forgot') {
     return (
-      <div style={S.screen}>
-        <ScreenChrome glyph="🔑" headline="Reset your password." />
-        <form onSubmit={handleForgotPassword} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Email</div>
-          <input
-            type="email"
-            value={forgotEmail}
-            onChange={(e) => setForgotEmail(e.target.value)}
-            onFocus={() => setFocused('forgot-email')}
-            onBlur={() => setFocused(null)}
-            style={inp(focused === 'forgot-email')}
-            required
-            autoComplete="email"
-          />
-          <div style={S.hint}>We'll send a reset link straight to your inbox.</div>
-          <button type="submit" style={S.btnPrimary} disabled={loading}>
-            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Send Reset Link
-          </button>
+      <AuthScreen eyebrow="Account" headline="Reset your password.">
+        <form onSubmit={handleForgotPassword} className="space-y-4">
+          <Field id="forgot-email" label="Email">
+            <Input
+              id="forgot-email"
+              type="email"
+              inputMode="email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              required
+              autoComplete="email"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">We'll send a reset link straight to your inbox.</p>
+          </Field>
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="animate-spin" />}
+            Send reset link
+          </Button>
         </form>
-        <button type="button" style={S.btnSecondary} onClick={() => setStep('auth')}>
-          Back to Sign In
-        </button>
-      </div>
+        <Button type="button" variant="ghost" size="lg" className="mt-3 w-full" onClick={() => setStep('auth')}>
+          <ArrowLeft /> Back to sign in
+        </Button>
+      </AuthScreen>
     );
   }
 
   // ─── Setup (step === 'setup') ─────────────────────────────────────────────────
 
   return (
-    <div style={S.screen}>
-      <ScreenChrome glyph="♠" headline={<>Welcome to<br />the table.</>} />
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, position: 'relative', zIndex: 1 }}>
-        <button type="button" style={toggleStyle(setupMode === 'create')} onClick={() => setSetupMode('create')}>
-          <span style={toggleIconStyle(setupMode === 'create')}>+</span>
-          <span style={toggleLblStyle(setupMode === 'create')}>Create Game</span>
-        </button>
-        <button type="button" style={toggleStyle(setupMode === 'join')} onClick={() => setSetupMode('join')}>
-          <span style={toggleIconStyle(setupMode === 'join')}>🔗</span>
-          <span style={toggleLblStyle(setupMode === 'join')}>Join with Code</span>
-        </button>
+    <AuthScreen eyebrow="One last step" headline={<>Welcome to<br />the table.</>}>
+      <div role="tablist" aria-label="Create or join" className="mb-6 grid grid-cols-2 gap-1 rounded-xl border border-border/60 bg-muted p-1">
+        {([
+          { mode: 'create' as const, icon: Plus, label: 'Create game' },
+          { mode: 'join' as const, icon: Link2, label: 'Join with code' },
+        ]).map(({ mode, icon: Icon, label }) => (
+          <button
+            key={mode}
+            type="button"
+            role="tab"
+            aria-selected={setupMode === mode}
+            onClick={() => setSetupMode(mode)}
+            className={cn(
+              'pressable flex min-h-[48px] items-center justify-center gap-2 rounded-lg text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              setupMode === mode
+                ? 'bg-secondary text-gold shadow-[inset_0_1px_0_hsl(40_70%_75%/0.08),0_2px_8px_-4px_hsl(0_0%_0%/0.8)]'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Icon className="h-4 w-4" aria-hidden="true" />
+            {label}
+          </button>
+        ))}
       </div>
       {setupMode === 'create' ? (
-        <form onSubmit={handleCreateHomegame} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Game Name</div>
-          <input
-            type="text"
-            placeholder="Friday Night Game"
-            value={setupForm.homegameName}
-            onChange={(e) => setSetupForm({ ...setupForm, homegameName: e.target.value })}
-            onFocus={() => setFocused('setup-name')}
-            onBlur={() => setFocused(null)}
-            style={inp(focused === 'setup-name')}
-            required
-          />
-          <button type="submit" style={S.btnPrimary} disabled={loading}>
-            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Create Game
-          </button>
+        <form onSubmit={handleCreateHomegame} className="space-y-4">
+          <Field id="setup-name" label="Game name">
+            <Input
+              id="setup-name"
+              type="text"
+              placeholder="Friday Night Game"
+              value={setupForm.homegameName}
+              onChange={(e) => setSetupForm({ ...setupForm, homegameName: e.target.value })}
+              required
+            />
+          </Field>
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="animate-spin" />}
+            Create game
+          </Button>
         </form>
       ) : (
-        <form onSubmit={handleJoinHomegame} style={{ position: 'relative', zIndex: 1 }}>
-          <div style={lbl(true)}>Invite Code</div>
-          <input
-            type="text"
-            placeholder="ABCD1234"
-            value={setupForm.inviteCode}
-            onChange={(e) => setSetupForm({ ...setupForm, inviteCode: e.target.value.toUpperCase() })}
-            onFocus={() => setFocused('setup-code')}
-            onBlur={() => setFocused(null)}
-            style={{
-              ...inp(focused === 'setup-code'),
-              fontFamily: 'monospace',
-              textAlign: 'center',
-              letterSpacing: '0.2em',
-            }}
-            maxLength={8}
-            required
-          />
-          <button type="submit" style={S.btnPrimary} disabled={loading}>
-            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Join Game
-          </button>
+        <form onSubmit={handleJoinHomegame} className="space-y-4">
+          <Field id="setup-code" label="Invite code">
+            <Input
+              id="setup-code"
+              type="text"
+              placeholder="ABCD1234"
+              value={setupForm.inviteCode}
+              onChange={(e) => setSetupForm({ ...setupForm, inviteCode: e.target.value.toUpperCase() })}
+              className="text-center font-mono text-lg tracking-[0.2em]"
+              maxLength={8}
+              autoCapitalize="characters"
+              autoComplete="off"
+              required
+            />
+          </Field>
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="animate-spin" />}
+            Join game
+          </Button>
         </form>
       )}
-      <div style={S.micro}>
-        <span style={S.microSpan} onClick={handleBackToLogin}>
-          Back to sign in
-        </span>
-      </div>
-    </div>
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        Wrong account? <TextLink onClick={handleBackToLogin}>Back to sign in</TextLink>
+      </p>
+    </AuthScreen>
   );
 }
