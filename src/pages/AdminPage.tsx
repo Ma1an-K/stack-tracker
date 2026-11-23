@@ -71,8 +71,8 @@ function Tiles() {
       {TILES.map(([label, key]) => (
         <Card key={key}>
           <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground">{label}</div>
-            <div className="text-2xl font-bold text-primary">{data ? data[key] ?? 0 : "…"}</div>
+            <div className="text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">{label}</div>
+            <div className="font-display text-2xl font-semibold tabular-nums text-gold">{data ? data[key] ?? 0 : "…"}</div>
           </CardContent>
         </Card>
       ))}
@@ -131,7 +131,7 @@ function RecentActivity() {
       <CardContent className="grid gap-4 sm:grid-cols-2">
         {error ? <ErrorNote message={error} /> : ACTIVITY_GROUPS.map(([key, title]) => (
           <div key={key}>
-            <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{title}</h3>
+            <h3 className="section-header mb-2">{title}</h3>
             <ul className="space-y-1 text-sm">
               {(data?.[key] ?? []).map((a, i) => (
                 <li key={i}>
@@ -230,7 +230,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background p-4 text-foreground">
       <div className="mx-auto max-w-6xl space-y-4">
-        <h1 className="text-2xl font-bold text-primary">Stack Tracker Admin</h1>
+        <h1 className="page-title">Stack Tracker Admin</h1>
         <Tiles />
         <Homegames />
         <RecentActivity />

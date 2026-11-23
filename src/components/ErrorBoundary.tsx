@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { AlertTriangle, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { logError } from '@/lib/errorLog';
 
@@ -25,9 +26,15 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background text-foreground p-6">
-          <h1 className="text-xl font-semibold">Something went wrong</h1>
-          <Button onClick={() => window.location.reload()}>Reload</Button>
+        <div role="alert" className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center text-foreground">
+          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-gold/30 bg-gold/10">
+            <AlertTriangle className="h-6 w-6 text-gold" aria-hidden="true" />
+          </div>
+          <h1 className="font-display text-2xl text-foreground">Something went wrong</h1>
+          <Button className="mt-6" onClick={() => window.location.reload()}>
+            <RotateCw aria-hidden="true" />
+            Reload
+          </Button>
         </div>
       );
     }

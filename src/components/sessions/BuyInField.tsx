@@ -31,7 +31,7 @@ export function BuyInField({ value, currency = '$', onCommit, label }: BuyInFiel
   };
 
   return (
-    <span className="inline-flex items-center gap-1 text-lg font-bold tabular-nums text-gold">
+    <span className="-mr-1 inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-lg font-semibold tabular-nums text-gold transition-colors duration-150 focus-within:bg-gold/10 hover:bg-gold/10">
       <span aria-hidden="true">{currency}</span>
       <Input
         type="number"
@@ -57,9 +57,9 @@ export function BuyInField({ value, currency = '$', onCommit, label }: BuyInFiel
             e.currentTarget.blur();
           }
         }}
-        className="h-auto w-24 border-0 bg-transparent p-0 text-right text-lg font-bold tabular-nums text-gold focus-visible:ring-1 focus-visible:ring-offset-0 md:text-lg"
+        className="h-auto w-24 rounded-md border-0 bg-transparent p-0 text-right text-lg font-semibold tabular-nums text-gold focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0 md:h-auto md:text-lg"
       />
-      <Pencil aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" />
+      <Pencil aria-hidden="true" className="h-3.5 w-3.5 text-gold opacity-60" />
     </span>
   );
 }

@@ -64,39 +64,38 @@ export function AddPlayerDialog({
         <DialogHeader>
           <DialogTitle>Add player</DialogTitle>
         </DialogHeader>
-        <DialogDescription className="text-xs">
+        <DialogDescription>
           {`Joins with a ${formatCurrency(baseBuyIn, currency)} buy-in — adjust after.`}
         </DialogDescription>
         {canCreate ? (
-          <form onSubmit={submit} className="flex gap-2 border-b border-border pb-3">
+          <form onSubmit={submit} className="flex gap-2 border-b border-border/60 pb-4">
             <Input
               aria-label="New player"
               placeholder="New player"
               value={name}
               onChange={e => setName(e.target.value)}
             />
-            <Button type="submit" disabled={!trimmed || busy}>
+            <Button type="submit" className="shrink-0" disabled={!trimmed || busy}>
               Add &amp; seat
             </Button>
           </form>
         ) : (
-          <p className="border-b border-border pb-3 text-xs text-muted-foreground">
+          <p className="border-b border-border/60 pb-4 text-sm text-muted-foreground">
             {`Only the owner or an admin can create new players. Ask ${ownerName ?? 'the owner'} to make you an admin on the Members page.`}
           </p>
         )}
         {bench.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {bench.map(p => (
-              <Button
+              <button
                 key={p.id}
-                variant="secondary"
-                size="sm"
-                className="h-9"
+                type="button"
+                className="pressable inline-flex h-11 items-center gap-1.5 rounded-full border border-border/80 bg-secondary/70 px-4 text-sm font-medium hover:border-gold/40 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={() => seat(p.id)}
               >
-                <Plus className="mr-1 h-3.5 w-3.5" />
+                <Plus className="h-4 w-4 text-gold" aria-hidden="true" />
                 {p.name}
-              </Button>
+              </button>
             ))}
           </div>
         ) : (
