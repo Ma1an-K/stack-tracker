@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,20 +14,27 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { useTutorialContext } from '@/contexts/TutorialContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { clearPendingCode } from '@/lib/inviteLink';
 
 interface HomegameDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultTab?: 'create' | 'join';
+  /** Prefills the join field (from an invite link). The player still taps Join. */
+  initialInviteCode?: string | null;
 }
 
-export function HomegameDialog({ open, onOpenChange, defaultTab = 'create' }: HomegameDialogProps) {
+export function HomegameDialog({ open, onOpenChange, defaultTab = 'create', initialInviteCode }: HomegameDialogProps) {
   const { createHomegame, joinHomegame } = useAuthContext();
   const { startTour } = useTutorialContext();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [newHomegameName, setNewHomegameName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+
+  useEffect(() => {
+    if (open && initialInviteCode) setInviteCode(initialInviteCode);
+  }, [open, initialInviteCode]);
 
   const handleCreateHomegame = async () => {
     if (!newHomegameName.trim()) {
@@ -62,6 +69,7 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create' }: Ho
     if (error) {
       toast({ title: 'Error', description: error.message || 'Failed to join homegame', variant: 'destructive' });
     } else {
+      clearPendingCode();
       toast({ title: 'Joined homegame successfully' });
       setInviteCode('');
       onOpenChange(false);
@@ -118,6 +126,9 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create' }: Ho
                 autoComplete="off"
                 className="font-mono tracking-[0.2em] text-center text-lg"
               />
+              {initialInviteCode && inviteCode === initialInviteCode && (
+                <p className="text-sm text-muted-foreground">Filled in from your invite link.</p>
+              )}
             </div>
             <Button type="submit" disabled={loading} size="lg" className="w-full">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

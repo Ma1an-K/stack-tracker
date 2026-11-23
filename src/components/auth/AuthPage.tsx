@@ -12,6 +12,7 @@ import { PokerChipSpade } from '@/components/icons/PokerChipSpade';
 import { SplashScreen } from '@/components/common/SplashScreen';
 import { PasswordInput } from '@/components/common/PasswordInput';
 import { cn } from '@/lib/utils';
+import { parseInviteCode, savePendingCode, readPendingCode, clearPendingCode } from '@/lib/inviteLink';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -78,41 +79,6 @@ function FormError({ message }: { message: string | null }) {
 
 // Invite codes: ignore spaces and hyphens people paste in, compare in capitals.
 const normaliseCode = (v: string) => v.replace(/[\s-]/g, '').toUpperCase().slice(0, 8);
-
-// Invite links (`/auth?mode=signup&code=XXXXXXXX`) carry the code so a new player
-// never has to type it. The code is only ever used to PREFILL the join field;
-// joining still needs the player's own tap. Only a well-formed 8-character code is
-// accepted, and a copy is kept on this device for 7 days so it survives the
-// email-confirmation round trip (signup signs the user out until they confirm).
-const PENDING_CODE_KEY = 'pendingInviteCode';
-const PENDING_CODE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const parseInviteCode = (raw: string | null): string | null => {
-  if (!raw) return null;
-  const code = normaliseCode(raw);
-  return /^[A-Z0-9]{8}$/.test(code) ? code : null;
-};
-function savePendingCode(code: string) {
-  try {
-    localStorage.setItem(PENDING_CODE_KEY, JSON.stringify({ code, savedAt: Date.now() }));
-  } catch { /* storage unavailable: the code is still in the invite message */ }
-}
-function readPendingCode(): string | null {
-  try {
-    const raw = localStorage.getItem(PENDING_CODE_KEY);
-    if (!raw) return null;
-    const { code, savedAt } = JSON.parse(raw) as { code?: string; savedAt?: number };
-    if (typeof savedAt !== 'number' || Date.now() - savedAt > PENDING_CODE_TTL_MS) {
-      localStorage.removeItem(PENDING_CODE_KEY);
-      return null;
-    }
-    return parseInviteCode(code ?? null);
-  } catch {
-    return null;
-  }
-}
-function clearPendingCode() {
-  try { localStorage.removeItem(PENDING_CODE_KEY); } catch { /* storage unavailable */ }
-}
 
 function TextLink({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (

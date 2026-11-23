@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { HomegameDialog } from './HomegameDialog';
+import { readPendingCode, clearPendingCode } from '@/lib/inviteLink';
 
 export function Header() {
   const { homegame, homegames, profile, isOwner, signOut, selectHomegame, updateProfile, updateHomegame, deleteHomegame } = useAuthContext();
@@ -112,6 +113,19 @@ export function Header() {
     setDialogTab('join');
     setDialogOpen(true);
   };
+
+  // A signed-in member who opened an invite link lands here (the auth page saved
+  // the code and redirected). Offer the join dialog once, prefilled; closing it
+  // either way forgets the code so it doesn't reappear on every load.
+  const [linkInviteCode, setLinkInviteCode] = useState<string | null>(null);
+  useEffect(() => {
+    const code = readPendingCode();
+    if (!code) return;
+    setLinkInviteCode(code);
+    clearPendingCode();
+    setDialogTab('join');
+    setDialogOpen(true);
+  }, []);
 
   const handleSelectIcon = async (iconId: string) => {
     setIconLoading(true);
@@ -294,8 +308,12 @@ export function Header() {
 
       <HomegameDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setLinkInviteCode(null);
+        }}
         defaultTab={dialogTab}
+        initialInviteCode={dialogTab === 'join' ? linkInviteCode : null}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
