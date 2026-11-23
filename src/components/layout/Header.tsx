@@ -280,6 +280,10 @@ export function Header() {
                 onClick={fromClub(handleToggleNotifications)}
               />
             )}
+          </div>
+
+          {/* Account exits kept apart from everyday settings */}
+          <div className="mt-2 overflow-hidden rounded-xl border border-border/60 bg-secondary/40 divide-y divide-border/50">
             <ClubRow icon={LogOut} label="Sign out" onClick={fromClub(handleSignOut)} />
             {isOwner && (
               <ClubRow icon={Trash2} label="Delete homegame" destructive onClick={fromClub(() => setDeleteDialogOpen(true))} />
@@ -329,6 +333,7 @@ export function Header() {
                 key={icon.id}
                 onClick={() => handleSelectIcon(icon.id)}
                 disabled={iconLoading}
+                aria-pressed={homegame?.icon_id === icon.id}
                 className={`relative rounded-lg p-1 border-2 transition-colors hover:border-gold/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${homegame?.icon_id === icon.id ? 'border-gold shadow-[0_0_18px_-4px_hsl(var(--gold)/0.6)]' : 'border-border/40'}`}
               >
                 <img src={icon.src} alt={icon.label} className="w-full aspect-square object-cover rounded" />
@@ -376,6 +381,7 @@ export function Header() {
                   <Switch
                     checked={!isDisabled}
                     onCheckedChange={() => handleToggleBadge(badge.id)}
+                    aria-label={`Show the ${badge.name} badge`}
                   />
                 </div>
               );
@@ -396,6 +402,7 @@ export function Header() {
               <Input
                 id="display-name"
                 placeholder="Your name"
+                autoComplete="nickname"
                 value={profileForm.display_name}
                 onChange={(e) => setProfileForm({ ...profileForm, display_name: e.target.value })}
               />
@@ -407,6 +414,8 @@ export function Header() {
                 placeholder="username"
                 value={profileForm.username}
                 onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
+                autoComplete="username"
+                autoCapitalize="none"
                 maxLength={20}
                 required
               />
@@ -443,7 +452,7 @@ function ClubRow({ icon: Icon, label, onClick, destructive }: { icon: typeof Use
     <button
       onClick={onClick}
       className={cn(
-        'flex w-full min-h-[52px] items-center gap-3 px-4 text-left text-sm font-medium transition-colors hover:bg-accent focus:outline-none focus-visible:bg-accent',
+        'flex w-full min-h-[52px] items-center gap-3 px-4 text-left text-sm font-medium transition-colors hover:bg-accent focus:outline-none focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
         destructive ? 'text-destructive' : 'text-foreground'
       )}
     >

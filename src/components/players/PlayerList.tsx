@@ -91,6 +91,8 @@ export function PlayerList({
             <form onSubmit={handleAddPlayer} className="flex gap-2">
               <Input
                 placeholder="Player name"
+                autoComplete="off"
+                enterKeyHint="done"
                 value={newPlayerName}
                 onChange={(e) => setNewPlayerName(e.target.value)}
                 aria-label="New player name"
@@ -115,7 +117,7 @@ export function PlayerList({
         <CardContent>
           {players.length === 0 ? (
             <div className="text-center py-8">
-              <Users className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
+              <Users className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" aria-hidden="true" />
               <p className="text-muted-foreground text-sm">
                 {isOwner ? 'No players yet. Add your first player above.' : 'No players yet.'}
               </p>
@@ -130,6 +132,7 @@ export function PlayerList({
                   <div className="flex items-center gap-2 min-w-0">
                     <span className={cn('truncate font-medium', !player.is_active && 'text-muted-foreground line-through decoration-muted-foreground/40')}>
                       {player.name}
+                      {!player.is_active && <span className="sr-only"> (inactive)</span>}
                     </span>
                     {isMyPlayer(player) && (
                       <Badge className="shrink-0">
@@ -160,7 +163,10 @@ export function PlayerList({
                           disabled={claimingId === player.id}
                         >
                           {claimingId === player.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                              <span className="sr-only">Sending claim</span>
+                            </>
                           ) : (
                             <>
                               <Hand />
@@ -179,6 +185,7 @@ export function PlayerList({
                         <Switch
                           id={`active-${player.id}`}
                           checked={player.is_active}
+                          aria-label={`${player.name} is active`}
                           onCheckedChange={(checked) => 
                             onUpdatePlayer(player.id, { is_active: checked })
                           }

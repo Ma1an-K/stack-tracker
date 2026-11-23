@@ -45,7 +45,7 @@ export function Leaderboard({ sessions, players, currency, titleAside }: Leaderb
       <PageHeader eyebrow={homegame?.name} title="Standings" action={titleAside} />
 
       <Tabs value={timeFrame} onValueChange={(v) => setTimeFrame(v as TimeFrame)}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-4" aria-label="Time frame">
           <TabsTrigger value="week">Week</TabsTrigger>
           <TabsTrigger value="month">Month</TabsTrigger>
           <TabsTrigger value="year">Year</TabsTrigger>
@@ -60,7 +60,7 @@ export function Leaderboard({ sessions, players, currency, titleAside }: Leaderb
           description={timeFrame === 'all' ? 'Standings appear once the first session is logged.' : 'No sessions in this period. Try a longer time frame.'}
         />
       ) : (
-        <ol className="space-y-2" aria-label="Leaderboard. Tap a player for head-to-head.">
+        <ol className="space-y-2" aria-label="Leaderboard. Choose a player for head-to-head.">
           {leaderboard.map((stat, index) => {
             const isTop3 = index < 3;
             const rankDisplay = `${index + 1}`.padStart(2, '0');
@@ -71,32 +71,31 @@ export function Leaderboard({ sessions, players, currency, titleAside }: Leaderb
             return (
               <li
                 key={stat.player.id}
-                role="button"
-                tabIndex={0}
-                onClick={open}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    open();
-                  }
-                }}
-                aria-label={`${stat.player.name}, rank ${index + 1}, ${formatProfit(stat.netProfit, currency)}. Open head-to-head`}
                 className={cn(
-                  'surface pressable flex min-h-[68px] cursor-pointer items-center gap-3 px-3.5 py-3 hover:border-gold/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'surface pressable relative flex min-h-[68px] cursor-pointer items-center gap-3 px-3.5 py-3 hover:border-gold/30',
                   index === 0 && 'border-gold/40 bg-[linear-gradient(100deg,hsl(var(--gold)/0.10),hsl(var(--card))_45%)]',
                   isMe && 'ring-1 ring-gold/30'
                 )}
               >
+                {/* The whole row is one button; the badge chips sit above it so
+                    they stay separately tappable (no nested interactive elements). */}
+                <button
+                  type="button"
+                  onClick={open}
+                  aria-label={`${stat.player.name}, rank ${index + 1}, ${formatProfit(stat.netProfit, currency)}. Open head-to-head`}
+                  className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
                 <span
+                  aria-hidden="true"
                   className={cn(
-                    'w-8 shrink-0 text-center tabular-nums',
+                    'pointer-events-none w-8 shrink-0 text-center tabular-nums',
                     isTop3 ? 'font-display text-[1.5rem] font-semibold text-gold' : 'text-sm font-medium text-muted-foreground'
                   )}
                 >
                   {rankDisplay}
                 </span>
 
-                <span className="min-w-0 flex-1">
+                <span aria-hidden="true" className="pointer-events-none min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="truncate font-medium">{stat.player.name}</span>
                     {isMe && <span className="shrink-0 rounded-full bg-gold/15 px-1.5 py-px text-[0.6875rem] font-semibold uppercase tracking-wide text-gold">You</span>}
@@ -108,17 +107,13 @@ export function Leaderboard({ sessions, players, currency, titleAside }: Leaderb
                 </span>
 
                 {/* Badges — 2 max on mobile, 4 on desktop */}
-                <span
-                  className="flex max-w-[4.5rem] shrink-0 items-center justify-end overflow-hidden md:max-w-[10rem]"
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                >
+                <span className="relative z-[1] flex max-w-[4.5rem] shrink-0 items-center justify-end overflow-hidden md:max-w-[10rem]">
                   {playerBadges.length > 0 && (
                     <PlayerBadges badges={playerBadges} currency={currency} size="sm" maxDisplay={2} />
                   )}
                 </span>
 
-                <span className={cn('w-[5.5rem] shrink-0 text-right text-[0.9375rem] font-semibold tabular-nums md:w-32', stat.netProfit >= 0 ? 'profit' : 'loss')}>
+                <span aria-hidden="true" className={cn('pointer-events-none w-[5.5rem] shrink-0 text-right text-[0.9375rem] font-semibold tabular-nums md:w-32', stat.netProfit >= 0 ? 'profit' : 'loss')}>
                   {formatProfit(stat.netProfit, currency)}
                 </span>
               </li>

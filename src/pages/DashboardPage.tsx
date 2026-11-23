@@ -200,7 +200,7 @@ export function DashboardPage() {
                 <li key={`${session.id}-${idx}`}>
                   <Link
                     to="/sessions"
-                    className="flex min-h-[60px] items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-accent/50 focus:outline-none focus-visible:bg-accent"
+                    className="flex min-h-[60px] items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-accent/50 focus:outline-none focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                   >
                     <span className="flex min-w-0 items-center gap-3">
                       <span className={cn('h-8 w-1 shrink-0 rounded-full', isWin ? 'bg-success' : 'bg-destructive')} aria-hidden="true" />

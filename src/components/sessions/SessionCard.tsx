@@ -121,7 +121,7 @@ export function SessionCard({
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
         aria-controls={contentId}
-        className="flex w-full min-h-[72px] items-center gap-3 p-4 text-left transition-colors hover:bg-accent/40 focus:outline-none focus-visible:bg-accent/50"
+        className="flex w-full min-h-[72px] items-center gap-3 p-4 text-left transition-colors hover:bg-accent/40 focus:outline-none focus-visible:bg-accent/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
         <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl border border-border/70 bg-secondary/60 leading-none">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-gold">{format(parseISO(session.date), 'MMM')}</span>

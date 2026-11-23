@@ -91,7 +91,7 @@ export function PublicSettlementCalculator() {
             <select
               value={currencyCode}
               onChange={e => setCurrencyCode(e.target.value)}
-              className="bg-background border border-[hsl(var(--gold)/0.25)] rounded-md px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-gold"
+              className="min-h-[44px] bg-background border border-[hsl(var(--gold)/0.25)] rounded-md px-2 py-2 text-base sm:text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
             >
               {CURRENCIES.map(c => (
                 <option key={c.code} value={c.code}>
