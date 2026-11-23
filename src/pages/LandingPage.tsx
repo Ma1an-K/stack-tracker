@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuthContext } from '@/contexts/AuthContext';
 import {
   Calendar,
   Calculator,
@@ -663,10 +664,33 @@ function Footer() {
 
 /* ---------- root ---------- */
 
+/** Signed in but no homegame yet (e.g. straight after confirming email): point at setup. */
+function FinishSetupBanner() {
+  const { user, homegame } = useAuthContext();
+  if (!user || homegame) return null;
+  return (
+    <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-md page-enter">
+      <Link
+        to="/auth"
+        className="pressable flex min-h-[56px] items-center gap-3 rounded-2xl border border-gold/40 bg-[hsl(var(--popover)/0.94)] px-4 py-3 shadow-[0_18px_40px_-14px_rgb(0_0_0/0.95)] backdrop-blur-xl"
+      >
+        <span className="min-w-0 flex-1 text-sm">
+          <span className="block font-semibold">You're signed in</span>
+          <span className="text-muted-foreground">Create or join a homegame to get started.</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-gold">
+          Continue <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </span>
+      </Link>
+    </div>
+  );
+}
+
 export function LandingPage() {
   return (
     <div className="min-h-dvh bg-background text-foreground overflow-x-hidden">
       <MarketingNavbar />
+      <FinishSetupBanner />
       <main>
         <Hero />
         <Features />
