@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -88,6 +88,9 @@ function AuthRoute() {
   return <AuthPage />;
 }
 
+// Dev-server only: __ADMIN_ENABLED__ is false in every build, so this (and the page) is tree-shaken out.
+const AdminPage = __ADMIN_ENABLED__ ? lazy(() => import("./pages/AdminPage")) : null;
+
 function AppRoutes() {
   return (
     <Routes>
@@ -176,6 +179,9 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      {__ADMIN_ENABLED__ && AdminPage && (
+        <Route path="/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
+      )}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
