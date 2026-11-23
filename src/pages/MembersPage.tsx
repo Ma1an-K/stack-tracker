@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Users, UserMinus, Crown, Shield, ShieldOff } from 'lucide-react';
+import { Users, UserMinus, Crown, Shield, ShieldOff } from 'lucide-react';
+import { PageHeader } from '@/components/common/PageHeader';
+import { PageSkeleton } from '@/components/common/PageSkeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,38 +31,26 @@ export function MembersPage() {
   // Only the original owner can promote/demote
   const isOriginalOwner = currentHomegame?.role === 'owner';
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <PageSkeleton rows={5} />;
 
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'owner':
-        return <Badge variant="default" className="gap-1"><Crown className="h-3 w-3" /> Owner</Badge>;
+        return <Badge className="gap-1"><Crown className="h-3 w-3" aria-hidden="true" /> Owner</Badge>;
       case 'admin':
-        return <Badge variant="secondary" className="gap-1 bg-primary/20 text-primary"><Shield className="h-3 w-3" /> Admin</Badge>;
+        return <Badge variant="outline" className="gap-1 border-gold/30 text-gold"><Shield className="h-3 w-3" aria-hidden="true" /> Admin</Badge>;
       default:
         return <Badge variant="outline">Member</Badge>;
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Members</h1>
-        <p className="text-muted-foreground">People in {homegame?.name}</p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader eyebrow={homegame?.name} title="Members" subtitle={`${members.length} ${members.length === 1 ? 'person' : 'people'} at this table`} />
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            All Members ({members.length})
-          </CardTitle>
+          <CardTitle className="section-header">All members</CardTitle>
           <CardDescription>
             {isOriginalOwner 
               ? 'Manage members and their permissions. Admins can do everything owners can.' 
@@ -79,10 +69,10 @@ export function MembersPage() {
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  className="flex min-h-[64px] items-center gap-3 rounded-xl border border-border/50 bg-muted/40 p-3"
                 >
                   <Avatar className="flex-shrink-0">
-                    <AvatarFallback className="bg-primary/10 text-primary">
+                    <AvatarFallback className="bg-gold/10 font-display text-lg text-gold">
                       {member.profile?.username?.charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
@@ -93,7 +83,7 @@ export function MembersPage() {
                         {member.profile?.display_name || member.profile?.username || 'Unknown'}
                       </span>
                       {member.user_id === user?.id && (
-                        <Badge variant="outline" className="text-xs flex-shrink-0">You</Badge>
+                        <Badge variant="outline" className="flex-shrink-0">You</Badge>
                       )}
                       <div className="flex-shrink-0">{getRoleBadge(member.role)}</div>
                     </div>
@@ -111,19 +101,21 @@ export function MembersPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-primary hover:text-primary/80"
+                              aria-label="Remove admin"
+                              className="text-gold hover:text-gold/80"
                               onClick={() => updateMemberRole(member.id, 'member')}
                             >
-                              <ShieldOff className="h-4 w-4" />
+                              <ShieldOff />
                             </Button>
                           ) : (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-primary"
+                              aria-label="Make admin"
+                              className="text-muted-foreground hover:text-gold"
                               onClick={() => updateMemberRole(member.id, 'admin')}
                             >
-                              <Shield className="h-4 w-4" />
+                              <Shield />
                             </Button>
                           )}
                         </TooltipTrigger>
@@ -137,13 +129,13 @@ export function MembersPage() {
                     {isOwner && member.role !== 'owner' && member.user_id !== user?.id && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                            <UserMinus className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" aria-label="Remove member" className="text-destructive hover:text-destructive">
+                            <UserMinus />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Remove Member</AlertDialogTitle>
+                            <AlertDialogTitle>Remove member?</AlertDialogTitle>
                             <AlertDialogDescription>
                               Are you sure you want to remove {member.profile?.display_name || member.profile?.username} from this homegame?
                               They will need a new invite code to rejoin.
@@ -153,7 +145,7 @@ export function MembersPage() {
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => removeMember(member.id)}
-                              className="bg-destructive hover:bg-destructive/90"
+                              className="bg-destructive bg-none text-destructive-foreground shadow-none hover:bg-destructive/90"
                             >
                               Remove
                             </AlertDialogAction>
@@ -170,17 +162,17 @@ export function MembersPage() {
       </Card>
 
       {/* Permission info card */}
-      <Card className="bg-muted/30">
-        <CardContent className="pt-6">
-          <h3 className="font-medium mb-3">Permission Levels</h3>
+      <Card>
+        <CardContent className="pt-4 sm:pt-5">
+          <h3 className="section-header mb-3">Permission levels</h3>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
-              <Crown className="h-4 w-4 text-primary" />
+              <Crown className="h-4 w-4 text-gold" aria-hidden="true" />
               <span className="font-medium">Owner</span>
               <span className="text-muted-foreground">— Full control, can promote admins</span>
             </div>
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-primary" />
+              <Shield className="h-4 w-4 text-gold" aria-hidden="true" />
               <span className="font-medium">Admin</span>
               <span className="text-muted-foreground">— All owner permissions except promoting admins</span>
             </div>

@@ -81,7 +81,7 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
             transform: 'translate(-50%, -50%)',
             width: cardW,
           }}
-          className="rounded-xl border border-border bg-card shadow-xl p-5"
+          className="rounded-2xl border border-gold/30 bg-popover p-5 shadow-[0_20px_50px_-16px_rgb(0_0_0/0.95)]"
         >
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-muted-foreground font-medium">
@@ -102,7 +102,7 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
                 {step.description}
               </p>
               <Button
-                className="w-full text-sm h-9 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold mb-2"
+                className="w-full mb-2"
                 onClick={() => {
                   installPrompt.trigger?.();
                   onNext();
@@ -119,7 +119,7 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
           )}
           <button
             onClick={onSkip}
-            className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center py-1"
+            className="w-full min-h-[44px] text-sm text-muted-foreground hover:text-foreground transition-colors text-center"
           >
             Maybe later
           </button>
@@ -158,8 +158,8 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
           left: spotlightLeft,
           width: spotlightW,
           height: spotlightH,
-          borderRadius: 8,
-          boxShadow: '0 0 0 9999px rgba(0,0,0,0.65)',
+          borderRadius: 14,
+          boxShadow: '0 0 0 2px hsl(var(--gold) / 0.7), 0 0 24px 2px hsl(var(--gold) / 0.35), 0 0 0 9999px rgba(0,0,0,0.7)',
           pointerEvents: 'none',
           transition: 'top 0.2s, left 0.2s, width 0.2s, height 0.2s',
         }}
@@ -172,34 +172,33 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
           width: tooltipW,
           transition: 'top 0.2s, left 0.2s',
         }}
-        className="rounded-xl border border-border bg-card shadow-xl p-4"
+        className="rounded-2xl border border-gold/30 bg-popover p-4 shadow-[0_20px_50px_-16px_rgb(0_0_0/0.95)]"
       >
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-muted-foreground font-medium">
+          <span className="section-header tabular-nums">
             Step {currentStep + 1} of {steps.length}
           </span>
           <button
             onClick={onSkip}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="-mr-2 -mt-1 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Skip tutorial"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="font-semibold text-sm mb-1">{step.title}</p>
-        <p className="text-xs text-muted-foreground leading-relaxed">{step.description}</p>
+        <p className="font-display text-xl font-semibold mb-1">{step.title}</p>
+        <p className="text-[0.8125rem] text-muted-foreground leading-relaxed">{step.description}</p>
         <div className="flex items-center justify-between mt-3">
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs h-7 px-2 text-muted-foreground"
+            className="-ml-2 text-muted-foreground"
             onClick={onSkip}
           >
             Skip tour
           </Button>
           <Button
             size="sm"
-            className="text-xs h-7 px-3 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold"
             onClick={onNext}
           >
             {currentStep === steps.length - 1 ? 'Got it ✓' : 'Next →'}
