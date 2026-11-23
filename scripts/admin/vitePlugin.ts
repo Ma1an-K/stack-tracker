@@ -4,7 +4,7 @@
 import type { Plugin } from "vite";
 import { loadEnv } from "vite";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { createAdminHandler, isLoopback, isSameOrigin, sendJson } from "./adminApi";
+import { createAdminHandler, hasProxyHeaders, isLoopback, isSameOrigin, sendJson } from "./adminApi";
 
 const MOUNT = "/__admin/api";
 
@@ -27,8 +27,13 @@ export function adminPlugin(): Plugin {
         const path = (req.url ?? "").split("?")[0];
         if (path !== MOUNT && !path.startsWith(`${MOUNT}/`)) return next();
         // The dev server listens on all interfaces; only this machine's own
-        // browser, on a localhost origin, may reach the admin API.
-        if (!isLoopback(req.socket.remoteAddress) || !isSameOrigin({ host: req.headers.host, origin: req.headers.origin })) {
+        // browser, on a localhost origin, may reach the admin API. A local
+        // proxy/tunnel also connects from loopback, so forwarded requests are refused.
+        if (
+          !isLoopback(req.socket.remoteAddress) ||
+          !isSameOrigin({ host: req.headers.host, origin: req.headers.origin }) ||
+          hasProxyHeaders(req.headers)
+        ) {
           return sendJson(res, 403, { error: "Forbidden" });
         }
         void handler(req, res);

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createAdminHandler, isLoopback, isSameOrigin } from "./adminApi";
+import { createAdminHandler, hasProxyHeaders, isLoopback, isSameOrigin } from "./adminApi";
 
 const ID = "3f2b8c1e-9d4a-4b7e-8f61-2a5c9e0d7b13";
 
@@ -77,6 +77,21 @@ describe("isLoopback", () => {
   it.each(["192.168.1.20", "::ffff:192.168.1.20", undefined, ""])("rejects %s", (a) => {
     expect(isLoopback(a)).toBe(false);
   });
+});
+
+describe("hasProxyHeaders", () => {
+  it("is false for a plain browser request", () => {
+    expect(hasProxyHeaders({ host: "localhost:8080", origin: "http://localhost:8080", accept: "*/*" })).toBe(false);
+    expect(hasProxyHeaders({})).toBe(false);
+  });
+  it.each(["x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "forwarded", "x-real-ip", "via"])(
+    "is true when %s is present",
+    (h) => {
+      expect(hasProxyHeaders({ host: "localhost:8080", [h]: "1.2.3.4" })).toBe(true);
+      expect(hasProxyHeaders({ host: "localhost:8080", [h]: "" })).toBe(true);
+      expect(hasProxyHeaders({ host: "localhost:8080", [h]: ["a", "b"] })).toBe(true);
+    },
+  );
 });
 
 describe("isSameOrigin", () => {

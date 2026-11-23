@@ -21,6 +21,18 @@ export function isSameOrigin(headers: { host?: string; origin?: string }): boole
   return origin === undefined || origin === `http://${host}`;
 }
 
+const PROXY_HEADERS = ["x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "forwarded", "x-real-ip", "via"];
+
+/**
+ * True when the request carries a header that reverse proxies and tunnels add
+ * (ngrok, cloudflared, tailscale serve, editor port forwarding). They connect
+ * from loopback and often rewrite Host, so their traffic is refused outright.
+ * Keys are expected lower-cased, as Node delivers them.
+ */
+export function hasProxyHeaders(headers: Record<string, string | string[] | undefined>): boolean {
+  return PROXY_HEADERS.some((h) => headers[h] !== undefined);
+}
+
 export function sendJson(res: ServerResponse, status: number, body: unknown): void {
   if (res.headersSent) {
     res.end();
