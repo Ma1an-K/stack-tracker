@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Json } from '@/integrations/supabase/types';
@@ -81,6 +82,16 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
     fetchLiveSession();
   }, [fetchLiveSession]);
 
+  // The provider lives in the persistent shell and never remounts, so re-check
+  // when the user opens Home or the live screen: another member may have
+  // started the game or added buy-ins from their phone.
+  const { pathname } = useLocation();
+  const lastPath = useRef(pathname);
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    if (pathname === '/' || pathname === '/live-session') fetchLiveSession();
+  }, [pathname, fetchLiveSession]);
 
   // Re-check when the app comes back to the foreground — another member may
   // have added a buy-in from their phone while this tab was backgrounded.
