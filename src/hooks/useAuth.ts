@@ -248,7 +248,8 @@ export function useAuth() {
     if (!error && data) {
       setProfile(data as Profile);
     }
-    
+
+    if (error) logError({ kind: 'save_failed', action: 'useAuth.updateProfile', error, homegameId: currentHomegame?.id });
     return { error };
   };
 
@@ -274,6 +275,7 @@ export function useAuth() {
       }
     }
 
+    if (error) logError({ kind: 'save_failed', action: 'useAuth.deleteHomegame', error, homegameId });
     return { error };
   };
 
@@ -292,7 +294,8 @@ export function useAuth() {
       setCurrentHomegame(updatedHomegame);
       setHomegames(prev => prev.map(h => h.id === data.id ? updatedHomegame : h));
     }
-    
+
+    if (error) logError({ kind: 'save_failed', action: 'useAuth.updateHomegame', error, homegameId: currentHomegame.id });
     return { error };
   };
 
