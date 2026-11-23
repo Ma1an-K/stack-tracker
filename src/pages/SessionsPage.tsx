@@ -1,66 +1,90 @@
 import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useSessions } from '@/hooks/useSessions';
+import { useStaleWhileLoading } from '@/hooks/useStaleWhileLoading';
 import { SessionCard } from '@/components/sessions/SessionCard';
 import { SessionForm } from '@/components/sessions/SessionForm';
 import { LiveSessionCard } from '@/components/sessions/LiveSessionCard';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { SessionWithPlayers } from '@/types/database';
-import { Loader2, Calendar } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { CalendarDays, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/common/PageHeader';
+import { PageSkeleton } from '@/components/common/PageSkeleton';
+import { EmptyState } from '@/components/common/EmptyState';
+import { RefreshingDot } from '@/components/common/RefreshingDot';
 
 export function SessionsPage() {
   const { homegame } = useAuthContext();
+  const location = useLocation();
   const { players } = usePlayers(homegame?.id);
-  const { sessions, loading, updateSession, deleteSession, markSettled } = useSessions(homegame?.id);
+  const { sessions: liveSessions, loading, updateSession, deleteSession, markSettled } = useSessions(homegame?.id);
+  const { data: sessions, isFirstLoad, isRefreshing } = useStaleWhileLoading(
+    homegame?.id ? `sessions:${homegame.id}` : null,
+    liveSessions,
+    loading
+  );
   const [editingSession, setEditingSession] = useState<SessionWithPlayers | null>(null);
   const { liveSession } = useLiveSession();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  // Arriving straight after logging a session: open the newest one so the
+  // settlement is on screen without another tap.
+  const navState = location.state as { expandLatest?: boolean; expandSessionId?: string } | null;
+  const expandLatest = !!navState?.expandLatest;
+  const expandId = navState?.expandSessionId;
+
+  if (isFirstLoad) return <PageSkeleton rows={5} />;
 
   return (
-    <div className="space-y-5 max-w-3xl mx-auto animate-fade-in">
-      <div className="flex items-center gap-2">
-        <Calendar className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-lg font-semibold">Sessions</h1>
-        <span className="text-sm text-muted-foreground ml-auto tabular-nums">{sessions.length} total</span>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow={homegame?.name}
+        title="Sessions"
+        subtitle={
+          <span className="flex items-center gap-3">
+            <span className="tabular-nums">{sessions.length} logged</span>
+            <RefreshingDot show={isRefreshing} />
+          </span>
+        }
+      />
 
       {liveSession && (
-        <div className="space-y-2">
-          <span className="section-header">In Progress</span>
+        <section className="space-y-2">
+          <h2 className="section-header px-1">In progress</h2>
           <LiveSessionCard />
-        </div>
+        </section>
       )}
 
       {sessions.length === 0 ? (
-        <div className="text-center py-12">
-          <Calendar className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">No sessions yet.</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Create your first session using the "New Session" tab.
-          </p>
-        </div>
+        <EmptyState
+          icon={CalendarDays}
+          title="No sessions yet"
+          description="Start a live game to track buy-ins as you play, or log a game that's already finished."
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button asChild>
+                <Link to="/live-session">Start live game</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link to="/new-session">
+                  <Plus /> Log a result
+                </Link>
+              </Button>
+            </div>
+          }
+        />
       ) : (
         <div className="space-y-3">
-          {sessions.map((session) => (
+          {sessions.map((session, i) => (
             <SessionCard
               key={session.id}
               session={session}
               currency={homegame?.currency || '$'}
               homegameName={homegame?.name}
+              defaultExpanded={expandLatest && (expandId ? session.id === expandId : i === 0)}
               onEdit={() => setEditingSession(session)}
               onDelete={() => deleteSession(session.id)}
               onMarkSettled={(settled) => markSettled(session.id, settled)}
@@ -70,13 +94,14 @@ export function SessionsPage() {
       )}
 
       <Dialog open={!!editingSession} onOpenChange={() => setEditingSession(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Session</DialogTitle>
+            <DialogTitle>Edit session</DialogTitle>
           </DialogHeader>
           {editingSession && (
             <SessionForm
               players={players}
+              currency={homegame?.currency || '$'}
               existingSession={editingSession}
               onSubmit={(date, playerData, notes, payments) =>
                 updateSession(editingSession.id, date, playerData, notes, payments)

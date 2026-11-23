@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
 import { SessionWithPlayers, Player } from '@/types/database';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
+import { Trophy } from 'lucide-react';
+import { PageHeader } from '@/components/common/PageHeader';
+import { EmptyState } from '@/components/common/EmptyState';
+import { cn } from '@/lib/utils';
 import { TimeFrame, filterSessionsByTimeFrame, calculateLeaderboard } from '@/lib/leaderboard';
 import { formatCurrency, formatProfit } from '@/lib/settlement';
 import { computeHomegameBadges } from '@/lib/badges';
@@ -14,9 +16,11 @@ interface LeaderboardProps {
   sessions: SessionWithPlayers[];
   players: Player[];
   currency: string;
+  /** Optional slot rendered next to the title (e.g. a refreshing indicator). */
+  titleAside?: React.ReactNode;
 }
 
-export function Leaderboard({ sessions, players, currency }: LeaderboardProps) {
+export function Leaderboard({ sessions, players, currency, titleAside }: LeaderboardProps) {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('all');
   const [h2hOpponent, setH2hOpponent] = useState<Player | null>(null);
   const { user, homegame } = useAuthContext();
@@ -37,131 +41,126 @@ export function Leaderboard({ sessions, players, currency }: LeaderboardProps) {
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
-              Standings
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={timeFrame} onValueChange={(v) => setTimeFrame(v as TimeFrame)}>
-            <TabsList className="grid w-full grid-cols-4 bg-muted/50">
-              <TabsTrigger value="week" className="text-xs">Week</TabsTrigger>
-              <TabsTrigger value="month" className="text-xs">Month</TabsTrigger>
-              <TabsTrigger value="year" className="text-xs">Year</TabsTrigger>
-              <TabsTrigger value="all" className="text-xs">All Time</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <PageHeader eyebrow={homegame?.name} title="Standings" action={titleAside} />
+
+      <Tabs value={timeFrame} onValueChange={(v) => setTimeFrame(v as TimeFrame)}>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="week">Week</TabsTrigger>
+          <TabsTrigger value="month">Month</TabsTrigger>
+          <TabsTrigger value="year">Year</TabsTrigger>
+          <TabsTrigger value="all">All time</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {leaderboard.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No sessions found for this time period
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Trophy}
+          title="No results here yet"
+          description={timeFrame === 'all' ? 'Standings appear once the first session is logged.' : 'No sessions in this period. Try a longer time frame.'}
+        />
       ) : (
-        <div className="space-y-2">
+        <ol className="space-y-2" aria-label="Leaderboard. Tap a player for head-to-head.">
           {leaderboard.map((stat, index) => {
             const isTop3 = index < 3;
             const rankDisplay = `${index + 1}`.padStart(2, '0');
             const playerBadges = badgeMap.get(stat.player.id) || [];
+            const isMe = myPlayer?.id === stat.player.id;
+            const open = () => setH2hOpponent(stat.player);
 
             return (
-              <Card
+              <li
                 key={stat.player.id}
-                className={`transition-all duration-150 cursor-pointer hover:bg-muted/30 ${isTop3 ? 'border-border/80' : 'border-border/50'}`}
-                onClick={() => setH2hOpponent(stat.player)}
+                role="button"
+                tabIndex={0}
+                onClick={open}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    open();
+                  }
+                }}
+                aria-label={`${stat.player.name}, rank ${index + 1}, ${formatProfit(stat.netProfit, currency)}. Open head-to-head`}
+                className={cn(
+                  'surface pressable flex min-h-[68px] cursor-pointer items-center gap-3 px-3.5 py-3 hover:border-gold/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  index === 0 && 'border-gold/40 bg-[linear-gradient(100deg,hsl(var(--gold)/0.10),hsl(var(--card))_45%)]',
+                  isMe && 'ring-1 ring-gold/30'
+                )}
               >
-                <CardContent className="py-4">
-                  <div className="flex items-center gap-2">
-                    {/* Rank */}
-                    <div className={`w-7 flex-shrink-0 text-center font-mono text-sm ${isTop3 ? 'text-gold font-semibold' : 'text-muted-foreground'}`}>
-                      {rankDisplay}
-                    </div>
+                <span
+                  className={cn(
+                    'w-8 shrink-0 text-center tabular-nums',
+                    isTop3 ? 'font-display text-[1.5rem] font-semibold text-gold' : 'text-sm font-medium text-muted-foreground'
+                  )}
+                >
+                  {rankDisplay}
+                </span>
 
-                    {/* Player info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{stat.player.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {stat.sessionsPlayed} session{stat.sessionsPlayed !== 1 ? 's' : ''}
-                      </div>
-                    </div>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="truncate font-medium">{stat.player.name}</span>
+                    {isMe && <span className="shrink-0 rounded-full bg-gold/15 px-1.5 py-px text-[0.625rem] font-semibold uppercase tracking-wide text-gold">You</span>}
+                  </span>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {stat.sessionsPlayed} session{stat.sessionsPlayed !== 1 ? 's' : ''} · {formatProfit(stat.avgProfit, currency)} avg
+                  </span>
+                </span>
 
-                    {/* Badges — 2 max on mobile, 4 on desktop */}
-                    <div
-                      className="flex-shrink-0 flex items-center justify-end overflow-hidden max-w-[4.5rem] md:max-w-[10rem]"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      {playerBadges.length > 0 && (
-                        <PlayerBadges badges={playerBadges} currency={currency} size="sm" maxDisplay={2} />
-                      )}
-                    </div>
+                {/* Badges — 2 max on mobile, 4 on desktop */}
+                <span
+                  className="flex max-w-[4.5rem] shrink-0 items-center justify-end overflow-hidden md:max-w-[10rem]"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  {playerBadges.length > 0 && (
+                    <PlayerBadges badges={playerBadges} currency={currency} size="sm" maxDisplay={2} />
+                  )}
+                </span>
 
-                    {/* Net position */}
-                    <div className="w-20 flex-shrink-0 text-right md:w-32">
-                      <div className={`text-sm font-semibold tabular-nums flex items-center justify-end gap-1 ${stat.netProfit >= 0 ? 'profit' : 'loss'}`}>
-                        {stat.netProfit >= 0 ? (
-                          <TrendingUp className="h-3 w-3" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3" />
-                        )}
-                        {formatProfit(stat.netProfit, currency)}
-                      </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">
-                        {formatProfit(stat.avgProfit, currency)}/avg
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <span className={cn('w-[5.5rem] shrink-0 text-right text-[0.9375rem] font-semibold tabular-nums md:w-32', stat.netProfit >= 0 ? 'profit' : 'loss')}>
+                  {formatProfit(stat.netProfit, currency)}
+                </span>
+              </li>
             );
           })}
-        </div>
+        </ol>
       )}
 
       {/* Summary Stats */}
       {leaderboard.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <span className="section-header">Summary</span>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <section className="surface p-4 sm:p-5">
+          <h2 className="section-header mb-4">Summary</h2>
+          <div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-5">
               <div className="space-y-1">
-                <div className="text-2xl font-semibold tabular-nums">{filteredSessions.length}</div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Sessions</div>
+                <div className="font-display text-[1.75rem] leading-none font-semibold tabular-nums">{filteredSessions.length}</div>
+                <div className="text-[0.6875rem] text-muted-foreground uppercase tracking-[0.12em]">Sessions</div>
               </div>
               <div className="space-y-1">
-                <div className="text-2xl font-semibold tabular-nums">{leaderboard.length}</div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Players</div>
+                <div className="font-display text-[1.75rem] leading-none font-semibold tabular-nums">{leaderboard.length}</div>
+                <div className="text-[0.6875rem] text-muted-foreground uppercase tracking-[0.12em]">Players</div>
               </div>
               <div className="space-y-1">
-                <div className="text-2xl font-semibold tabular-nums text-gold">
+                <div className="font-display text-[1.75rem] leading-none font-semibold tabular-nums text-gold">
                   {formatCurrency(
                     leaderboard.reduce((sum, s) => sum + s.totalBuyIn, 0),
                     currency
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Volume</div>
+                <div className="text-[0.6875rem] text-muted-foreground uppercase tracking-[0.12em]">Total Volume</div>
               </div>
               <div className="space-y-1">
-                <div className="text-2xl font-semibold tabular-nums profit">
+                <div className="font-display text-[1.75rem] leading-none font-semibold tabular-nums profit">
                   {formatCurrency(
                     Math.max(...leaderboard.map(s => s.netProfit)),
                     currency
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Top Earner</div>
+                <div className="text-[0.6875rem] text-muted-foreground uppercase tracking-[0.12em]">Top Earner</div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
       {h2hOpponent && (

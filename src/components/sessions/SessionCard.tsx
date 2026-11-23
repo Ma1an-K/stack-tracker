@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { ActionError, SessionWithPlayers } from '@/types/database';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
-import { ChevronDown, ChevronUp, Edit, Trash2, CheckCircle2, ArrowRight, Share2, Copy, Check } from 'lucide-react';
+import { ChevronDown, Edit, Trash2, CheckCircle2, ArrowRight, Share2, Check, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { calculateSettlements, formatCurrency, formatProfit } from '@/lib/settlement';
 import {
@@ -26,6 +25,8 @@ interface SessionCardProps {
   onEdit?: () => void;
   onDelete?: () => Promise<{ error: ActionError }>;
   onMarkSettled?: (settled: boolean) => Promise<{ error: ActionError }>;
+  /** Open on first render (e.g. the session that was just logged). */
+  defaultExpanded?: boolean;
 }
 
 export function SessionCard({
@@ -35,8 +36,18 @@ export function SessionCard({
   onEdit,
   onDelete,
   onMarkSettled,
+  defaultExpanded = false,
 }: SessionCardProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [settling, setSettling] = useState(false);
+  const contentId = `session-${session.id}`;
+
+  const handleMarkSettled = async () => {
+    if (!onMarkSettled) return;
+    setSettling(true);
+    await onMarkSettled(!session.is_settled);
+    setSettling(false);
+  };
   const [copied, setCopied] = useState(false);
 
   const payments = session.session_payments ?? [];
@@ -94,46 +105,58 @@ export function SessionCard({
     }
   };
 
+  const sorted = [...session.session_players].sort(
+    (a, b) => Number(b.cash_out) - Number(b.buy_in) - (Number(a.cash_out) - Number(a.buy_in))
+  );
+  const top = sorted[0];
+  const topProfit = top ? Number(top.cash_out) - Number(top.buy_in) : 0;
+
   return (
-    <Card className="transition-all duration-150 hover:border-border/80">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="font-medium">
-              {format(parseISO(session.date), 'EEEE, MMM d, yyyy')}
-            </div>
-            <div className="flex items-center gap-3 mt-1.5">
-              <span className="text-sm text-muted-foreground">
-                {session.session_players.length} players
-              </span>
-              <span className="text-sm font-medium text-gold tabular-nums">
-                {formatCurrency(totalPot, currency)}
-              </span>
-              {session.is_settled && (
-                <Badge variant="secondary" className="text-xs font-normal">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Settled
-                </Badge>
-              )}
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setExpanded(!expanded)}
-            className="h-8 w-8 shrink-0"
-          >
-            {expanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
+    <article className={cn('surface overflow-hidden transition-colors', expanded && 'border-gold/30')}>
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+        aria-controls={contentId}
+        className="flex w-full min-h-[72px] items-center gap-3 p-4 text-left transition-colors hover:bg-accent/40 focus:outline-none focus-visible:bg-accent/50"
+      >
+        <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl border border-border/70 bg-secondary/60 leading-none">
+          <span className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-gold">{format(parseISO(session.date), 'MMM')}</span>
+          <span className="font-display text-[1.35rem] font-semibold tabular-nums">{format(parseISO(session.date), 'd')}</span>
         </div>
-      </CardHeader>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-semibold">{format(parseISO(session.date), 'EEEE')}</span>
+            {session.is_settled && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/12 px-2 py-0.5 text-[0.6875rem] font-semibold text-success">
+                <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                Settled
+              </span>
+            )}
+          </div>
+          <div className="mt-0.5 flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
+            <span>{session.session_players.length} players</span>
+            <span aria-hidden="true">·</span>
+            <span className="font-medium tabular-nums text-gold">{formatCurrency(totalPot, currency)}</span>
+            {!expanded && top && topProfit > 0 && (
+              <>
+                <span aria-hidden="true" className="hidden min-[380px]:inline">·</span>
+                <span className="hidden truncate min-[380px]:inline">
+                  {top.player.name} <span className="profit tabular-nums">{formatProfit(topProfit, currency)}</span>
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+        <ChevronDown
+          className={cn('h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200', expanded && 'rotate-180 text-gold')}
+          aria-hidden="true"
+        />
+        <span className="sr-only">{expanded ? 'Hide details' : 'Show results and settlements'}</span>
+      </button>
 
       {expanded && (
-        <CardContent className="space-y-5 pt-0 animate-fade-in">
+        <div id={contentId} className="space-y-5 border-t border-border/50 p-4 pt-4 animate-fade-in">
           {session.notes && (
             <p className="text-sm text-muted-foreground">{session.notes}</p>
           )}
@@ -141,14 +164,8 @@ export function SessionCard({
           {/* Results - Ledger style */}
           <div className="space-y-3">
             <span className="section-header">Results</span>
-            <div className="rounded-lg bg-muted/30 divide-y divide-border/50">
-              {session.session_players
-                .sort((a, b) => {
-                  const profitA = Number(a.cash_out) - Number(a.buy_in);
-                  const profitB = Number(b.cash_out) - Number(b.buy_in);
-                  return profitB - profitA;
-                })
-                .map((sp) => {
+            <div className="rounded-xl border border-border/50 bg-muted/40 divide-y divide-border/50">
+              {sorted.map((sp) => {
                   const profit = Number(sp.cash_out) - Number(sp.buy_in);
                   return (
                     <div
@@ -178,7 +195,7 @@ export function SessionCard({
                 {payments.map(p => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/30 text-sm"
+                    className="flex min-h-[44px] items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/40 text-sm"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
                     <span className="font-medium">{p.from_player.name}</span>
@@ -204,7 +221,7 @@ export function SessionCard({
                   {settlements.map((settlement, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted/30 text-sm"
+                      className="flex min-h-[44px] items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/40 text-sm"
                     >
                       <span className="font-medium">{settlement.from.name}</span>
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -216,7 +233,7 @@ export function SessionCard({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground px-3 py-2.5 rounded-lg bg-muted/30">
+                <p className="text-sm text-muted-foreground px-3 py-2.5 rounded-xl bg-muted/40">
                   All settled during the game
                 </p>
               )}
@@ -224,38 +241,38 @@ export function SessionCard({
           )}
 
           {/* Actions */}
-          <div className="flex flex-wrap gap-2 pt-3 border-t border-border/50">
-            <Button variant="secondary" size="sm" onClick={handleShare}>
-              {copied ? <Check className="h-4 w-4 mr-1.5" /> : <Share2 className="h-4 w-4 mr-1.5" />}
+          <div className="grid grid-cols-2 gap-2 border-t border-border/50 pt-4">
+            <Button variant="secondary" onClick={handleShare}>
+              {copied ? <Check /> : <Share2 />}
               {copied ? 'Copied' : 'Share'}
             </Button>
             {onMarkSettled && (
               <Button
                 variant={session.is_settled ? 'secondary' : 'default'}
-                size="sm"
-                onClick={() => onMarkSettled(!session.is_settled)}
+                onClick={handleMarkSettled}
+                disabled={settling}
               >
-                <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                {session.is_settled ? 'Unsettle' : 'Mark Settled'}
+                {settling ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
+                {session.is_settled ? 'Unsettle' : 'Mark settled'}
               </Button>
             )}
             {onEdit && (
-              <Button variant="secondary" size="sm" onClick={onEdit}>
-                <Edit className="h-4 w-4 mr-1.5" />
+              <Button variant="ghost" onClick={onEdit}>
+                <Edit />
                 Edit
               </Button>
             )}
             {onDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="secondary" size="sm" className="text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4 mr-1.5" />
+                  <Button variant="ghost" className="text-destructive hover:text-destructive">
+                    <Trash2 />
                     Delete
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Session</AlertDialogTitle>
+                    <AlertDialogTitle>Delete this session?</AlertDialogTitle>
                     <AlertDialogDescription>
                       Are you sure you want to delete this session? This action cannot be undone.
                     </AlertDialogDescription>
@@ -264,7 +281,7 @@ export function SessionCard({
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => onDelete()}
-                      className="bg-destructive hover:bg-destructive/90"
+                      className="bg-destructive bg-none text-destructive-foreground shadow-none hover:bg-destructive/90"
                     >
                       Delete
                     </AlertDialogAction>
@@ -273,8 +290,8 @@ export function SessionCard({
               </AlertDialog>
             )}
           </div>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </article>
   );
 }

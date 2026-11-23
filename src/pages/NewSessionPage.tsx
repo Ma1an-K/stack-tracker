@@ -6,9 +6,11 @@ import { useSessions } from '@/hooks/useSessions';
 import { SessionPaymentInput } from '@/types/database';
 import { SessionForm } from '@/components/sessions/SessionForm';
 import { LiveSessionCard } from '@/components/sessions/LiveSessionCard';
-import { PlusCircle, AlertCircle, Radio, ChevronRight, Flag } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Radio, NotebookPen, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/common/PageHeader';
+import { PageSkeleton } from '@/components/common/PageSkeleton';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export function NewSessionPage() {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export function NewSessionPage() {
   const { liveSession, finish } = useLiveSession();
   const { activePlayers, loading: playersLoading, addPlayer } = usePlayers(homegame?.id);
   const { createSession } = useSessions(homegame?.id, homegame?.name);
+  const currency = homegame?.currency || '$';
 
   // Arriving from "End Session & Cash Out": pre-seed the normal form with the
   // live buy-ins and close the draft once the real session is logged.
@@ -31,70 +34,85 @@ export function NewSessionPage() {
     const result = await createSession(date, players, notes, payments);
     if (!result.error) {
       if (fromLive) await finish();
-      navigate('/');
+      // Land on the result: Sessions opens the newest card with its settlement.
+      const newId = (result as { session?: { id?: string } }).session?.id;
+      navigate('/sessions', { state: { expandLatest: true, expandSessionId: newId } });
     }
     return result;
   };
 
-  if (activePlayers.length < 2 && !playersLoading) {
-    return (
-      <div className="space-y-6 max-w-3xl mx-auto">
-        <div className="flex items-center gap-2">
-          <PlusCircle className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">New Session</h1>
-        </div>
+  // Players load before the form renders, so chips don't pop in.
+  if (playersLoading && activePlayers.length === 0) return <PageSkeleton rows={3} />;
 
-        <Card>
-          <CardContent className="py-12 text-center">
-            <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">
-              You need at least 2 active players to create a session.
-            </p>
-            {isOwner ? (
+  if (activePlayers.length < 2) {
+    return (
+      <div className="space-y-6">
+        <PageHeader eyebrow={homegame?.name} title="New session" />
+        <EmptyState
+          icon={Users}
+          title="Seat at least two players"
+          description="A session needs two or more active players in this homegame."
+          action={
+            isOwner ? (
               <Button asChild>
-                <Link to="/players">Add Players</Link>
+                <Link to="/players">Add players</Link>
               </Button>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Ask the homegame owner to add players.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              <p className="text-sm text-muted-foreground">Ask the homegame owner to add players.</p>
+            )
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="flex items-center gap-2">
-        {fromLive ? <Flag className="h-6 w-6 text-primary" /> : <PlusCircle className="h-6 w-6 text-primary" />}
-        <h1 className="text-2xl font-bold">{fromLive ? 'Cash Out' : 'New Session'}</h1>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow={homegame?.name}
+        title={fromLive ? 'Cash out' : 'New session'}
+        subtitle={
+          fromLive
+            ? 'Buy-ins, early cash-outs and payments are carried over. Enter the remaining cash-outs, then log it.'
+            : undefined
+        }
+      />
 
-      {fromLive ? (
-        <p className="text-sm text-muted-foreground -mt-2">
-          Buy-ins, early cash-outs and payments are carried over from the live session. Enter the remaining cash-outs, then log it.
-        </p>
-      ) : liveSession ? (
-        <LiveSessionCard />
-      ) : (
-        <Link
-          to="/live-session"
-          className="flex items-center gap-3 rounded-lg border border-dashed border-gold/40 bg-gold/5 p-3 transition-colors hover:bg-gold/10"
-        >
-          <Radio className="h-5 w-5 shrink-0 text-gold" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">Playing right now?</p>
-            <p className="text-xs text-muted-foreground">Track buy-ins live as the game runs, cash out at the end.</p>
+      {!fromLive &&
+        (liveSession ? (
+          <LiveSessionCard />
+        ) : (
+          <div role="tablist" aria-label="Session type" className="grid grid-cols-2 gap-1 rounded-xl border border-border/60 bg-muted p-1">
+            <Link
+              to="/live-session"
+              role="tab"
+              aria-selected="false"
+              className="pressable flex min-h-[52px] items-center justify-center gap-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Radio className="h-4 w-4 text-gold" aria-hidden="true" />
+              <span className="text-left leading-tight">
+                Live game
+                <span className="block text-[0.6875rem] font-normal">Playing now</span>
+              </span>
+            </Link>
+            <span
+              role="tab"
+              aria-selected="true"
+              className="flex min-h-[52px] items-center justify-center gap-2 rounded-lg bg-secondary text-sm font-semibold text-gold shadow-[inset_0_1px_0_hsl(40_70%_75%/0.08),0_2px_8px_-4px_hsl(0_0%_0%/0.8)]"
+            >
+              <NotebookPen className="h-4 w-4" aria-hidden="true" />
+              <span className="text-left leading-tight">
+                Log result
+                <span className="block text-[0.6875rem] font-normal text-muted-foreground">Game finished</span>
+              </span>
+            </span>
           </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-        </Link>
-      )}
+        ))}
 
       <SessionForm
         key={fromLive ? liveSession?.id : 'blank'}
         players={activePlayers}
+        currency={currency}
         onSubmit={handleSubmit}
         onAddPlayer={isOwner ? addPlayer : undefined}
         initialPlayers={fromLive ? liveSession?.players : undefined}

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2, UserPlus, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
@@ -40,9 +39,11 @@ interface SessionFormProps {
   initialPlayers?: { player_id: string; buy_in: number; cash_out?: number }[];
   initialPayments?: SessionPaymentInput[];
   initialNotes?: string;
+  /** Homegame currency symbol for totals (display only). */
+  currency?: string;
 }
 
-export function SessionForm({ players, existingSession, onSubmit, onCancel, onAddPlayer, initialPlayers, initialPayments, initialNotes }: SessionFormProps) {
+export function SessionForm({ players, existingSession, onSubmit, onCancel, onAddPlayer, initialPlayers, initialPayments, initialNotes, currency = '$' }: SessionFormProps) {
   const isMobile = useIsMobile();
   const [date, setDate] = useState(
     existingSession?.date || format(new Date(), 'yyyy-MM-dd')
@@ -220,145 +221,150 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
     }
   };
 
+  const hasEmpty = selectedPlayers.some(p => p.buy_in === '' || p.cash_out === '');
+  const diff = totalBuyIn - totalCashOut;
+  const money = (n: number) => `${currency}${Math.abs(n).toFixed(2)}`;
+  const status: { tone: 'muted' | 'bad' | 'good'; text: string } =
+    selectedPlayers.length < 2
+      ? { tone: 'muted', text: `Add ${2 - selectedPlayers.length} more player${selectedPlayers.length === 1 ? '' : 's'}` }
+      : hasEmpty
+        ? { tone: 'muted', text: 'Fill in every buy-in and cash-out' }
+        : !isBalanced
+          ? { tone: 'bad', text: `Off by ${money(diff)}: cash-outs ${diff > 0 ? 'short' : 'over'}` }
+          : { tone: 'good', text: `Balanced · ${money(totalBuyIn)} in play` };
+  const inDialog = !!onCancel;
+  const fieldH = isMobile ? 'h-12' : 'h-11';
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <Card>
-        <CardHeader className="pb-3">
-          <span className="section-header">{existingSession ? 'Edit Session' : 'Session Details'}</span>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <section className="surface space-y-4 p-4 sm:p-5">
+        <h2 className="section-header">{existingSession ? 'Session details' : 'When'}</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="date" className="text-sm">Date</Label>
+            <Label htmlFor="date">Date</Label>
             <Input
               id="date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className={cn("bg-muted/30", isMobile && "h-10")}
+              className={fieldH}
             />
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-sm">Notes (optional)</Label>
+            <Label htmlFor="notes">Notes <span className="text-muted-foreground">(optional)</span></Label>
             <Textarea
               id="notes"
-              placeholder="Any notes about this session..."
+              placeholder="Anything worth remembering…"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="bg-muted/30 resize-none"
+              rows={1}
+              className="min-h-[48px] resize-none"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <span className="section-header">Players</span>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {availablePlayers.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Add Players</Label>
-              <div className="flex flex-wrap gap-2">
-                {availablePlayers.map((player) => (
-                  <Button
-                    key={player.id}
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => addPlayer(player.id)}
-                    className={isMobile ? "h-9" : "h-8"}
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
-                    {player.name}
-                  </Button>
-                ))}
-                {onAddPlayer && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddPlayer(!showAddPlayer)}
-                    className={cn("border-dashed", isMobile ? "h-9" : "h-8")}
-                  >
-                    <UserPlus className="h-3.5 w-3.5 mr-1" />
-                    New Player
-                  </Button>
-                )}
-              </div>
-            </div>
+      <section className="surface space-y-4 p-4 sm:p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="section-header">Players</h2>
+          {selectedPlayers.length > 0 && (
+            <span className="text-xs text-muted-foreground tabular-nums">{selectedPlayers.length} at the table</span>
           )}
+        </div>
 
-          {availablePlayers.length === 0 && onAddPlayer && (
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Add Players</Label>
-              <Button
+        {(availablePlayers.length > 0 || onAddPlayer) && (
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Add players">
+            {availablePlayers.map((player) => (
+              <button
+                key={player.id}
                 type="button"
-                variant="outline"
-                size="sm"
+                onClick={() => addPlayer(player.id)}
+                className="pressable inline-flex h-11 items-center gap-1.5 rounded-full border border-border/80 bg-secondary/70 px-4 text-sm font-medium hover:border-gold/40 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Plus className="h-4 w-4 text-gold" aria-hidden="true" />
+                {player.name}
+              </button>
+            ))}
+            {onAddPlayer && (
+              <button
+                type="button"
                 onClick={() => setShowAddPlayer(!showAddPlayer)}
-                className={cn("border-dashed", isMobile ? "h-9" : "h-8")}
+                aria-expanded={showAddPlayer}
+                className="pressable inline-flex h-11 items-center gap-1.5 rounded-full border border-dashed border-gold/40 px-4 text-sm font-medium text-gold hover:bg-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <UserPlus className="h-3.5 w-3.5 mr-1" />
-                New Player
-              </Button>
-            </div>
-          )}
+                <UserPlus className="h-4 w-4" aria-hidden="true" />
+                New player
+              </button>
+            )}
+          </div>
+        )}
 
-          {showAddPlayer && onAddPlayer && (
-            <div className="flex gap-2 p-3 rounded-lg bg-muted/30 border border-dashed border-border">
-              <Input
-                placeholder="Player name"
-                value={newPlayerName}
-                onChange={(e) => setNewPlayerName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNewPlayer())}
-                className={cn("flex-1", isMobile ? "h-10" : "h-9")}
-                autoFocus
-              />
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleAddNewPlayer}
-                disabled={addingPlayer || !newPlayerName.trim()}
-                className={isMobile ? "h-10" : "h-9"}
-              >
-                {addingPlayer ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  'Add'
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => { setShowAddPlayer(false); setNewPlayerName(''); }}
-                className={isMobile ? "h-10" : "h-9"}
-              >
-                Cancel
-              </Button>
-            </div>
-          )}
+        {showAddPlayer && onAddPlayer && (
+          <div className="flex gap-2 rounded-xl border border-dashed border-gold/30 bg-muted/40 p-2.5">
+            <Input
+              placeholder="Player name"
+              aria-label="New player name"
+              value={newPlayerName}
+              onChange={(e) => setNewPlayerName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNewPlayer())}
+              className="h-11 flex-1"
+              autoFocus
+            />
+            <Button
+              type="button"
+              onClick={handleAddNewPlayer}
+              disabled={addingPlayer || !newPlayerName.trim()}
+            >
+              {addingPlayer ? <Loader2 className="animate-spin" /> : 'Add'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Cancel new player"
+              onClick={() => { setShowAddPlayer(false); setNewPlayerName(''); }}
+            >
+              <Trash2 />
+            </Button>
+          </div>
+        )}
 
-          {selectedPlayers.length === 0 ? (
-            <p className="text-muted-foreground text-center py-6 text-sm">
-              Select players to add to this session
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {selectedPlayers.map((entry) => (
-                <div
-                  key={entry.player_id}
-                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/30"
-                >
-                  <span className="font-medium text-sm min-w-[70px] truncate">
-                    {getPlayerName(entry.player_id)}
-                  </span>
-                  <div className="flex-1 flex gap-2">
-                    <div className="flex-1">
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Buy-in</Label>
+        {selectedPlayers.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
+            Tap a name above to seat them
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {selectedPlayers.map((entry) => {
+              const bi = parseFloat(entry.buy_in);
+              const co = parseFloat(entry.cash_out);
+              const net = !isNaN(bi) && !isNaN(co) ? co - bi : null;
+              return (
+                <li key={entry.player_id} className="rounded-xl border border-border/60 bg-muted/40 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">{getPlayerName(entry.player_id)}</span>
+                    <span className="flex items-center gap-1">
+                      {net !== null && (
+                        <span className={cn('text-sm font-semibold tabular-nums', net >= 0 ? 'profit' : 'loss')}>
+                          {net >= 0 ? '+' : '-'}{money(net)}
+                        </span>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removePlayer(entry.player_id)}
+                        aria-label={`Remove ${getPlayerName(entry.player_id)}`}
+                        className="-mr-1.5 h-10 w-10 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 />
+                      </Button>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="space-y-1">
+                      <span className="block text-[0.6875rem] font-medium uppercase tracking-[0.1em] text-muted-foreground">Buy-in</span>
                       <Input
                         type="number"
                         inputMode="decimal"
@@ -366,14 +372,12 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
                         min="0"
                         placeholder="0.00"
                         value={entry.buy_in}
-                        onChange={(e) =>
-                          updatePlayer(entry.player_id, 'buy_in', e.target.value)
-                        }
-                        className={cn("bg-background/50", isMobile ? "h-10" : "h-9")}
+                        onChange={(e) => updatePlayer(entry.player_id, 'buy_in', e.target.value)}
+                        className={cn(fieldH, 'tabular-nums')}
                       />
-                    </div>
-                    <div className="flex-1">
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Cash-out</Label>
+                    </label>
+                    <label className="space-y-1">
+                      <span className="block text-[0.6875rem] font-medium uppercase tracking-[0.1em] text-muted-foreground">Cash-out</span>
                       <Input
                         type="number"
                         inputMode="decimal"
@@ -381,98 +385,52 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
                         min="0"
                         placeholder="0.00"
                         value={entry.cash_out}
-                        onChange={(e) =>
-                          updatePlayer(entry.player_id, 'cash_out', e.target.value)
-                        }
-                        className={cn("bg-background/50", isMobile ? "h-10" : "h-9")}
+                        onChange={(e) => updatePlayer(entry.player_id, 'cash_out', e.target.value)}
+                        className={cn(fieldH, 'tabular-nums')}
                       />
-                    </div>
+                    </label>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removePlayer(entry.player_id)}
-                    className="text-muted-foreground hover:text-destructive h-8 w-8"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
-          {selectedPlayers.length > 0 && (
-            <div className="pt-4 border-t border-border/50 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Buy-in</span>
-                <span className="font-medium tabular-nums">${totalBuyIn.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Cash-out</span>
-                <span className="font-medium tabular-nums">${totalCashOut.toFixed(2)}</span>
-              </div>
-              {totalBuyIn > 0 && (
-                <div className={`flex items-center gap-2 mt-3 text-sm ${isBalanced ? 'text-success' : 'text-destructive'}`}>
-                  {isBalanced ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Balanced</span>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="h-4 w-4" />
-                      <span>
-                        Difference: ${Math.abs(totalBuyIn - totalCashOut).toFixed(2)}
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
+        {selectedPlayers.length > 0 && (
+          <dl className="grid grid-cols-2 gap-2 border-t border-border/50 pt-4 text-sm">
+            <div className="rounded-xl bg-muted/40 px-3 py-2">
+              <dt className="text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">Total buy-in</dt>
+              <dd className="font-semibold tabular-nums">{money(totalBuyIn)}</dd>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="rounded-xl bg-muted/40 px-3 py-2">
+              <dt className="text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">Total cash-out</dt>
+              <dd className="font-semibold tabular-nums">{money(totalCashOut)}</dd>
+            </div>
+          </dl>
+        )}
+      </section>
 
       {selectedPlayers.length >= 2 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <span className="section-header">Payments made</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addPayment}
-                className={cn("border-dashed", isMobile ? "h-9" : "h-8")}
-              >
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Add Payment
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              Cash that already changed hands during the game, like someone paying their loss before leaving. These are subtracted from the settlements.
-            </p>
-            {payments.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4 text-sm">
-                No payments recorded
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {payments.map(entry => (
-                  <div
-                    key={entry.key}
-                    className="flex flex-wrap items-end gap-2 p-3 rounded-lg bg-muted/30"
-                  >
-                    <div className="flex-1 min-w-[120px]">
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">From</Label>
-                      <Select
-                        value={entry.from_player_id}
-                        onValueChange={v => updatePayment(entry.key, 'from_player_id', v)}
-                      >
-                        <SelectTrigger className={cn("bg-background/50", isMobile ? "h-10" : "h-9")}>
+        <section className="surface space-y-3 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="section-header">Paid during the game</h2>
+            <Button type="button" variant="outline" size="sm" onClick={addPayment} className="border-dashed">
+              <Plus />
+              Add payment
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Cash that already changed hands, like someone paying their loss before leaving. It is subtracted from the settlements.
+          </p>
+          {payments.length > 0 && (
+            <ul className="space-y-2">
+              {payments.map(entry => (
+                <li key={entry.key} className="space-y-2 rounded-xl border border-border/60 bg-muted/40 p-3">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                    <div className="min-w-0 space-y-1">
+                      <span className="block text-[0.6875rem] font-medium uppercase tracking-[0.1em] text-muted-foreground">From</span>
+                      <Select value={entry.from_player_id} onValueChange={v => updatePayment(entry.key, 'from_player_id', v)}>
+                        <SelectTrigger className={fieldH} aria-label="Payer">
                           <SelectValue placeholder="Payer" />
                         </SelectTrigger>
                         <SelectContent>
@@ -484,14 +442,11 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
                         </SelectContent>
                       </Select>
                     </div>
-                    <ArrowRight className="h-4 w-4 mb-2.5 text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-[120px]">
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">To</Label>
-                      <Select
-                        value={entry.to_player_id}
-                        onValueChange={v => updatePayment(entry.key, 'to_player_id', v)}
-                      >
-                        <SelectTrigger className={cn("bg-background/50", isMobile ? "h-10" : "h-9")}>
+                    <ArrowRight className="mb-3.5 h-4 w-4 shrink-0 text-gold" aria-hidden="true" />
+                    <div className="min-w-0 space-y-1">
+                      <span className="block text-[0.6875rem] font-medium uppercase tracking-[0.1em] text-muted-foreground">To</span>
+                      <Select value={entry.to_player_id} onValueChange={v => updatePayment(entry.key, 'to_player_id', v)}>
+                        <SelectTrigger className={fieldH} aria-label="Recipient">
                           <SelectValue placeholder="Recipient" />
                         </SelectTrigger>
                         <SelectContent>
@@ -505,55 +460,70 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="w-24">
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Amount</Label>
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={entry.amount}
-                        onChange={e => updatePayment(entry.key, 'amount', e.target.value)}
-                        className={cn("bg-background/50", isMobile ? "h-10" : "h-9")}
-                      />
-                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0"
+                      placeholder={`Amount (${currency})`}
+                      aria-label="Amount"
+                      value={entry.amount}
+                      onChange={e => updatePayment(entry.key, 'amount', e.target.value)}
+                      className={cn(fieldH, 'flex-1 tabular-nums')}
+                    />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => removePayment(entry.key)}
-                      className="text-muted-foreground hover:text-destructive h-8 w-8 mb-0.5"
+                      aria-label="Remove payment"
+                      className="text-muted-foreground hover:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 />
                     </Button>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       )}
 
-      <div className="flex gap-3">
-        {onCancel && (
-          <Button 
-            type="button" 
-            variant="secondary" 
-            onClick={onCancel} 
-            className={cn("flex-1", isMobile && "h-11")}
-          >
-            Cancel
-          </Button>
+      {/* Sticky action bar with a live explanation of what's missing */}
+      <div
+        className={cn(
+          'sticky z-10 -mx-1 rounded-2xl border border-border/70 bg-[hsl(var(--popover)/0.92)] p-2.5 shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.95)] backdrop-blur-xl',
+          inDialog ? 'bottom-0' : 'bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+0.75rem)] md:bottom-4'
         )}
-        <Button
-          type="submit"
-          className={cn("flex-1", isMobile && "h-11")}
-          disabled={submitting || selectedPlayers.length < 2 || !isBalanced}
+      >
+        <p
+          role="status"
+          className={cn(
+            'mb-2 flex items-center justify-center gap-1.5 text-[0.8125rem] font-medium',
+            status.tone === 'good' ? 'text-success' : status.tone === 'bad' ? 'text-destructive' : 'text-muted-foreground'
+          )}
         >
-          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {existingSession ? 'Update Session' : 'Log Session'}
-        </Button>
+          {status.tone === 'good' ? <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> : status.tone === 'bad' ? <AlertCircle className="h-4 w-4" aria-hidden="true" /> : null}
+          <span className="tabular-nums">{status.text}</span>
+        </p>
+        <div className="flex gap-2">
+          {onCancel && (
+            <Button type="button" variant="secondary" size="lg" onClick={onCancel} className="flex-1">
+              Cancel
+            </Button>
+          )}
+          <Button
+            type="submit"
+            size="lg"
+            className="flex-[2]"
+            disabled={submitting || selectedPlayers.length < 2 || !isBalanced}
+          >
+            {submitting && <Loader2 className="animate-spin" />}
+            {existingSession ? 'Save changes' : 'Log session'}
+          </Button>
+        </div>
       </div>
     </form>
   );
