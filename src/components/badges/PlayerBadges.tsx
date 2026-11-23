@@ -52,7 +52,8 @@ function BadgePill({ playerBadge, currency, size }: { playerBadge: PlayerBadge; 
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className={`inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/50
+          aria-label={`${badge.name} badge`}
+          className={`relative inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/50 before:absolute before:-inset-1.5 before:content-['']
             hover:bg-muted hover:border-border transition-colors cursor-pointer select-none
             ${isSmall ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-sm'}
             ${badgeImg ? '!border-none !bg-transparent !p-0' : ''}`}
@@ -105,7 +106,8 @@ function OverflowBadges({ badges, currency, count, size }: { badges: PlayerBadge
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className={`inline-flex items-center rounded-full border border-border/60 bg-muted/50 
+          aria-label={`Show ${count} more badges`}
+          className={`relative inline-flex items-center rounded-full border border-border/60 bg-muted/50 before:absolute before:-inset-1.5 before:content-['']
             hover:bg-muted hover:border-border transition-colors cursor-pointer select-none text-muted-foreground
             ${isSmall ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-sm'}`}
         >

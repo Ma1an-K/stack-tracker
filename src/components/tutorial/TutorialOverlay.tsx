@@ -1,5 +1,5 @@
 // src/components/tutorial/TutorialOverlay.tsx
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { TourStep } from './tours';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -58,6 +58,20 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
     };
   }, [measureTarget]);
 
+  // Keyboard: focus the step's main action so Enter/Space continues; Escape skips.
+  const primaryRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const id = setTimeout(() => primaryRef.current?.focus({ preventScroll: true }), 80);
+    return () => clearTimeout(id);
+  }, [currentStep]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onSkip();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onSkip]);
+
   if (!step) return null;
 
   // Suppress render while auto-skip effect fires
@@ -81,6 +95,8 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
             transform: 'translate(-50%, -50%)',
             width: cardW,
           }}
+          role="dialog"
+          aria-labelledby="tour-title"
           className="rounded-2xl border border-gold/30 bg-popover p-5 shadow-[0_20px_50px_-16px_rgb(0_0_0/0.95)]"
         >
           <div className="flex items-center justify-between mb-3">
@@ -89,19 +105,20 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
             </span>
             <button
               onClick={onSkip}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="-mr-2 -mt-1 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Skip tutorial"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
-          <p className="font-semibold text-sm mb-2">{step.title}</p>
+          <p id="tour-title" className="font-semibold text-sm mb-2">{step.title}</p>
           {installPrompt.platform === 'android' ? (
             <>
               <p className="text-xs text-muted-foreground leading-relaxed mb-4">
                 {step.description}
               </p>
               <Button
+                ref={primaryRef}
                 className="w-full mb-2"
                 onClick={() => {
                   installPrompt.trigger?.();
@@ -118,6 +135,7 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
             </p>
           )}
           <button
+            ref={installPrompt.platform === 'android' ? undefined : primaryRef}
             onClick={onSkip}
             className="w-full min-h-[44px] text-sm text-muted-foreground hover:text-foreground transition-colors text-center"
           >
@@ -172,6 +190,9 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
           width: tooltipW,
           transition: 'top 0.2s, left 0.2s',
         }}
+        role="dialog"
+        aria-labelledby="tour-title"
+        aria-describedby="tour-desc"
         className="rounded-2xl border border-gold/30 bg-popover p-4 shadow-[0_20px_50px_-16px_rgb(0_0_0/0.95)]"
       >
         <div className="flex items-center justify-between mb-1">
@@ -183,11 +204,11 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
             className="-mr-2 -mt-1 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Skip tutorial"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
-        <p className="font-display text-xl font-semibold mb-1">{step.title}</p>
-        <p className="text-[0.8125rem] text-muted-foreground leading-relaxed">{step.description}</p>
+        <p id="tour-title" className="font-display text-xl font-semibold mb-1">{step.title}</p>
+        <p id="tour-desc" className="text-[0.8125rem] text-muted-foreground leading-relaxed">{step.description}</p>
         <div className="flex items-center justify-between mt-3">
           <Button
             variant="ghost"
@@ -198,6 +219,7 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
             Skip tour
           </Button>
           <Button
+            ref={primaryRef}
             size="sm"
             onClick={onNext}
           >

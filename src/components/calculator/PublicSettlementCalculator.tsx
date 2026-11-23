@@ -122,7 +122,7 @@ export function PublicSettlementCalculator() {
                 onChange={e => updatePlayer(p.id, { name: e.target.value })}
                 placeholder={`Player ${idx + 1}`}
                 aria-label={`Player ${idx + 1} name`}
-                className="bg-transparent border border-transparent focus:border-[hsl(var(--gold)/0.35)] focus:outline-none rounded-md px-2 py-2 text-base sm:text-sm"
+                className="min-h-[44px] bg-transparent border border-transparent focus:border-[hsl(var(--gold)/0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-md px-2 py-2 text-base sm:text-sm"
               />
               <div className="grid grid-cols-2 sm:contents gap-2">
                 <label className="sm:hidden text-xs text-muted-foreground self-center">Buy-in</label>
@@ -145,9 +145,9 @@ export function PublicSettlementCalculator() {
                 onClick={() => removePlayer(p.id)}
                 disabled={players.length <= 2}
                 aria-label={`Remove ${p.name || `Player ${idx + 1}`}`}
-                className="justify-self-end sm:justify-self-center text-muted-foreground hover:text-destructive disabled:opacity-30 disabled:cursor-not-allowed h-9 w-9 rounded-md inline-flex items-center justify-center"
+                className="justify-self-end sm:justify-self-center text-muted-foreground hover:text-destructive disabled:opacity-40 disabled:cursor-not-allowed h-11 w-11 rounded-md inline-flex items-center justify-center"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           ))}
@@ -284,7 +284,7 @@ function NumberField({ value, symbol, onChange, ariaLabel }: NumberFieldProps) {
           setText(Number.isFinite(parsed) ? String(parsed) : '');
         }}
         placeholder="0"
-        className="w-full bg-background/80 border border-[hsl(var(--gold)/0.18)] focus:border-gold focus:outline-none rounded-md pl-7 pr-2 py-2 text-base sm:text-sm text-right tabular-nums"
+        className="min-h-[44px] w-full bg-background/80 border border-[hsl(var(--gold)/0.18)] focus:border-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-md pl-7 pr-2 py-2 text-base sm:text-sm text-right tabular-nums"
       />
     </div>
   );
