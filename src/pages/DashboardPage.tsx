@@ -11,6 +11,7 @@ import {
   Calculator,
   CalendarDays,
   ChevronRight,
+  HandCoins,
   Medal,
   NotebookPen,
   Radio,
@@ -143,16 +144,20 @@ export function DashboardPage() {
       {pending > 0 && (
         <Link
           to="/my-stats"
-          className="pressable flex min-h-[56px] items-center gap-3 rounded-xl border border-gold/35 bg-gold/[0.07] px-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="pressable flex min-h-[64px] items-center gap-3 rounded-xl border border-gold/35 bg-gold/[0.07] px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/15 font-semibold tabular-nums text-gold">
-            {pending}
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gold/25 bg-gold/10">
+            <HandCoins className="h-5 w-5 text-gold" aria-hidden="true" />
           </span>
-          <span className="flex-1 text-sm">
-            <span className="font-semibold">Settlement{pending !== 1 ? 's' : ''} pending</span>
-            <span className="block text-xs text-muted-foreground">in {homegame?.name}</span>
+          <span className="min-w-0 flex-1 text-sm">
+            <span className="block font-semibold">Settlements to clear</span>
+            <span className="block truncate text-xs text-muted-foreground">in {homegame?.name}</span>
           </span>
-          <ChevronRight className="h-5 w-5 text-gold" aria-hidden="true" />
+          <span className="flex shrink-0 items-baseline gap-1.5">
+            <span className="font-display text-[1.75rem] font-semibold leading-none tabular-nums text-gold">{pending}</span>
+            <span className="text-xs text-muted-foreground">open</span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-gold" aria-hidden="true" />
         </Link>
       )}
 

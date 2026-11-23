@@ -50,18 +50,20 @@ export function H2HChart({ results, myName, opponentName, currency }: H2HChartPr
   if (chartData.length < 2) return null;
 
   const last = chartData[chartData.length - 1];
+  // A dot per session reads as beads on long histories; show dots only when there are few.
+  const showDots = chartData.length <= 12;
   const summary = `Cumulative profit in sessions you both played, over ${chartData.length} dates: ${myName} ${formatProfit(Number(last[myName]), currency)}, ${opponentName} ${formatProfit(Number(last[opponentName]), currency)}.`;
 
   return (
     <Card>
-      <CardContent className="py-3 px-4">
-        <div className="flex items-center gap-1.5 mb-3">
-          <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+      <CardContent className="p-4 sm:p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-gold" aria-hidden="true" />
           <span className="section-header">Cumulative P&L</span>
         </div>
-        <div className="flex items-center gap-4 mb-2 text-xs" aria-hidden="true">
+        <div className="mb-3 flex items-center gap-4 text-xs" aria-hidden="true">
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: 'hsl(var(--gold))' }} />
+            <div className="h-0.5 w-4 rounded-full" style={{ backgroundColor: 'hsl(var(--gold))' }} />
             <span className="text-muted-foreground truncate max-w-[120px]" title={myName}>{myName}</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -103,7 +105,7 @@ export function H2HChart({ results, myName, opponentName, currency }: H2HChartPr
               dataKey={myName}
               stroke="hsl(var(--gold))"
               strokeWidth={2}
-              dot={{ r: 3, fill: 'hsl(var(--gold))' }}
+              dot={showDots ? { r: 3, fill: 'hsl(var(--gold))', strokeWidth: 0 } : false}
               activeDot={{ r: 5 }}
               isAnimationActive={!reduceMotion}
             />
@@ -111,9 +113,9 @@ export function H2HChart({ results, myName, opponentName, currency }: H2HChartPr
               type="monotone"
               dataKey={opponentName}
               stroke="hsl(var(--chart-4))"
-              strokeWidth={2}
+              strokeWidth={1.75}
               strokeDasharray="5 4"
-              dot={{ r: 3, fill: 'hsl(var(--chart-4))' }}
+              dot={showDots ? { r: 3, fill: 'hsl(var(--chart-4))', strokeWidth: 0 } : false}
               activeDot={{ r: 5 }}
               isAnimationActive={!reduceMotion}
             />

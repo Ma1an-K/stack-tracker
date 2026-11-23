@@ -28,7 +28,7 @@ export function ResultsDisplay({ players, boards, mode }: ResultsDisplayProps) {
   if (validPlayers.length < 2) {
     return (
       <UICard>
-        <CardContent className="py-8 text-center text-muted-foreground">
+        <CardContent className="py-8 sm:py-8 text-center text-muted-foreground">
           Add at least 2 players with hole cards to see results
         </CardContent>
       </UICard>

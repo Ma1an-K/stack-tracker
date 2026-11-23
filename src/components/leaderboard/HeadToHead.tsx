@@ -221,9 +221,9 @@ export function HeadToHead({ open, onOpenChange, myPlayer, opponent, sessions, c
             {/* Recent results */}
             {stats.recentResults.length > 0 && (
               <Card>
-                <CardContent className="py-3 px-4">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                <CardContent className="p-4 sm:p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-gold" aria-hidden="true" />
                     <span className="section-header">Recent sessions</span>
                   </div>
                   <div className="space-y-1.5">
