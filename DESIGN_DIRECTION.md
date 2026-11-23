@@ -193,3 +193,327 @@ Same rules as the audit (start on signed-in Home, owner, homegame selected; 1 ta
 - **Light mode** was deliberately not built (dark-only product); the skill's light-mode checklist rows don't apply.
 - **Montserrat** (the skill's body pick) was swapped for Inter for density and figure legibility; recorded in §2.
 - Not run in a browser against data (brief rule); visual QA happens in the orchestrator's mocked harness.
+
+## 14. UI UX Pro Max full rule pass (240 rules)
+
+Every rule in `.claude/skills/ui-ux-pro-max/references/quick-reference.md` checked against the whole app (all pages, shell, sessions, standings, players, calculator, auth, badges, public pages, 404). The brief said ~141 rules; the installed reference lists **240** across the same 10 categories, so all 240 are covered. Detail looked up with `search.py … --domain ux` where needed. File:line refs are to `src/` at the time of the pass.
+
+**Summary: 240 rules: 152 PASS · 54 FIXED · 19 N/A · 15 DEFERRED.**
+
+
+### 1. Accessibility (CRITICAL)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `color-contrast` | FIXED | Landing body/footer text 30–45 % → 60 % ivory (2.4–4.0 → 6.3:1) `pages/LandingPage.tsx:330`; header discriminator `components/layout/Header.tsx:175`; input placeholder `components/ui/input.tsx:11`; H2H ticks `components/leaderboard/H2HChart.tsx:47` |
+| `focus-states` | FIXED | Zero-specificity `:focus-visible` outline fallback `index.css:120`; rings added to session toggle `components/sessions/SessionCard.tsx:124`, Home recent rows, Club rows, public calculator fields |
+| `alt-text` | PASS | Logos/badges/icons named; decorative homegame art `alt=""` next to visible names |
+| `aria-labels` | FIXED | All `size=icon` buttons were labelled; added: marketing menu `aria-expanded/controls` `components/layout/MarketingNavbar.tsx:110`, badge chips `components/badges/PlayerBadges.tsx:55`, password toggle, calculator remove buttons |
+| `icon-context` | PASS | Decorative Lucide icons beside text are `aria-hidden`; icon-only controls named; Settled pill has icon + text |
+| `keyboard-nav` | FIXED | Standings rows no longer nest badge buttons inside `role=button` (stretched button) `components/leaderboard/Leaderboard.tsx:86`; tour operable by keyboard |
+| `form-labels` | FIXED | Calculator name/stack/all-in now labelled `components/calculator/PlayerInput.tsx:108` |
+| `skip-links` | FIXED | Skip link in app shell `components/layout/MainLayout.tsx:68` and marketing navbar `components/layout/MarketingNavbar.tsx:55`; style `index.css:208` |
+| `heading-hierarchy` | FIXED | h1→h3 skips fixed: Members `pages/MembersPage.tsx:53`, calculator `components/calculator/PlayerInput.tsx:174`, badge gallery |
+| `color-not-only` | FIXED | Inactive players announced, not only struck-through/greyed `components/players/PlayerList.tsx:135`; money always signed (+/−) |
+| `dynamic-type` | PASS | rem-based type scale, wrapping layouts; `text-size-adjust:100%` stops iOS landscape inflation without blocking user zoom |
+| `reduced-motion` | FIXED | Global collapse existed; chart entrance animations now off too `components/stats/ProfitChart.tsx:88` |
+| `voiceover-sr` | FIXED | Chart summaries (`role=img` + label) `components/stats/ProfitChart.tsx:39`; claim button keeps a name while sending |
+| `escape-routes` | FIXED | Escape now closes the tour `components/tutorial/TutorialOverlay.tsx:69` and marketing menu; dialogs/back already had them |
+| `keyboard-shortcuts` | PASS | No system shortcuts overridden; only author drag is the sheet grabber, which has a Close button |
+| `focus-not-obscured` | FIXED | `#main` scroll-padding clears fixed header and sticky Log bar `index.css:310` |
+| `focus-not-obscured-enhanced` | FIXED | Same scroll-padding keeps whole focused field visible |
+| `focus-appearance` | PASS | 2 px gold ring (8:1 vs onyx) with 2 px offset |
+| `dragging-alternative` | PASS | Sheet swipe has the Close button / Escape / scrim tap |
+| `web-target-size` | FIXED | Badge chips get extended hit area `components/badges/PlayerBadges.tsx:56`; empty card slot `components/calculator/CardDisplay.tsx:188` |
+| `consistent-help` | PASS | Help = tour + Club sheet, always in the same place |
+| `redundant-entry` | PASS | Email prefilled after sign-up; live game seeds the session form |
+| `accessible-authentication` | PASS | Paste allowed, real autocomplete tokens, no cognitive tests |
+| `auto-rotation-controls` | N/A | No carousels or auto-advancing content; live pulse is state and stops under reduced motion |
+| `contextual-live-badge-updates` | PASS | Session form balance line is one `role=status` phrase; offline banner is a polite status region |
+
+### 2. Touch & Interaction (CRITICAL)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `touch-target-size` | FIXED | Marketing menu 40→44 px `components/layout/MarketingNavbar.tsx:108`; calculator inputs 32→44 px; public calculator fields/remove 36→44 px `components/calculator/PublicSettlementCalculator.tsx:148`; tour close 16→40 px |
+| `touch-spacing` | PASS | 8 px gaps on chips/buttons; exception: calculator card slots (4 px, dense card row) with extended hit areas |
+| `hover-vs-tap` | PASS | No hover-only reveals |
+| `loading-buttons` | PASS | Async buttons disable + spinner |
+| `error-feedback` | FIXED | Auth errors next to the field `components/auth/AuthPage.tsx:70` |
+| `cursor-pointer` | PASS | Preflight sets pointer on buttons; stretched rows `cursor-pointer` |
+| `gesture-conflicts` | PASS | Vertical scroll only |
+| `tap-delay` | PASS | `touch-action: manipulation` on buttons/links |
+| `standard-gestures` | PASS | No redefined gestures |
+| `system-gestures` | PASS | Sheet drag only from the grabber strip, not screen edges |
+| `press-feedback` | PASS | `.pressable` scale 0.97 / Button `active:scale` |
+| `haptic-feedback` | DEFERRED | Vibration API is unsupported on iOS Safari (the main client); adding haptics is a product decision |
+| `gesture-alternative` | PASS | Every gesture has a visible control |
+| `safe-area-awareness` | PASS | Header, tab bar, sheets, toasts, skip link use safe-area insets |
+| `no-precision-required` | FIXED | Card slot and badge hit areas extended (see web-target-size) |
+| `swipe-clarity` | FIXED | The sheet grabber now actually drags `components/ui/dialog.tsx:102` |
+| `drag-threshold` | FIXED | 8 px threshold before the sheet follows `components/ui/dialog.tsx:56` |
+
+### 3. Performance (HIGH)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `image-optimization` | DEFERRED | Landing art is WebP; app/badge icons are small PNGs. Re-encoding the badge/icon asset set is an asset-pipeline task |
+| `image-dimension` | FIXED | Marketing logo declares size `components/layout/MarketingNavbar.tsx:61`; other images have fixed CSS boxes |
+| `font-loading` | PASS | Google Fonts `display=swap` |
+| `font-preload` | PASS | Preconnect only, one stylesheet |
+| `critical-css` | PASS | Single early stylesheet; public pages prerendered |
+| `lazy-loading` | PASS | Signed-in routes `lazy()`; now wrapped in an error boundary |
+| `bundle-splitting` | PASS | Route-level chunks + idle prefetch |
+| `third-party-scripts` | PASS | None |
+| `reduce-reflows` | PASS | Sheet drag writes `transform` only, no layout reads in the move loop |
+| `content-jumping` | PASS | Shape-matched skeletons |
+| `lazy-load-below-fold` | PASS | Below-fold landing images `loading=lazy` |
+| `virtualize-lists` | DEFERRED | Sessions list can pass 50 rows after a few years; needs pagination/virtualisation (data hook returns all rows, or a new dependency) |
+| `main-thread-budget` | PASS | No heavy synchronous work on interaction |
+| `progressive-loading` | PASS | Skeletons + stale-while-revalidate |
+| `input-latency` | PASS | Optimistic live mutations |
+| `tap-feedback-speed` | PASS | 120 ms press token |
+| `debounce-throttle` | PASS | Passive scroll listener; no per-keystroke work |
+| `offline-support` | FIXED | Offline banner in the shell `components/layout/MainLayout.tsx:78` |
+| `network-fallback` | PASS | Remembered page data stays readable on a slow refetch |
+
+### 4. Style Selection (HIGH)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `style-match` | PASS | Private Salon: Liquid Glass chrome, onyx + champagne (§1–2) |
+| `consistency` | PASS | One token set, PageHeader/EmptyState everywhere |
+| `no-emoji-icons` | PASS | Lucide only; emoji only as badge-art fallback content |
+| `color-palette-from-product` | PASS | From `--domain color` luxury query (§2) |
+| `effects-match-style` | PASS | Glass on chrome only, embossed cards |
+| `platform-adaptive` | PASS | Bottom sheets/tab bar on mobile, centred dialogs + sidebar on desktop |
+| `state-clarity` | PASS | Hover/pressed/disabled/selected distinct (aria-pressed chips) |
+| `elevation-consistent` | PASS | `.surface` + one sheet shadow |
+| `dark-mode-pairing` | N/A | Dark-only product by decision (§10) |
+| `icon-style-consistent` | PASS | Lucide, one stroke family |
+| `system-controls` | PASS | Native date/number/select inputs, Radix primitives |
+| `blur-purpose` | PASS | Scrim blur behind sheets; chrome glass is the chosen style |
+| `primary-action` | PASS | One gold primary per screen |
+
+### 5. Layout & Responsive (HIGH)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `viewport-meta` | PASS | `width=device-width, initial-scale=1`, zoom not disabled |
+| `mobile-first` | PASS | Base styles are mobile; sm/md add |
+| `breakpoint-consistency` | PASS | Tailwind sm/md/lg + two micro breakpoints (400/420 px) for row density |
+| `readable-font-size` | FIXED | Calculator name input no longer 14 px on phones (iOS zoom) `components/calculator/PlayerInput.tsx:65`; public currency select 16 px. Body copy stays 15 px by type-scale decision (§4); inputs are 16 px |
+| `line-length-control` | PASS | max-w-3xl content, max-w-xs descriptions |
+| `horizontal-scroll` | PASS | Verified at 390 px in the harness |
+| `spacing-scale` | PASS | 4/8 rhythm |
+| `touch-density` | PASS | 44–60 px rows |
+| `container-width` | PASS | max-w-3xl app (5xl calculator), 1280 px marketing |
+| `z-index-management` | PASS | Scale 0/1/10/20/40/50/100/200 (content, chrome, sheets, toasts, tour/skip link) |
+| `fixed-element-offset` | PASS | `<main>` pads for header + tab bar |
+| `scroll-behavior` | PASS | One scroll container; sheets `overscroll-contain` |
+| `viewport-units` | FIXED | `min-h-screen` → `min-h-dvh` `pages/Index.tsx:12`, badge gallery |
+| `orientation-support` | PASS | Layouts reflow; text-size-adjust prevents landscape text inflation |
+| `content-priority` | PASS | Live game and lifetime figure first on Home |
+| `visual-hierarchy` | PASS | Size/weight/serif, not colour alone |
+| `compact-label-overflow` | FIXED | H2H legend names expose full text `components/leaderboard/H2HChart.tsx:65` |
+| `chip-collection-reflow` | FIXED | Name chips wrap; badge `+n` is an operable, labelled disclosure `components/badges/PlayerBadges.tsx:109` |
+
+### 6. Typography & Color (MEDIUM)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `line-height` | PASS | Body 1.45–1.6 |
+| `line-length` | PASS | Max-width containers |
+| `font-pairing` | PASS | Fraunces display + Inter UI (§4) |
+| `font-scale` | PASS | Defined scale (§4) |
+| `contrast-readability` | PASS | Ivory on onyx 15.8:1 (dark equivalent) |
+| `text-styles-system` | PASS | Roles: page-title, section-header, body, micro |
+| `weight-hierarchy` | PASS | Inter 600 labels/400 body; Fraunces held at 500 by design |
+| `color-semantic` | PASS | HSL tokens only |
+| `color-dark-mode` | PASS | Desaturated warm ramp |
+| `color-accessible-pairs` | FIXED | See color-contrast (computed with the §3 tokens) |
+| `color-not-decorative-only` | PASS | Profit/loss signed; status pills icon + text |
+| `truncation-strategy` | FIXED | Truncated legend names get the full name; long tokens now wrap (below) |
+| `letter-spacing` | PASS | Default on body; tracking only on uppercase labels |
+| `number-tabular` | PASS | `tabular-nums` on money/timers |
+| `whitespace-balance` | PASS | Section gaps 24 px |
+| `heading-line-balance` | FIXED | `text-wrap: balance` on headings `index.css:113` |
+| `long-token-wrapping` | FIXED | `overflow-wrap: break-word` on body `index.css:96` |
+
+### 7. Animation (MEDIUM)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `duration-timing` | PASS | Tokens 120/200/260 ms |
+| `transform-performance` | PASS | Transform/opacity only |
+| `loading-states` | PASS | Skeleton only on first load; refresh dot otherwise |
+| `excessive-motion` | PASS | Page rise + one state element |
+| `easing` | PASS | Expo-out arriving |
+| `motion-meaning` | PASS | Motion marks cause (sheet from trigger edge, press) |
+| `state-transition` | PASS | Expand fades in, tabs/active states transition |
+| `continuity` | PASS | Route rise, sheets from bottom |
+| `parallax-subtle` | N/A | No parallax |
+| `spring-physics` | PASS | Expo-out curves; sheet springs back on release |
+| `exit-faster-than-enter` | PASS | Sheet 260 in / 180 out |
+| `stagger-sequence` | PASS | Landing cards staggered; app lists intentionally not |
+| `shared-element-transition` | DEFERRED | Would need the View Transitions API or a motion library across routes; not worth a dependency |
+| `interruptible` | PASS | CSS transitions, nothing locks input |
+| `no-blocking-animation` | PASS | No exit animation on routes |
+| `fade-crossfade` | PASS | Content fades on replacement |
+| `scale-feedback` | PASS | 0.97 press |
+| `gesture-feedback` | FIXED | Sheet tracks the finger in real time while dragged |
+| `hierarchy-motion` | PASS | Sheets rise from below |
+| `motion-consistency` | PASS | Shared tokens |
+| `opacity-threshold` | PASS | Fades complete |
+| `modal-motion` | PASS | Bottom sheet slide / desktop zoom-fade |
+| `navigation-direction` | DEFERRED | Route enter is a neutral 8 px rise for both directions; direction-aware transitions need history-direction tracking |
+| `layout-shift-avoid` | PASS | No animated layout properties |
+| `cancellable-state-transitions` | PASS | No animationend logic; drag sets the final state explicitly |
+
+### 8. Forms & Feedback (MEDIUM)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `input-labels` | FIXED | Calculator name/stack labelled (see form-labels) |
+| `error-placement` | FIXED | Below the field with `aria-describedby` `components/auth/AuthPage.tsx:130` |
+| `submit-feedback` | PASS | Spinner then toast/navigation |
+| `ime-composition-enter` | FIXED | Session form Enter handlers skip composition `components/sessions/SessionForm.tsx:102`; homegame sheet now a real form `components/layout/HomegameDialog.tsx:108` |
+| `required-indicators` | PASS | Convention used: the only optional field says “(optional)”; all others are required |
+| `empty-states` | PASS | EmptyState with message + action |
+| `toast-dismiss` | FIXED | 4 s confirmations / 8 s errors `components/ui/toaster.tsx:11` |
+| `confirmation-dialogs` | PASS | Delete session/player/homegame, discard live game |
+| `input-helper-text` | FIXED | Password and reset hints linked with `aria-describedby` `components/auth/AuthPage.tsx:365` |
+| `disabled-states` | PASS | opacity 0.45 + `disabled` |
+| `progressive-disclosure` | PASS | Payments section only after two players |
+| `inline-validation` | PASS | No per-keystroke errors |
+| `input-type-keyboard` | PASS | email / decimal inputMode |
+| `password-toggle` | FIXED | Show/hide on every password field `components/common/PasswordInput.tsx:18` |
+| `autofill-support` | FIXED | Reset dialog `new-password` `App.tsx:173`; profile nickname/username |
+| `undo-support` | DEFERRED | Undo delete needs soft-delete in the backend |
+| `success-feedback` | PASS | Toasts, Settled pill, land on the logged session |
+| `error-recovery` | FIXED | Errors say what to do; screen-level error boundary with Reload `components/common/RouteErrorBoundary.tsx:26` |
+| `multi-step-progress` | PASS | Auth steps have back; tour shows step x of y |
+| `form-autosave` | DEFERRED | The live game is the server-side draft; autosaving the manual form would add new client storage behaviour |
+| `sheet-dismiss-confirm` | DEFERRED | Edit-session sheet closes without asking; needs SessionForm dirty state lifted to the page (form-logic change) |
+| `error-clarity` | FIXED | Auth messages state cause + fix (e.g. wrong password → reset) |
+| `field-grouping` | PASS | Sectioned surfaces with section headings |
+| `read-only-distinction` | PASS | Cashed-out amounts render as text, not disabled inputs |
+| `focus-management` | FIXED | Failed auth submit focuses the invalid field |
+| `error-summary` | N/A | No form reports several errors at once (validation stops at the first and focuses it); session form has its live status line |
+| `touch-friendly-input` | FIXED | Calculator inputs 44 px (see touch-target-size) |
+| `destructive-emphasis` | FIXED | Destructive actions red and, in the Club sheet, separated (see destructive-nav-separation) |
+| `toast-accessibility` | PASS | Radix toasts are live regions and never take focus |
+| `aria-live-errors` | FIXED | Inline auth errors `role=alert` |
+| `contrast-feedback` | PASS | Loss 5.3:1, profit 7.9:1 on card |
+| `timeout-feedback` | DEFERRED | Data hooks have no request timeout; adding one is data-layer work. Offline banner covers no-connection |
+| `error-clears-on-fix` | FIXED | Field error and aria-invalid clear on the next edit |
+| `no-premature-validation` | PASS | Validation on submit only |
+| `keep-input-on-error` | PASS | Values kept on failure |
+| `submit-not-pre-disabled` | DEFERRED | Log session stays disabled until balanced, with a live line explaining why (owner-approved §9); Add player disabled while empty |
+| `unsaved-changes-guard` | DEFERRED | Same as sheet-dismiss-confirm |
+| `forgiving-formats` | FIXED | Invite codes ignore spaces/hyphens `components/auth/AuthPage.tsx:80` |
+| `allow-paste` | PASS | Never blocked |
+| `persistent-errors` | FIXED | Form errors stay inline until the next attempt; error toasts 8 s |
+| `dialog-focus` | PASS | Radix focus trap/return; tour now focuses its action |
+
+### 9. Navigation Patterns (HIGH)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `bottom-nav-limit` | PASS | 5 slots |
+| `drawer-usage` | PASS | Club sheet = secondary |
+| `back-behavior` | PASS | Back keeps scroll, falls back to / without history |
+| `deep-linking` | PASS | Every screen has a URL |
+| `tab-bar-ios` | PASS | Bottom tab bar |
+| `top-app-bar-android` | PASS | Header with homegame switcher and Club |
+| `nav-label-icon` | PASS | Icon + label on every tab |
+| `nav-state-active` | PASS | Gold + indicator + `aria-current` |
+| `nav-hierarchy` | PASS | Tabs vs Club sheet |
+| `modal-escape` | FIXED | Close button + Escape existed; swipe-down to dismiss added (see swipe-clarity) |
+| `search-accessible` | N/A | No search feature; rosters are small |
+| `breadcrumb-web` | N/A | Hierarchy is two levels deep |
+| `state-preservation` | PASS | Per-path scroll memory, remembered page data |
+| `gesture-nav-support` | PASS | No edge gestures captured |
+| `tab-badge` | PASS | None used |
+| `overflow-menu` | PASS | Club sheet |
+| `bottom-nav-top-level` | PASS | Top-level only |
+| `adaptive-navigation` | PASS | Sidebar ≥768 px |
+| `back-stack-integrity` | PASS | No stack resets |
+| `navigation-consistency` | PASS | Same placement everywhere |
+| `avoid-mixed-patterns` | PASS | Sidebar xor tab bar |
+| `modal-vs-navigation` | PASS | Routes for flows, sheets for tasks |
+| `focus-on-route-change` | FIXED | Focus moves to `<main>` after in-app navigation `components/layout/MainLayout.tsx:60` |
+| `persistent-nav` | PASS | Tab bar on every signed-in screen |
+| `destructive-nav-separation` | FIXED | Sign out / Delete homegame in their own group `components/layout/Header.tsx:285` |
+| `empty-nav-state` | PASS | Live/New screens explain why when unavailable |
+
+### 10. Charts & Data (LOW)
+
+| Rule | Status | Where / what |
+|---|---|---|
+| `chart-type` | PASS | Line/area for trends |
+| `color-guidance` | PASS | Gold vs ivory-grey, no red/green pair |
+| `data-table` | FIXED | Text summary added; per-session values are listed on Sessions and My Stats |
+| `pattern-texture` | PASS | H2H opponent dashed |
+| `legend-visible` | PASS | Legend above the H2H chart; profit chart single series |
+| `tooltip-on-interact` | PASS | Tooltips on hover/touch |
+| `axis-labels` | PASS | Currency and session-number ticks |
+| `responsive-chart` | PASS | ResponsiveContainer, ≤6 ticks |
+| `empty-data-state` | PASS | Charts hidden under 2 points; page empty states |
+| `loading-chart` | PASS | Skeletons |
+| `animation-optional` | FIXED | See reduced-motion |
+| `large-dataset` | N/A | Hundreds of points at most |
+| `number-formatting` | FIXED | Sign before currency, grouped thousands `components/leaderboard/H2HChart.tsx:48` |
+| `touch-target-chart` | PASS | Tooltip follows the finger along x |
+| `no-pie-overuse` | N/A | No pie charts |
+| `contrast-data` | PASS | Gold line 8:1 |
+| `legend-interactive` | N/A | At most two series |
+| `direct-labeling` | PASS | Final value shown as the hero figure above the chart |
+| `tooltip-keyboard` | DEFERRED | Recharts 2 tooltips are pointer-only; the text summary carries the key values |
+| `sortable-table` | N/A | No data tables |
+| `axis-readability` | FIXED | Date ticks auto-skip `components/leaderboard/H2HChart.tsx:80` |
+| `data-density` | PASS | One or two series |
+| `trend-emphasis` | PASS | Thin line, 20 % fill |
+| `gridline-subtle` | PASS | No grid, dashed zero line |
+| `focusable-elements` | DEFERRED | Same as tooltip-keyboard (Recharts limitation) |
+| `screen-reader-summary` | FIXED | See voiceover-sr |
+| `error-state-chart` | DEFERRED | Data hooks swallow fetch errors; surfacing them needs hook changes (out of scope) |
+| `export-option` | DEFERRED | Feature request; Share already exports a session as text |
+| `drill-down-consistency` | PASS | H2H sheet closes back to Standings |
+| `time-scale-clarity` | PASS | Week/Month/Year/All tabs; per-session x axis |
+| `map-attribution` | N/A | No maps |
+| `map-text-alternative` | N/A | No maps |
+| `map-keyboard-no-drag` | N/A | No maps |
+| `map-not-color-alone` | N/A | No maps |
+| `normalized-choropleth` | N/A | No maps |
+| `map-color-ramps` | N/A | No maps |
+| `map-popup-text` | N/A | No maps |
+| `map-clustering` | N/A | No maps |
+| `map-reduced-motion` | N/A | No maps |
+
+### Deferred, and why
+
+- `haptic-feedback`: Vibration API is unsupported on iOS Safari (the main client); adding haptics is a product decision
+- `image-optimization`: Landing art is WebP; app/badge icons are small PNGs. Re-encoding the badge/icon asset set is an asset-pipeline task
+- `virtualize-lists`: Sessions list can pass 50 rows after a few years; needs pagination/virtualisation (data hook returns all rows, or a new dependency)
+- `shared-element-transition`: Would need the View Transitions API or a motion library across routes; not worth a dependency
+- `navigation-direction`: Route enter is a neutral 8 px rise for both directions; direction-aware transitions need history-direction tracking
+- `undo-support`: Undo delete needs soft-delete in the backend
+- `form-autosave`: The live game is the server-side draft; autosaving the manual form would add new client storage behaviour
+- `sheet-dismiss-confirm`: Edit-session sheet closes without asking; needs SessionForm dirty state lifted to the page (form-logic change)
+- `timeout-feedback`: Data hooks have no request timeout; adding one is data-layer work. Offline banner covers no-connection
+- `submit-not-pre-disabled`: Log session stays disabled until balanced, with a live line explaining why (owner-approved §9); Add player disabled while empty
+- `unsaved-changes-guard`: Same as sheet-dismiss-confirm
+- `tooltip-keyboard`: Recharts 2 tooltips are pointer-only; the text summary carries the key values
+- `focusable-elements`: Same as tooltip-keyboard (Recharts limitation)
+- `error-state-chart`: Data hooks swallow fetch errors; surfacing them needs hook changes (out of scope)
+- `export-option`: Feature request; Share already exports a session as text
+
+### Parity fixes made in the same pass (from the read-only parity audit)
+
+- Live game: the provider clears the previous homegame's live session on a switch and ignores late responses (`contexts/LiveSessionContext.tsx`).
+- Lazy screens: `RouteErrorBoundary` reloads once on a stale chunk (sessionStorage guard), otherwise shows Something went wrong / Reload (`App.tsx`, `components/common/RouteErrorBoundary.tsx`).
+- Live game refetches (existing fetch) when opening `/` or `/live-session`.
+- View cache: `clearStale()` after logging a session, adding a player, approving a claim; Sessions holds Edit/Delete/Mark settled while rows are remembered data (`hooks/useStaleWhileLoading.ts`).
+- Standings: separate switch guards for players and sessions (`pages/LeaderboardPage.tsx`).
+- Tour copy says “This is me” (`components/tutorial/tours.ts`).
