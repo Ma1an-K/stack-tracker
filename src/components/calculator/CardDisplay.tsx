@@ -185,7 +185,7 @@ export function CardSlot({ card, usedCards, onSelect, onRemove, placeholder = '+
         variant="outline"
         aria-label="Add card"
         className={cn(
-          'min-w-0 rounded-lg border-2 border-dashed border-gold/30 bg-muted/40 px-0 text-gold hover:bg-gold/10',
+          'relative min-w-0 rounded-lg border-2 border-dashed border-gold/30 bg-muted/40 px-0 text-gold hover:bg-gold/10 before:absolute before:-inset-x-0.5 before:-inset-y-1 before:content-[""]',
           sizeClasses[size]
         )}
       >
