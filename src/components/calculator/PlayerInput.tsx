@@ -170,7 +170,7 @@ export function PlayersList({ players, usedCards, onUpdate, maxPerCard = 1 }: Pl
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm">Players</h3>
+        <h2 className="font-semibold text-sm">Players</h2>
         <Button 
           variant="outline" 
           size="sm" 

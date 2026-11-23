@@ -92,6 +92,10 @@
     @apply text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv11', 'ss01';
+    /* Long names, codes and pasted notes reflow instead of pushing the layout sideways. */
+    overflow-wrap: break-word;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   #root {
     position: relative;
@@ -106,9 +110,20 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     @apply font-semibold tracking-tight;
+    text-wrap: balance;
   }
   button, [role="button"], a {
     touch-action: manipulation;
+  }
+  /* Keyboard focus fallback for every interactive element that doesn't style
+     its own ring (zero specificity, so component focus styles still win). */
+  :where(a, button, [role="button"], [role="tab"], [role="switch"], [role="checkbox"], [role="radio"], summary, select, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  /* Programmatic focus targets (main region, page titles) show no ring. */
+  [tabindex="-1"]:focus {
+    outline: none;
   }
 }
 
@@ -187,6 +202,18 @@
   }
   .pressable:active {
     transform: scale(0.97);
+  }
+
+  /* "Skip to content": off-screen until keyboard-focused. */
+  .skip-link {
+    @apply fixed left-3 z-[200] -translate-y-24 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg;
+    top: calc(env(safe-area-inset-top) + 0.5rem);
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .skip-link:focus-visible {
+    @apply translate-y-0;
+    outline: 2px solid hsl(var(--foreground));
+    outline-offset: 2px;
   }
 
   .page-enter {

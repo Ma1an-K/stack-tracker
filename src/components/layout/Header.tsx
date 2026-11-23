@@ -172,7 +172,7 @@ export function Header() {
           <div className="flex items-center gap-1 flex-shrink-0">
             {profile && (
               <span className="mr-2 hidden text-sm text-muted-foreground lg:block tabular-nums">
-                {profile.username}<span className="text-muted-foreground/60">#{profile.discriminator}</span>
+                {profile.username}<span className="text-muted-foreground/80">#{profile.discriminator}</span>
               </span>
             )}
             {!isDesktop && (

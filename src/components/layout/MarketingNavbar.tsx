@@ -26,6 +26,14 @@ export function MarketingNavbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Escape closes the mobile menu.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   const links: Array<
     { label: string; href: string } | { label: string; to: string }
   > = [
@@ -44,11 +52,14 @@ export function MarketingNavbar() {
           : 'bg-transparent border-b border-transparent'
       }`}
     >
-      <nav className="max-w-[1280px] mx-auto px-5 sm:px-6 lg:px-8 h-[68px] flex items-center justify-between">
+      <a href="#main" className="skip-link">Skip to content</a>
+      <nav aria-label="Main" className="max-w-[1280px] mx-auto px-5 sm:px-6 lg:px-8 h-[68px] flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 group">
           <img
             src="/icon-192x192.png"
             alt="Stack Tracker logo"
+            width={36}
+            height={36}
             className="w-9 h-9 rounded-lg shadow-[0_0_18px_hsl(var(--gold)/0.35)] group-hover:shadow-[0_0_28px_hsl(var(--gold)/0.55)] transition-shadow duration-300"
           />
           <span className="text-foreground font-semibold tracking-tight text-[17px]">
@@ -94,15 +105,17 @@ export function MarketingNavbar() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="lg:hidden p-2 -mr-2 text-foreground"
+          className="lg:hidden p-2.5 -mr-2.5 text-foreground rounded-lg"
           aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-expanded={open}
+          aria-controls="marketing-menu"
         >
-          {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {open ? <X className="w-6 h-6" aria-hidden="true" /> : <Menu className="w-6 h-6" aria-hidden="true" />}
         </button>
       </nav>
 
       {open && (
-        <div className="lg:hidden bg-[hsl(var(--background)/0.96)] backdrop-blur-xl border-b border-[hsl(var(--gold)/0.1)] px-6 pb-6 animate-fade-in">
+        <div id="marketing-menu" className="lg:hidden bg-[hsl(var(--background)/0.96)] backdrop-blur-xl border-b border-[hsl(var(--gold)/0.1)] px-6 pb-6 animate-fade-in">
           <div className="flex flex-col gap-1 pt-2">
             {links.map((l) =>
               'href' in l ? (

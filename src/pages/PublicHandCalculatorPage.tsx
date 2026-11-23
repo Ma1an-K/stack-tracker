@@ -51,7 +51,7 @@ export function PublicHandCalculatorPage() {
 
       <MarketingNavbar />
 
-      <main className="relative z-10 px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-28 pb-20">
+      <main id="main" tabIndex={-1} className="relative z-10 px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-28 pb-20">
         <div className="max-w-6xl mx-auto">
           <div className="max-w-3xl">
             <p className="text-[11px] uppercase tracking-[0.2em] text-gold/80 font-semibold mb-3">

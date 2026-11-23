@@ -133,7 +133,7 @@ export function BadgePreviewPage() {
                 <div className="flex items-center gap-4">
                   <BadgeDisplay badge={b} size={96} />
                   <div className="space-y-1.5 min-w-0">
-                    <h3 className="font-bold text-xl leading-tight">{b.name}</h3>
+                    <h2 className="font-bold text-xl leading-tight">{b.name}</h2>
                     <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${c.pill}`}>
                       {c.label}
                     </span>

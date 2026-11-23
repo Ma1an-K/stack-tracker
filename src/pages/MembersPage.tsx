@@ -1,7 +1,7 @@
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useHomegameMembers } from '@/hooks/useHomegameMembers';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Users, UserMinus, Crown, Shield, ShieldOff } from 'lucide-react';
@@ -50,7 +50,7 @@ export function MembersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="section-header">All members</CardTitle>
+          <h2 className="text-base font-semibold leading-none tracking-tight section-header">All members</h2>
           <CardDescription>
             {isOriginalOwner 
               ? 'Manage members and their permissions. Admins can do everything owners can.' 
@@ -164,7 +164,7 @@ export function MembersPage() {
       {/* Permission info card */}
       <Card>
         <CardContent className="pt-4 sm:pt-5">
-          <h3 className="section-header mb-3">Permission levels</h3>
+          <h2 className="section-header mb-3">Permission levels</h2>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
               <Crown className="h-4 w-4 text-gold" aria-hidden="true" />

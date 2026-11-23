@@ -143,7 +143,7 @@ export function CardPicker({ usedCards, onSelect, disabled, children, maxPerCard
                     )}
                   >
                     <span className="leading-none">{rank}</span>
-                    <span className="leading-none text-[0.625rem]">{suitSymbol}</span>
+                    <span className="leading-none text-[0.6875rem]">{suitSymbol}</span>
                   </button>
                 );
               })}

@@ -691,7 +691,7 @@ export function LandingPage() {
     <div className="min-h-dvh bg-background text-foreground overflow-x-hidden">
       <MarketingNavbar />
       <FinishSetupBanner />
-      <main>
+      <main id="main" tabIndex={-1}>
         <Hero />
         <Features />
         <HowItWorks />

@@ -71,9 +71,9 @@ export function BoardInput({
       isMobile ? "p-3 space-y-2" : "p-4 space-y-3"
     )}>
       <div className="flex items-center justify-between">
-        <h4 className="font-medium text-sm">
+        <h3 className="font-medium text-sm">
           {boardIndex === 0 ? 'Board' : `Runout ${boardIndex + 1}`}
-        </h4>
+        </h3>
         {canRemove && (
           <Button
             variant="ghost"
@@ -188,7 +188,7 @@ export function BoardsList({ boards, usedCards, onUpdate, maxPerCard = 1 }: Boar
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm">Community Cards</h3>
+        <h2 className="font-semibold text-sm">Community Cards</h2>
         <Button
           variant="outline"
           size="sm"
