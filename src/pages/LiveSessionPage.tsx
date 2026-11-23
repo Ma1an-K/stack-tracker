@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { usePlayers } from '@/hooks/usePlayers';
+import { useHomegameMembers } from '@/hooks/useHomegameMembers';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { formatCurrency } from '@/lib/settlement';
 import { cn } from '@/lib/utils';
@@ -25,8 +26,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Minus, Trash2, Users, Clock, Flag, Radio, UserPlus, Play, ArrowLeft, LogOut, Undo2, ArrowRight } from 'lucide-react';
+import { Loader2, Plus, MoreHorizontal, Trash2, Users, Clock, Flag, Radio, UserPlus, Play, ArrowLeft, LogOut, Undo2, ArrowRight } from 'lucide-react';
 import { LivePulse } from '@/components/sessions/LivePulse';
+import { BuyInField } from '@/components/sessions/BuyInField';
+import { AddPlayerDialog } from '@/components/sessions/AddPlayerDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -137,10 +141,17 @@ function SetupView({ players, onStart }: { players: Player[]; onStart: (p: LiveS
 /* Tracker — the running game                                          */
 /* ------------------------------------------------------------------ */
 
-function TrackerView({ players }: { players: Player[] }) {
+function TrackerView({
+  players,
+  createPlayer,
+}: {
+  players: Player[];
+  createPlayer: (name: string) => Promise<{ error: unknown | null; player: Player | null }>;
+}) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { homegame } = useAuthContext();
+  const { homegame, isOwner } = useAuthContext();
+  const { members } = useHomegameMembers(homegame?.id);
   const { liveSession, totalPot, totalBuyIn, seatedCount, addBuyIn, setBuyIn, addPlayer, removePlayer, cashOut, rejoin, addPayment, removePayment } = useLiveSession();
   const elapsed = useElapsed(liveSession?.started_at);
 
@@ -161,6 +172,7 @@ function TrackerView({ players }: { players: Player[] }) {
   const chips = [base, base * 2];
   const nameOf = (id: string) => players.find(p => p.id === id)?.name ?? 'Unknown';
   const seated = liveSession.players;
+  const ownerName = members.find(m => m.role === 'owner')?.profile?.username ?? null;
   const bench = players.filter(p => p.is_active && !seated.some(sp => sp.player_id === p.id));
 
   const payments = liveSession.payments ?? [];
@@ -222,12 +234,10 @@ function TrackerView({ players }: { players: Player[] }) {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <span className="section-header">Buy-ins</span>
-            {bench.length > 0 && (
-              <Button variant="outline" size="sm" className="h-8 border-dashed" onClick={() => setAddOpen(true)}>
-                <UserPlus className="mr-1 h-3.5 w-3.5" />
-                Add Player
-              </Button>
-            )}
+            <Button variant="outline" size="sm" className="h-8 border-dashed" onClick={() => setAddOpen(true)}>
+              <UserPlus className="mr-1 h-3.5 w-3.5" />
+              Add Player
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -251,13 +261,12 @@ function TrackerView({ players }: { players: Player[] }) {
                       <span className="font-bold text-gold">{formatCurrency(Number(sp.cash_out), currency)}</span>
                     </span>
                   ) : (
-                    <button
-                      type="button"
-                      className="text-lg font-bold tabular-nums text-gold"
-                      onClick={() => { if (player) { setCustomFor(player); setCustomAmount(''); } }}
-                    >
-                      {formatCurrency(Number(sp.buy_in), currency)}
-                    </button>
+                    <BuyInField
+                      value={Number(sp.buy_in)}
+                      currency={currency}
+                      label={`Buy-in total for ${nameOf(sp.player_id)}`}
+                      onCommit={t => setBuyIn(sp.player_id, t)}
+                    />
                   )}
                 </div>
                 {left ? (
@@ -315,13 +324,13 @@ function TrackerView({ players }: { players: Player[] }) {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 shrink-0 text-muted-foreground"
+                      size="sm"
+                      className="h-9 shrink-0 px-2 text-xs text-muted-foreground"
                       onClick={() => addBuyIn(sp.player_id, -base)}
                       disabled={Number(sp.buy_in) <= 0}
                       aria-label={`Remove ${base} from ${nameOf(sp.player_id)}`}
                     >
-                      <Minus className="h-4 w-4" />
+                      {`\u2212${base}`}
                     </Button>
                     <Button
                       variant="ghost"
@@ -332,6 +341,27 @@ function TrackerView({ players }: { players: Player[] }) {
                     >
                       <LogOut className="h-4 w-4" />
                     </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 shrink-0 text-muted-foreground"
+                          aria-label={`More options for ${nameOf(sp.player_id)}`}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={() => removePlayer(sp.player_id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Remove from session
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
               </div>
@@ -430,51 +460,22 @@ function TrackerView({ players }: { players: Player[] }) {
             >
               Add to buy-in
             </Button>
-            <Button
-              variant="secondary"
-              className="w-full"
-              disabled={!customAmount}
-              onClick={() => { if (customFor) setBuyIn(customFor.id, parseFloat(customAmount) || 0); setCustomFor(null); }}
-            >
-              Set total to this
-            </Button>
-            {customFor && (
-              <Button
-                variant="ghost"
-                className="w-full text-muted-foreground hover:text-destructive"
-                onClick={() => { removePlayer(customFor.id); setCustomFor(null); }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Remove from session
-              </Button>
-            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Late arrival */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Add player</DialogTitle>
-          </DialogHeader>
-          <p className="text-xs text-muted-foreground">Joins with a {formatCurrency(base, currency)} buy-in — adjust after.</p>
-          <div className="flex flex-wrap gap-2">
-            {bench.map(p => (
-              <Button
-                key={p.id}
-                variant="secondary"
-                size="sm"
-                className="h-9"
-                onClick={() => { addPlayer(p.id, base); setAddOpen(false); }}
-              >
-                <Plus className="mr-1 h-3.5 w-3.5" />
-                {p.name}
-              </Button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AddPlayerDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        bench={bench}
+        canCreate={isOwner}
+        ownerName={ownerName}
+        baseBuyIn={base}
+        currency={currency}
+        onSeat={id => addPlayer(id, base)}
+        onCreate={createPlayer}
+      />
 
       {/* Cash out (player leaving) */}
       <Dialog open={!!cashOutFor} onOpenChange={o => !o && setCashOutFor(null)}>
@@ -607,7 +608,7 @@ export function LiveSessionPage() {
   const navigate = useNavigate();
   const { homegame } = useAuthContext();
   const { liveSession, loading, start } = useLiveSession();
-  const { players, activePlayers, loading: playersLoading } = usePlayers(homegame?.id);
+  const { players, activePlayers, loading: playersLoading, addPlayer } = usePlayers(homegame?.id);
 
   if (loading || playersLoading) {
     return (
@@ -639,7 +640,7 @@ export function LiveSessionPage() {
       </div>
 
       {liveSession ? (
-        <TrackerView players={players} />
+        <TrackerView players={players} createPlayer={addPlayer} />
       ) : activePlayers.length < 2 ? (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">

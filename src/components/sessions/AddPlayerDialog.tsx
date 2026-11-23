@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/settlement';
 import type { Player } from '@/types/database';
 
@@ -32,6 +32,10 @@ export function AddPlayerDialog({
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    if (open) setName('');
+  }, [open]);
+
   const trimmed = name.trim();
 
   const seat = async (playerId: string) => {
@@ -60,9 +64,9 @@ export function AddPlayerDialog({
         <DialogHeader>
           <DialogTitle>Add player</DialogTitle>
         </DialogHeader>
-        <p className="text-xs text-muted-foreground">
+        <DialogDescription className="text-xs">
           {`Joins with a ${formatCurrency(baseBuyIn, currency)} buy-in — adjust after.`}
-        </p>
+        </DialogDescription>
         {bench.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {bench.map(p => (
