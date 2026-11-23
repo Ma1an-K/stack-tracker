@@ -8,6 +8,7 @@ import { TutorialOverlay } from '@/components/tutorial/TutorialOverlay';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { LiveSessionProvider } from '@/contexts/LiveSessionContext';
 import { LiveSessionBar } from '@/components/sessions/LiveSessionBar';
+import { OfflineBanner } from '@/components/common/OfflineBanner';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -74,6 +75,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
         >
           <div className="pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-4 md:px-8 md:pt-8 min-h-full">
+            <OfflineBanner />
             <LiveSessionBar />
             <div key={pathname} className={`page-enter mx-auto w-full ${pathname === '/calculator' ? 'max-w-5xl' : 'max-w-3xl'}`}>
               {children}
