@@ -69,11 +69,13 @@ export function PlayerList({
   };
 
   const isMyPlayer = (player: Player) => player.user_id === currentUserId;
-  // One player per account per homegame: once you hold a player here, or have a
-  // claim waiting for approval, "This is me" is no longer offered on the others.
+  // Members: once you hold a player here, or have a claim waiting for approval,
+  // "This is me" is no longer offered on the others (prevents accidental second
+  // claims). Owners/admins keep it, so they can also link bookkeeping players
+  // such as "dealer tips".
   const hasMyPlayer = !!currentUserId && players.some(isMyPlayer);
   const hasPendingClaim = !!hasRequestedPlayer && players.some((p) => hasRequestedPlayer(p.id));
-  const canClaim = !!onRequestClaim && !hasMyPlayer && !hasPendingClaim;
+  const canClaim = !!onRequestClaim && (isOwner || (!hasMyPlayer && !hasPendingClaim));
 
   if (loading) {
     return (
