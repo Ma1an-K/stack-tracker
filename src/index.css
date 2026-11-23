@@ -183,7 +183,7 @@
   }
 
   .page-enter {
-    animation: page-enter var(--dur-base) var(--ease-out) both;
+    animation: page-enter var(--dur-base) var(--ease-out) backwards;
   }
 }
 

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -24,17 +24,46 @@ import { SplashScreen } from "@/components/common/SplashScreen";
 
 // Signed-in screens are code-split; the public, prerendered pages stay eager so
 // hydration of their static HTML is synchronous.
-const DashboardPage = lazy(() => import("@/pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
-const SessionsPage = lazy(() => import("@/pages/SessionsPage").then((m) => ({ default: m.SessionsPage })));
-const NewSessionPage = lazy(() => import("@/pages/NewSessionPage").then((m) => ({ default: m.NewSessionPage })));
-const LeaderboardPage = lazy(() => import("@/pages/LeaderboardPage").then((m) => ({ default: m.LeaderboardPage })));
-const PlayersPage = lazy(() => import("@/pages/PlayersPage").then((m) => ({ default: m.PlayersPage })));
-const MyStatsPage = lazy(() => import("@/pages/MyStatsPage").then((m) => ({ default: m.MyStatsPage })));
-const InviteCodesPage = lazy(() => import("@/pages/InviteCodesPage").then((m) => ({ default: m.InviteCodesPage })));
-const MembersPage = lazy(() => import("@/pages/MembersPage").then((m) => ({ default: m.MembersPage })));
-const CalculatorPage = lazy(() => import("@/pages/CalculatorPage").then((m) => ({ default: m.CalculatorPage })));
-const BadgePreviewPage = lazy(() => import("@/pages/BadgePreviewPage").then((m) => ({ default: m.BadgePreviewPage })));
-const LiveSessionPage = lazy(() => import("@/pages/LiveSessionPage").then((m) => ({ default: m.LiveSessionPage })));
+const loaders = {
+  dashboard: () => import("@/pages/DashboardPage"),
+  sessions: () => import("@/pages/SessionsPage"),
+  newSession: () => import("@/pages/NewSessionPage"),
+  leaderboard: () => import("@/pages/LeaderboardPage"),
+  players: () => import("@/pages/PlayersPage"),
+  myStats: () => import("@/pages/MyStatsPage"),
+  invites: () => import("@/pages/InviteCodesPage"),
+  members: () => import("@/pages/MembersPage"),
+  calculator: () => import("@/pages/CalculatorPage"),
+  badgePreview: () => import("@/pages/BadgePreviewPage"),
+  live: () => import("@/pages/LiveSessionPage"),
+};
+
+const DashboardPage = lazy(() => loaders.dashboard().then((m) => ({ default: m.DashboardPage })));
+const SessionsPage = lazy(() => loaders.sessions().then((m) => ({ default: m.SessionsPage })));
+const NewSessionPage = lazy(() => loaders.newSession().then((m) => ({ default: m.NewSessionPage })));
+const LeaderboardPage = lazy(() => loaders.leaderboard().then((m) => ({ default: m.LeaderboardPage })));
+const PlayersPage = lazy(() => loaders.players().then((m) => ({ default: m.PlayersPage })));
+const MyStatsPage = lazy(() => loaders.myStats().then((m) => ({ default: m.MyStatsPage })));
+const InviteCodesPage = lazy(() => loaders.invites().then((m) => ({ default: m.InviteCodesPage })));
+const MembersPage = lazy(() => loaders.members().then((m) => ({ default: m.MembersPage })));
+const CalculatorPage = lazy(() => loaders.calculator().then((m) => ({ default: m.CalculatorPage })));
+const BadgePreviewPage = lazy(() => loaders.badgePreview().then((m) => ({ default: m.BadgePreviewPage })));
+const LiveSessionPage = lazy(() => loaders.live().then((m) => ({ default: m.LiveSessionPage })));
+
+/** Warm every signed-in screen's chunk once the shell is idle, so tab switches never wait on the network. */
+function usePrefetchRoutes(enabled: boolean) {
+  useEffect(() => {
+    if (!enabled || typeof window === "undefined") return;
+    const run = () => Object.values(loaders).forEach((load) => load().catch(() => {}));
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(run);
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(run, 1200);
+    return () => window.clearTimeout(id);
+  }, [enabled]);
+}
 
 const queryClient = new QueryClient();
 
@@ -47,6 +76,7 @@ const queryClient = new QueryClient();
 function AppShell() {
   const { user, homegame, loading } = useAuthContext();
   const { pathname } = useLocation();
+  usePrefetchRoutes(!loading && !!user && !!homegame);
 
   if (loading) return <SplashScreen />;
 
