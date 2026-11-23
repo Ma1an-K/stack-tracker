@@ -69,6 +69,11 @@ export function PlayerList({
   };
 
   const isMyPlayer = (player: Player) => player.user_id === currentUserId;
+  // One player per account per homegame: once you hold a player here, or have a
+  // claim waiting for approval, "This is me" is no longer offered on the others.
+  const hasMyPlayer = !!currentUserId && players.some(isMyPlayer);
+  const hasPendingClaim = !!hasRequestedPlayer && players.some((p) => hasRequestedPlayer(p.id));
+  const canClaim = !!onRequestClaim && !hasMyPlayer && !hasPendingClaim;
 
   if (loading) {
     return (
@@ -155,7 +160,7 @@ export function PlayerList({
                         <Badge variant="outline" className="text-muted-foreground">
                           Pending
                         </Badge>
-                      ) : (
+                      ) : !canClaim ? null : (
                         <Button
                           variant="outline"
                           size="sm"
