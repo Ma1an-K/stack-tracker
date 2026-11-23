@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { TutorialProvider } from "@/contexts/TutorialContext";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -11,17 +11,6 @@ import { LandingPage } from "@/pages/LandingPage";
 import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
 import { PublicHandCalculatorPage } from "@/pages/PublicHandCalculatorPage";
 import { AboutPage } from "@/pages/AboutPage";
-import { DashboardPage } from "@/pages/DashboardPage";
-import { SessionsPage } from "@/pages/SessionsPage";
-import { NewSessionPage } from "@/pages/NewSessionPage";
-import { LeaderboardPage } from "@/pages/LeaderboardPage";
-import { PlayersPage } from "@/pages/PlayersPage";
-import { MyStatsPage } from "@/pages/MyStatsPage";
-import { InviteCodesPage } from "@/pages/InviteCodesPage";
-import { MembersPage } from "@/pages/MembersPage";
-import { CalculatorPage } from "@/pages/CalculatorPage";
-import { BadgePreviewPage } from "@/pages/BadgePreviewPage";
-import { LiveSessionPage } from "@/pages/LiveSessionPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -29,60 +18,55 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
+import { PageSkeleton } from "@/components/common/PageSkeleton";
+import { SplashScreen } from "@/components/common/SplashScreen";
+
+// Signed-in screens are code-split; the public, prerendered pages stay eager so
+// hydration of their static HTML is synchronous.
+const DashboardPage = lazy(() => import("@/pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const SessionsPage = lazy(() => import("@/pages/SessionsPage").then((m) => ({ default: m.SessionsPage })));
+const NewSessionPage = lazy(() => import("@/pages/NewSessionPage").then((m) => ({ default: m.NewSessionPage })));
+const LeaderboardPage = lazy(() => import("@/pages/LeaderboardPage").then((m) => ({ default: m.LeaderboardPage })));
+const PlayersPage = lazy(() => import("@/pages/PlayersPage").then((m) => ({ default: m.PlayersPage })));
+const MyStatsPage = lazy(() => import("@/pages/MyStatsPage").then((m) => ({ default: m.MyStatsPage })));
+const InviteCodesPage = lazy(() => import("@/pages/InviteCodesPage").then((m) => ({ default: m.InviteCodesPage })));
+const MembersPage = lazy(() => import("@/pages/MembersPage").then((m) => ({ default: m.MembersPage })));
+const CalculatorPage = lazy(() => import("@/pages/CalculatorPage").then((m) => ({ default: m.CalculatorPage })));
+const BadgePreviewPage = lazy(() => import("@/pages/BadgePreviewPage").then((m) => ({ default: m.BadgePreviewPage })));
+const LiveSessionPage = lazy(() => import("@/pages/LiveSessionPage").then((m) => ({ default: m.LiveSessionPage })));
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+/**
+ * One persistent shell for every signed-in screen (including "/"), so Header,
+ * Navigation and LiveSessionProvider are mounted once and never remount on a
+ * tab change. Signed-out visitors get the landing page on "/" and are sent to
+ * /auth everywhere else (same behaviour as before).
+ */
+function AppShell() {
   const { user, homegame, loading } = useAuthContext();
+  const { pathname } = useLocation();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <SplashScreen />;
 
   if (!user || !homegame) {
+    if (pathname === "/") return <LandingPage />;
     return <Navigate to="/auth" replace />;
   }
 
-  return <MainLayout>{children}</MainLayout>;
-}
-
-function HomeRoute() {
-  const { user, homegame, loading } = useAuthContext();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (user && homegame) {
-    return (
-      <MainLayout>
-        <DashboardPage />
-      </MainLayout>
-    );
-  }
-
-  return <LandingPage />;
+  return (
+    <MainLayout>
+      <Suspense fallback={<PageSkeleton />}>
+        <Outlet />
+      </Suspense>
+    </MainLayout>
+  );
 }
 
 function AuthRoute() {
-  const { user, homegame, homegames, loading } = useAuthContext();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
+  const { loading } = useAuthContext();
+  if (loading) return <SplashScreen />;
   // Redirect is handled in AuthPage via useEffect
   return <AuthPage />;
 }
@@ -91,90 +75,22 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/auth" element={<AuthRoute />} />
-      <Route path="/" element={<HomeRoute />} />
       <Route path="/poker-settlement-calculator" element={<PublicSettlementPage />} />
       <Route path="/poker-hand-calculator" element={<PublicHandCalculatorPage />} />
       <Route path="/about" element={<AboutPage />} />
-      <Route
-        path="/sessions"
-        element={
-          <ProtectedRoute>
-            <SessionsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/new-session"
-        element={
-          <ProtectedRoute>
-            <NewSessionPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/leaderboard"
-        element={
-          <ProtectedRoute>
-            <LeaderboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/players"
-        element={
-          <ProtectedRoute>
-            <PlayersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/my-stats"
-        element={
-          <ProtectedRoute>
-            <MyStatsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/invites"
-        element={
-          <ProtectedRoute>
-            <InviteCodesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/members"
-        element={
-          <ProtectedRoute>
-            <MembersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/calculator"
-        element={
-          <ProtectedRoute>
-            <CalculatorPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/badge-preview"
-        element={
-          <ProtectedRoute>
-            <BadgePreviewPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/live-session"
-        element={
-          <ProtectedRoute>
-            <LiveSessionPage />
-          </ProtectedRoute>
-        }
-      />
+      <Route element={<AppShell />}>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/sessions" element={<SessionsPage />} />
+        <Route path="/new-session" element={<NewSessionPage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/players" element={<PlayersPage />} />
+        <Route path="/my-stats" element={<MyStatsPage />} />
+        <Route path="/invites" element={<InviteCodesPage />} />
+        <Route path="/members" element={<MembersPage />} />
+        <Route path="/calculator" element={<CalculatorPage />} />
+        <Route path="/badge-preview" element={<BadgePreviewPage />} />
+        <Route path="/live-session" element={<LiveSessionPage />} />
+      </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -249,10 +165,16 @@ function PasswordResetDialog() {
   );
 }
 
+function GlobalEffects() {
+  useKeyboardInset();
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
+      <GlobalEffects />
       <BrowserRouter>
         <AuthProvider>
           <TutorialProvider>

@@ -67,6 +67,7 @@ export default {
           DEFAULT: "hsl(var(--gold))",
           foreground: "hsl(var(--gold-foreground))",
           muted: "hsl(var(--gold-muted))",
+          bright: "hsl(var(--gold-bright))",
         },
       },
       borderRadius: {
@@ -76,6 +77,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['"Cormorant Garamond"', 'Cormorant', 'Georgia', 'serif'],
       },
       keyframes: {
         "accordion-down": {
@@ -94,12 +96,25 @@ export default {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "sheet-in": {
+          from: { transform: "translateY(100%)" },
+          to: { transform: "translateY(0)" },
+        },
+        "sheet-out": {
+          from: { transform: "translateY(0)" },
+          to: { transform: "translateY(100%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.2s ease-out",
-        "slide-up": "slide-up 0.25s ease-out",
+        "slide-up": "slide-up 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
+        "sheet-in": "sheet-in 0.26s cubic-bezier(0.22, 1, 0.36, 1)",
+        "sheet-out": "sheet-out 0.18s cubic-bezier(0.4, 0, 1, 1)",
+      },
+      transitionTimingFunction: {
+        "out-expo": "cubic-bezier(0.22, 1, 0.36, 1)",
       },
     },
   },

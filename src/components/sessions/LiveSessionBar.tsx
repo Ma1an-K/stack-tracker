@@ -5,7 +5,7 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/lib/settlement';
 import { LivePulse } from './LivePulse';
 
-/** Thin resume strip pinned to the top of every page while a game is running. */
+/** Resume strip pinned to the top of every page while a game is running. */
 export function LiveSessionBar() {
   const { liveSession, totalBuyIn } = useLiveSession();
   const { homegame } = useAuthContext();
@@ -16,18 +16,18 @@ export function LiveSessionBar() {
   return (
     <Link
       to="/live-session"
-      className="sticky top-0 z-20 -mx-[max(1rem,env(safe-area-inset-left))] -mt-4 mb-4 flex items-center gap-2.5 border-b border-gold/30 bg-gold/10 px-4 py-2.5 backdrop-blur transition-colors hover:bg-gold/15 md:-mx-6 md:-mt-6 md:mb-6 md:px-6"
+      className="pressable sticky top-2 z-20 mx-auto mb-4 flex min-h-[48px] max-w-3xl items-center gap-3 rounded-2xl border border-gold/35 bg-[hsl(var(--card)/0.85)] px-4 py-2.5 shadow-[0_10px_30px_-14px_hsl(0_0%_0%/0.9),0_0_24px_-10px_hsl(var(--gold)/0.5)] backdrop-blur-xl hover:border-gold/55"
     >
       <LivePulse />
-      <span className="min-w-0 flex-1 truncate text-xs">
-        <span className="font-semibold text-gold">Session in progress</span>
+      <span className="min-w-0 flex-1 truncate text-[0.8125rem]">
+        <span className="font-semibold text-gold">Game in progress</span>
         <span className="text-muted-foreground">
-          {' '}· {liveSession.players.length} players · {formatCurrency(totalBuyIn, homegame?.currency)} in
+          {' '}· {liveSession.players.length} players · <span className="tabular-nums">{formatCurrency(totalBuyIn, homegame?.currency)}</span> in
         </span>
       </span>
-      <span className="flex shrink-0 items-center gap-0.5 text-xs font-medium text-gold">
+      <span className="flex shrink-0 items-center gap-1 text-[0.8125rem] font-semibold text-gold">
         Resume
-        <ArrowRight className="h-3 w-3" />
+        <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </span>
     </Link>
   );

@@ -1,4 +1,5 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
+import { useLocation, useNavigationType } from 'react-router-dom';
 import { Header } from './Header';
 import { Navigation } from './Navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -12,10 +13,18 @@ interface MainLayoutProps {
   children: ReactNode;
 }
 
+// Scroll offsets per path, so Back returns to where you were and a fresh tab
+// always opens at the top (the <main> element is the shared scroll container).
+const scrollMemory = new Map<string, number>();
+
 export function MainLayout({ children }: MainLayoutProps) {
   const { homegame, currentHomegame, loading } = useAuthContext();
   const { activeTour, currentStep, steps, startTour, nextStep, skipTour } = useTutorialContext();
   const installPrompt = useInstallPrompt();
+  const { pathname } = useLocation();
+  const navType = useNavigationType();
+  const mainRef = useRef<HTMLElement>(null);
+  const lastPath = useRef(pathname);
 
   useEffect(() => {
     if (loading || !homegame || !currentHomegame) return;
@@ -24,19 +33,32 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   }, [loading, homegame, currentHomegame, startTour]);
 
+  useLayoutEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    if (lastPath.current !== pathname) {
+      scrollMemory.set(lastPath.current, el.scrollTop);
+      lastPath.current = pathname;
+    }
+    el.scrollTop = navType === 'POP' ? scrollMemory.get(pathname) ?? 0 : 0;
+  }, [pathname, navType]);
+
   return (
     <LiveSessionProvider>
       <div className="flex flex-col h-full overflow-x-hidden md:block md:relative bg-background">
-        <div style={{ position: 'fixed', top: -80, left: -80, width: 380, height: 380, background: 'radial-gradient(circle, rgba(200,155,60,0.08) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
-        <div style={{ position: 'fixed', bottom: 40, right: -60, width: 300, height: 300, background: 'radial-gradient(circle, rgba(200,155,60,0.05) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
+        <div aria-hidden="true" className="pointer-events-none fixed -left-24 -top-24 z-0 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.09)_0%,transparent_65%)]" />
+        <div aria-hidden="true" className="pointer-events-none fixed -right-20 bottom-10 z-0 h-[320px] w-[320px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.05)_0%,transparent_65%)]" />
         <Header />
         <main
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-none pt-[calc(3rem+env(safe-area-inset-top))] main-pb md:absolute md:inset-0 md:pt-[calc(3rem+env(safe-area-inset-top))] md:pb-6 md:ml-56"
+          ref={mainRef}
+          className="relative z-[1] flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-none pt-[calc(var(--header-h)+env(safe-area-inset-top))] main-pb md:absolute md:inset-0 md:ml-60"
           style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
         >
-          <div className="px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] py-4 md:p-6 min-h-full">
+          <div className="pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-4 md:px-8 md:pt-8 min-h-full">
             <LiveSessionBar />
-            {children}
+            <div key={pathname} className={`page-enter mx-auto w-full ${pathname === '/calculator' ? 'max-w-5xl' : 'max-w-3xl'}`}>
+              {children}
+            </div>
           </div>
         </main>
       </div>

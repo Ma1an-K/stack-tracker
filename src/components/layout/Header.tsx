@@ -3,27 +3,20 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogOut, Settings, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2, Trash2, Image, Award } from 'lucide-react';
+import { LogOut, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2, Trash2, Image, Award, Check, Calculator, Shield, ChevronRight, LayoutGrid } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useToast } from '@/hooks/use-toast';
-import { Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { cn } from '@/lib/utils';
 import { HOMEGAME_ICONS, getIconSrc } from '@/lib/homegameIcons';
 import { BADGE_DEFINITIONS } from '@/lib/badges';
 import { getStaticBadgeImage } from '@/assets/badges/static_badges';
 import { getHeaterImage } from '@/assets/badges/heater';
 import { getColdImage } from '@/assets/badges/cold';
 import { Switch } from '@/components/ui/switch';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { HomegameDialog } from './HomegameDialog';
 
 export function Header() {
@@ -39,7 +32,17 @@ export function Header() {
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [iconLoading, setIconLoading] = useState(false);
   const [badgesDialogOpen, setBadgesDialogOpen] = useState(false);
+  const [clubOpen, setClubOpen] = useState(false);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
   const { isSubscribed, isSupported, subscribe, unsubscribe } = usePushNotifications();
+  const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
+
+  /** Close the Club sheet, then run the action (lets the sheet animate out first). */
+  const fromClub = (fn: () => void) => () => {
+    setClubOpen(false);
+    fn();
+  };
 
   const handleToggleNotifications = async () => {
     if (isSubscribed) {
@@ -135,154 +138,155 @@ export function Header() {
 
   return (
     <>
-      <header className="border-b fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)] backdrop-blur-sm bg-[rgba(13,16,30,0.97)] border-[rgba(200,155,60,0.28)] shadow-[0_2px_20px_rgba(200,155,60,0.08)]">
-        <div className="px-4 h-12 flex items-center justify-between gap-2 min-w-0">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+      <header className="glass fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)] border-b border-gold/15">
+        <div className="pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] h-14 flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-1 min-w-0 flex-1">
             {isOwner ? (
               <button
                 data-tutorial="tutorial-homegame-icon"
                 onClick={() => setIconPickerOpen(true)}
-                className="rounded-lg focus:outline-none hover:ring-2 hover:ring-yellow-500/50 transition-all"
+                className="pressable shrink-0 rounded-xl p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Change homegame icon"
               >
-                <img src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover shadow-[0_0_12px_rgba(200,155,60,0.45)]" />
+                <img src={getIconSrc(homegame?.icon_id)} alt="" className="w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
               </button>
             ) : (
-              <img data-tutorial="tutorial-homegame-icon" src={getIconSrc(homegame?.icon_id)} alt={homegame?.name || 'Stack Tracker'} className="w-9 h-9 rounded-lg object-cover shadow-[0_0_12px_rgba(200,155,60,0.45)]" />
+              <img data-tutorial="tutorial-homegame-icon" src={getIconSrc(homegame?.icon_id)} alt="" className="shrink-0 w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
             )}
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-auto py-1 px-2 flex flex-col items-start min-w-0 max-w-[180px]">
-                  <div className="flex items-center gap-1 min-w-0 w-full">
-                    <span className="font-semibold truncate">{homegame?.name || 'Select Homegame'}</span>
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                  <span className="text-xs flex items-center gap-1">
-                    {isOwner ? (
-                      <span className="text-[9px] font-bold uppercase tracking-wide text-gold">Owner</span>
-                    ) : homegame ? (
-                      <span className="text-[9px] font-bold uppercase tracking-wide text-gold/60">Member</span>
-                    ) : null}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {homegames.length > 0 && (
-                  <>
-                    <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">Your Homegames</DropdownMenuLabel>
-                    {homegames.map((hg) => (
-                      <DropdownMenuItem
-                        key={hg.id}
-                        onClick={() => selectHomegame(hg.id)}
-                        className={homegame?.id === hg.id ? 'bg-accent' : ''}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <span>{hg.name}</span>
-                          <Badge variant={hg.role === 'owner' ? 'secondary' : 'outline'} className="text-[10px] font-normal">
-                            {hg.role}
-                          </Badge>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem onClick={openCreateDialog}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create New Homegame
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={openJoinDialog}>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Join with Invite Code
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            <button
+              onClick={() => setSwitcherOpen(true)}
+              className="pressable flex min-h-[44px] min-w-0 max-w-[60vw] flex-col items-start justify-center rounded-xl px-2 text-left hover:bg-accent/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:max-w-xs"
+              aria-label={`Current homegame ${homegame?.name ?? ''}. Switch homegame`}
+            >
+              <span className="flex w-full min-w-0 items-center gap-1">
+                <span className="truncate text-[0.9375rem] font-semibold leading-tight">{homegame?.name || 'Select Homegame'}</span>
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+              </span>
+              <span className={cn('text-[0.6875rem] font-semibold uppercase tracking-[0.14em] leading-tight', isOwner ? 'text-gold' : 'text-gold/70')}>
+                {isOwner ? 'Owner' : homegame ? 'Member' : ''}
+              </span>
+            </button>
           </div>
-          
-          <div className="flex items-center gap-2 flex-shrink-0">
+
+          <div className="flex items-center gap-1 flex-shrink-0">
             {profile && (
-              <span className="text-sm text-muted-foreground hidden sm:block font-mono">
-                {profile.username}#{profile.discriminator}
+              <span className="mr-2 hidden text-sm text-muted-foreground lg:block tabular-nums">
+                {profile.username}<span className="text-muted-foreground/60">#{profile.discriminator}</span>
               </span>
             )}
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  data-tutorial="tutorial-settings"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-lg border border-[rgba(200,155,60,0.28)] bg-[rgba(200,155,60,0.10)] hover:bg-[rgba(200,155,60,0.18)] text-gold/70 hover:text-gold transition-colors"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isSupported && (
-                  <>
-                    <DropdownMenuItem onClick={handleToggleNotifications}>
-                      {isSubscribed ? (
-                        <>
-                          <BellOff className="mr-2 h-4 w-4" />
-                          Disable Notifications
-                        </>
-                      ) : (
-                        <>
-                          <Bell className="mr-2 h-4 w-4" />
-                          Enable Notifications
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                {isOwner && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <RouterLink to="/members" className="flex items-center">
-                        <Users className="mr-2 h-4 w-4" />
-                        Manage Members
-                      </RouterLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <RouterLink to="/invites" className="flex items-center">
-                        <Link className="mr-2 h-4 w-4" />
-                        Invite Codes
-                      </RouterLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setIconPickerOpen(true)}>
-                      <Image className="mr-2 h-4 w-4" />
-                      Change Icon
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setBadgesDialogOpen(true)}>
-                      <Award className="mr-2 h-4 w-4" />
-                      Badges
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setDeleteDialogOpen(true)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Homegame
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem onClick={openProfileDialog}>
-                  <UserPen className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {!isDesktop && (
+              <button
+                data-tutorial="tutorial-nav-players"
+                onClick={() => navigate('/players')}
+                className="pressable flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Players"
+              >
+                <Users className="h-5 w-5" />
+              </button>
+            )}
+            <button
+              data-tutorial="tutorial-settings"
+              onClick={() => setClubOpen(true)}
+              className="pressable flex h-11 w-11 items-center justify-center rounded-xl border border-gold/25 bg-gold/10 text-gold hover:bg-gold/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Club menu and settings"
+            >
+              <LayoutGrid className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Homegame switcher (bottom sheet on mobile) */}
+      <Dialog open={switcherOpen} onOpenChange={setSwitcherOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Your homegames</DialogTitle>
+            <DialogDescription>Switch tables, start a new game or join one with a code.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            {homegames.map((hg) => {
+              const active = homegame?.id === hg.id;
+              return (
+                <button
+                  key={hg.id}
+                  onClick={() => {
+                    selectHomegame(hg.id);
+                    setSwitcherOpen(false);
+                  }}
+                  className={cn(
+                    'pressable flex w-full min-h-[56px] items-center gap-3 rounded-xl border px-3 text-left',
+                    active ? 'border-gold/40 bg-gold/10' : 'border-border/60 bg-secondary/50 hover:bg-accent'
+                  )}
+                  aria-current={active ? 'true' : undefined}
+                >
+                  <img src={getIconSrc(hg.icon_id)} alt="" className="h-9 w-9 rounded-lg object-cover" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{hg.name}</span>
+                    <span className="text-[0.6875rem] uppercase tracking-[0.12em] text-muted-foreground">{hg.role}</span>
+                  </span>
+                  {active && <Check className="h-5 w-5 text-gold" aria-label="Current" />}
+                </button>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <Button variant="secondary" onClick={() => { setSwitcherOpen(false); openCreateDialog(); }}>
+              <Plus /> Create
+            </Button>
+            <Button variant="secondary" onClick={() => { setSwitcherOpen(false); openJoinDialog(); }}>
+              <UserPlus /> Join with code
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Club sheet: replaces the old gear dropdown */}
+      <Dialog open={clubOpen} onOpenChange={setClubOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Club</DialogTitle>
+            {profile ? (
+              <DialogDescription>
+                Signed in as <span className="text-foreground">{profile.display_name || profile.username}</span>{' '}
+                <span className="tabular-nums">({profile.username}#{profile.discriminator})</span>
+              </DialogDescription>
+            ) : (
+              <DialogDescription>Settings for you and this homegame.</DialogDescription>
+            )}
+          </DialogHeader>
+
+          <div className="grid grid-cols-3 gap-2">
+            <ClubTile icon={Users} label="Players" onClick={fromClub(() => navigate('/players'))} />
+            <ClubTile icon={Calculator} label="Calculator" onClick={fromClub(() => navigate('/calculator'))} />
+            <ClubTile icon={UserPen} label="Profile" onClick={fromClub(openProfileDialog)} />
+            {isOwner && (
+              <>
+                <ClubTile icon={Link} label="Invites" onClick={fromClub(() => navigate('/invites'))} />
+                <ClubTile icon={Shield} label="Members" onClick={fromClub(() => navigate('/members'))} />
+                <ClubTile icon={Image} label="Icon" onClick={fromClub(() => setIconPickerOpen(true))} />
+              </>
+            )}
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-border/60 bg-secondary/40 divide-y divide-border/50">
+            {isOwner && (
+              <ClubRow icon={Award} label="Badges" onClick={fromClub(() => setBadgesDialogOpen(true))} />
+            )}
+            {isSupported && (
+              <ClubRow
+                icon={isSubscribed ? BellOff : Bell}
+                label={isSubscribed ? 'Disable notifications' : 'Enable notifications'}
+                onClick={fromClub(handleToggleNotifications)}
+              />
+            )}
+            <ClubRow icon={LogOut} label="Sign out" onClick={fromClub(handleSignOut)} />
+            {isOwner && (
+              <ClubRow icon={Trash2} label="Delete homegame" destructive onClick={fromClub(() => setDeleteDialogOpen(true))} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <HomegameDialog
         open={dialogOpen}
@@ -303,7 +307,7 @@ export function Header() {
             <AlertDialogAction
               onClick={handleDeleteHomegame}
               disabled={deleteLoading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground bg-none shadow-none hover:bg-destructive/90"
             >
               {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete Homegame
@@ -325,10 +329,10 @@ export function Header() {
                 key={icon.id}
                 onClick={() => handleSelectIcon(icon.id)}
                 disabled={iconLoading}
-                className={`relative rounded-lg p-1 border-2 transition-colors hover:border-yellow-500/60 focus:outline-none ${homegame?.icon_id === icon.id ? 'border-yellow-500' : 'border-border/40'}`}
+                className={`relative rounded-lg p-1 border-2 transition-colors hover:border-gold/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${homegame?.icon_id === icon.id ? 'border-gold shadow-[0_0_18px_-4px_hsl(var(--gold)/0.6)]' : 'border-border/40'}`}
               >
                 <img src={icon.src} alt={icon.label} className="w-full aspect-square object-cover rounded" />
-                <span className="block text-center text-[10px] text-muted-foreground mt-1 truncate">{icon.label}</span>
+                <span className="block text-center text-[0.6875rem] text-muted-foreground mt-1 truncate">{icon.label}</span>
                 {iconLoading && homegame?.icon_id !== icon.id && null}
               </button>
             ))}
@@ -408,7 +412,7 @@ export function Header() {
               />
               <p className="text-xs text-muted-foreground">Shown as {profileForm.username || 'username'}#{profile?.discriminator}</p>
             </div>
-            <Button type="submit" className="w-full" disabled={profileLoading}>
+            <Button type="submit" size="lg" className="w-full" disabled={profileLoading}>
               {profileLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
@@ -416,5 +420,36 @@ export function Header() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+
+function ClubTile({ icon: Icon, label, onClick }: { icon: typeof Users; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="pressable flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-xl border border-border/60 bg-secondary/50 px-2 text-[0.8125rem] font-medium hover:border-gold/30 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold/10 text-gold">
+        <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+      </span>
+      {label}
+    </button>
+  );
+}
+
+function ClubRow({ icon: Icon, label, onClick, destructive }: { icon: typeof Users; label: string; onClick: () => void; destructive?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'flex w-full min-h-[52px] items-center gap-3 px-4 text-left text-sm font-medium transition-colors hover:bg-accent focus:outline-none focus-visible:bg-accent',
+        destructive ? 'text-destructive' : 'text-foreground'
+      )}
+    >
+      <Icon className="h-[18px] w-[18px] shrink-0 opacity-80" aria-hidden="true" />
+      <span className="flex-1">{label}</span>
+      <ChevronRight className="h-4 w-4 text-muted-foreground/60" aria-hidden="true" />
+    </button>
   );
 }

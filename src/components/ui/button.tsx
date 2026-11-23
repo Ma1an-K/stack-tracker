@@ -5,28 +5,26 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold select-none transition-[transform,background-color,border-color,color,opacity,box-shadow] duration-150 ease-out-expo active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        // Gold variant for primary actions - use sparingly
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
-        // Secondary slate for most actions
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        // Outline for tertiary actions
-        outline: "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground",
+        // Gold gradient for the one primary action on a screen
+        default: "gold-fill text-primary-foreground hover:brightness-105",
+        // Raised onyx for most actions
+        secondary: "bg-secondary text-secondary-foreground border border-border/70 hover:bg-accent",
+        // Brass outline for tertiary actions
+        outline: "border border-border bg-transparent text-foreground hover:bg-accent hover:border-gold/30",
         // Ghost for minimal actions
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        // Destructive - muted red
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        // Link style
-        link: "text-primary underline-offset-4 hover:underline",
+        ghost: "text-foreground hover:bg-accent",
+        destructive: "bg-destructive/12 text-destructive border border-destructive/35 hover:bg-destructive/20",
+        link: "text-primary underline-offset-4 hover:underline active:scale-100",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3 text-xs",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        default: "h-11 px-5",
+        sm: "h-10 rounded-lg px-3.5 text-[0.8125rem]",
+        lg: "h-12 px-7 text-[0.9375rem]",
+        icon: "h-11 w-11",
       },
     },
     defaultVariants: {

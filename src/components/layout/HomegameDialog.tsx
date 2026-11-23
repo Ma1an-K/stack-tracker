@@ -72,7 +72,7 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create' }: Ho
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Homegame</DialogTitle>
+          <DialogTitle>{defaultTab === 'join' ? 'Join a homegame' : 'Add a homegame'}</DialogTitle>
           <DialogDescription>
             Create a new homegame or join an existing one with an invite code.
           </DialogDescription>
@@ -93,11 +93,13 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create' }: Ho
                 value={newHomegameName}
                 onChange={(e) => setNewHomegameName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleCreateHomegame()}
+                autoFocus={defaultTab === 'create'}
               />
             </div>
             <Button 
               onClick={handleCreateHomegame} 
               disabled={loading}
+              size="lg"
               className="w-full"
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -114,12 +116,16 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create' }: Ho
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === 'Enter' && handleJoinHomegame()}
-                className="font-mono tracking-wider"
+                autoFocus={defaultTab === 'join'}
+                autoCapitalize="characters"
+                autoComplete="off"
+                className="font-mono tracking-[0.2em] text-center text-lg"
               />
             </div>
             <Button 
               onClick={handleJoinHomegame} 
               disabled={loading}
+              size="lg"
               className="w-full"
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
