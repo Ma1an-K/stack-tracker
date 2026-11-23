@@ -99,7 +99,7 @@ function BadgeDisplay({ badge, size }: { badge: BadgeDef; size: number }) {
 
 export function BadgePreviewPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <div className="space-y-10">
 
         {/* Header */}
