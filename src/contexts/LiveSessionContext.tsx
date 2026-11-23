@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Json } from '@/integrations/supabase/types';
@@ -46,6 +46,10 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
   const homegameId = homegame?.id;
   const [liveSession, setLiveSession] = useState<LiveSession | null>(null);
   const [loading, setLoading] = useState(true);
+  // The homegame the latest fetch belongs to, so a slow response for the
+  // previous homegame can't land after a switch.
+  const currentHomegameId = useRef(homegameId);
+  currentHomegameId.current = homegameId;
 
   const fetchLiveSession = useCallback(async () => {
     if (!homegameId) {
@@ -59,19 +63,24 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('homegame_id', homegameId)
         .maybeSingle();
+      if (currentHomegameId.current !== homegameId) return;
       if (error) throw error;
       setLiveSession(normalise(data));
     } catch (err) {
       console.error('Error fetching live session:', err);
     } finally {
-      setLoading(false);
+      if (currentHomegameId.current === homegameId) setLoading(false);
     }
   }, [homegameId]);
 
+  // On a homegame switch, drop the previous game's live session at once so its
+  // tracker can never be shown (or edited) under the new homegame's name.
   useEffect(() => {
+    setLiveSession(null);
     setLoading(true);
     fetchLiveSession();
   }, [fetchLiveSession]);
+
 
   // Re-check when the app comes back to the foreground — another member may
   // have added a buy-in from their phone while this tab was backgrounded.
