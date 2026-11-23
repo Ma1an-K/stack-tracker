@@ -1,0 +1,118 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, waitFor, act } from "@testing-library/react";
+import { createSupabaseMock } from "@/test/supabaseMock";
+
+type AuthCallback = (event: string, session: unknown) => void;
+
+const mocks = vi.hoisted(() => ({
+  db: null as unknown as ReturnType<typeof import("@/test/supabaseMock").createSupabaseMock>,
+  authCallback: null as AuthCallback | null,
+  getSession: null as unknown as (...args: unknown[]) => unknown,
+}));
+
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: {
+    from: (table: string) => mocks.db.from(table),
+    auth: {
+      onAuthStateChange: (cb: AuthCallback) => {
+        mocks.authCallback = cb;
+        return { data: { subscription: { unsubscribe: () => {} } } };
+      },
+      getSession: (...args: unknown[]) => mocks.getSession(...args),
+    },
+  },
+}));
+
+import { useAuth } from "./useAuth";
+
+const session = { user: { id: "u1" } };
+let getSession: ReturnType<typeof vi.fn>;
+
+beforeEach(() => {
+  mocks.db = createSupabaseMock();
+  mocks.authCallback = null;
+  getSession = vi.fn(() => Promise.resolve({ data: { session } }));
+  mocks.getSession = getSession;
+  const store = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  });
+});
+
+afterEach(() => vi.unstubAllGlobals());
+
+describe("useAuth startup", () => {
+  it("fetches profile and memberships in parallel, once, and stays loading until both land", async () => {
+    const { result } = renderHook(() => useAuth());
+    expect(result.current.loading).toBe(true);
+
+    // Startup: INITIAL_SESSION, then (as can happen during init) a second
+    // event for the same user before the first fetch has finished.
+    act(() => {
+      mocks.authCallback!("INITIAL_SESSION", session);
+      mocks.authCallback!("SIGNED_IN", session);
+    });
+
+    // Both requests are in flight before either has resolved.
+    await waitFor(() => expect(mocks.db.pending()).toHaveLength(2));
+    const [profileReq] = mocks.db.find("profiles");
+    const [membershipReq] = mocks.db.find("homegame_members");
+    expect(profileReq).toBeDefined();
+    expect(membershipReq).toBeDefined();
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      profileReq.resolve({ data: { id: "u1", username: "dan" }, error: null });
+    });
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      membershipReq.resolve({
+        data: [{ role: "owner", homegame: { id: "h1", name: "Friday" } }],
+        error: null,
+      });
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.profile).toEqual({ id: "u1", username: "dan" });
+    expect(result.current.currentHomegame).toMatchObject({ id: "h1", role: "owner" });
+
+    // Only one fetch of each, and no redundant getSession() round trip.
+    await act(async () => { await new Promise((r) => setTimeout(r, 10)); });
+    expect(mocks.db.find("profiles")).toHaveLength(1);
+    expect(mocks.db.find("homegame_members")).toHaveLength(1);
+    expect(getSession).not.toHaveBeenCalled();
+  });
+
+  it("stops loading with no user data when there is no session", async () => {
+    const { result } = renderHook(() => useAuth());
+    act(() => mocks.authCallback!("INITIAL_SESSION", null));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.user).toBeNull();
+    expect(mocks.db.requests).toHaveLength(0);
+  });
+
+  it("still flags password recovery", async () => {
+    const { result } = renderHook(() => useAuth());
+    act(() => mocks.authCallback!("PASSWORD_RECOVERY", session));
+    await waitFor(() => expect(result.current.isRecovery).toBe(true));
+  });
+
+  it("refetchUserData always issues a fresh fetch", async () => {
+    const { result } = renderHook(() => useAuth());
+    act(() => mocks.authCallback!("INITIAL_SESSION", session));
+    await waitFor(() => expect(mocks.db.pending()).toHaveLength(2));
+    await act(async () => {
+      for (const r of mocks.db.pending()) {
+        r.resolve({ data: r.table === "profiles" ? { id: "u1" } : [], error: null });
+      }
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => { result.current.refetchUserData(); });
+    await waitFor(() => expect(mocks.db.find("profiles")).toHaveLength(2));
+    expect(mocks.db.find("homegame_members")).toHaveLength(2);
+  });
+});

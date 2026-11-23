@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, Homegame, HomegameWithRole, HomegameRole } from '@/types/database';
@@ -13,7 +13,16 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [isRecovery, setIsRecovery] = useState(false);
 
+  // The in-flight user-data fetch started by the auth listener, so that
+  // back-to-back auth events for the same user (e.g. INITIAL_SESSION followed
+  // by SIGNED_IN / TOKEN_REFRESHED during startup) share one fetch.
+  const listenerFetchRef = useRef<{ userId: string; promise: Promise<void> } | null>(null);
+
   useEffect(() => {
+    // supabase-js v2 emits INITIAL_SESSION to every new subscriber once the
+    // stored session has been loaded (or with null on failure), so this
+    // listener alone covers startup; a separate getSession() call would only
+    // fetch the same user data a second time.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -24,8 +33,18 @@ export function useAuth() {
         }
 
         if (session?.user) {
+          const userId = session.user.id;
+          // Deferred so no Supabase call runs inside the auth callback (which
+          // holds the auth lock).
           setTimeout(() => {
-            fetchUserData(session.user.id);
+            const inFlight = listenerFetchRef.current;
+            if (inFlight && inFlight.userId === userId) return;
+            const promise = fetchUserData(userId).finally(() => {
+              if (listenerFetchRef.current?.promise === promise) {
+                listenerFetchRef.current = null;
+              }
+            });
+            listenerFetchRef.current = { userId, promise };
           }, 0);
         } else {
           setProfile(null);
@@ -36,42 +55,35 @@ export function useAuth() {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserData(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
     return () => subscription.unsubscribe();
   }, []);
 
   const fetchUserData = async (userId: string) => {
     try {
-      // Fetch profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      // Profile and memberships are independent: fetch them in parallel.
+      const [
+        { data: profileData, error: profileError },
+        { data: membershipData, error: membershipError },
+      ] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single(),
+        supabase
+          .from('homegame_members')
+          .select(`
+            role,
+            homegame:homegames(*)
+          `)
+          .eq('user_id', userId),
+      ]);
 
       if (profileError && profileError.code !== 'PGRST116') {
         console.error('Error fetching profile:', profileError);
       }
-      
-      setProfile(profileData as Profile | null);
 
-      // Fetch homegames with membership role
-      const { data: membershipData, error: membershipError } = await supabase
-        .from('homegame_members')
-        .select(`
-          role,
-          homegame:homegames(*)
-        `)
-        .eq('user_id', userId);
+      setProfile(profileData as Profile | null);
 
       if (membershipError) {
         console.error('Error fetching memberships:', membershipError);
