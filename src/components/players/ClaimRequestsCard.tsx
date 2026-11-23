@@ -33,15 +33,9 @@ export function ClaimRequestsCard({
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <span className="section-header">Pending Claims</span>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        </CardContent>
+      <Card className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+        Checking for player claims…
       </Card>
     );
   }
@@ -51,12 +45,12 @@ export function ClaimRequestsCard({
   }
 
   return (
-    <Card className="border-primary/30 bg-primary/5">
+    <Card className="border-gold/35 bg-[linear-gradient(135deg,hsl(var(--gold)/0.08),hsl(var(--card))_60%)]">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-primary" />
+          <Clock className="h-4 w-4 text-gold" aria-hidden="true" />
           <span className="section-header text-primary">
-            Pending Player Claims ({requests.length})
+            Player claims to review ({requests.length})
           </span>
         </div>
       </CardHeader>
@@ -81,21 +75,19 @@ export function ClaimRequestsCard({
               
               <div className="flex items-center gap-2">
                 <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  size="icon"
+                  variant="destructive"
+                  aria-label={`Reject ${request.profile.username}`}
                   onClick={() => handleReject(request.id)}
                   disabled={processingId === request.id}
                 >
                   {processingId === request.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <X className="h-4 w-4" />
+                    <X />
                   )}
                 </Button>
                 <Button
-                  size="sm"
-                  className="h-8"
                   onClick={() => handleApprove(request)}
                   disabled={processingId === request.id}
                 >
@@ -103,7 +95,7 @@ export function ClaimRequestsCard({
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      <Check className="h-4 w-4 mr-1" />
+                      <Check />
                       Approve
                     </>
                   )}

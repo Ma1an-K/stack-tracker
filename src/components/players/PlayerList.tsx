@@ -7,6 +7,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, Trash2, Loader2, Users, UserCheck, Hand } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,8 +72,10 @@ export function PlayerList({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="space-y-2" aria-busy="true" aria-label="Loading players">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-xl" />
+        ))}
       </div>
     );
   }
@@ -81,7 +85,7 @@ export function PlayerList({
       {isOwner && (
         <Card>
           <CardHeader className="pb-3">
-            <span className="section-header">Add Player</span>
+            <span className="section-header">Add a player</span>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAddPlayer} className="flex gap-2">
@@ -89,10 +93,11 @@ export function PlayerList({
                 placeholder="Player name"
                 value={newPlayerName}
                 onChange={(e) => setNewPlayerName(e.target.value)}
-                className="flex-1 bg-muted/30"
+                aria-label="New player name"
+                className="flex-1"
               />
               <Button type="submit" disabled={adding || !newPlayerName.trim()}>
-                {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1.5" />}
+                {adding ? <Loader2 className="animate-spin" /> : <UserPlus />}
                 Add
               </Button>
             </form>
@@ -103,8 +108,8 @@ export function PlayerList({
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <span className="section-header">Players</span>
-            <span className="text-sm text-muted-foreground tabular-nums">{players.length}</span>
+            <span className="section-header">Roster</span>
+            <span className="text-sm text-muted-foreground tabular-nums">{players.filter(p => p.is_active).length} active · {players.length}</span>
           </div>
         </CardHeader>
         <CardContent>
@@ -120,31 +125,31 @@ export function PlayerList({
               {players.map((player) => (
                 <div
                   key={player.id}
-                  className="flex items-center justify-between py-3 gap-3"
+                  className="flex min-h-[60px] items-center justify-between gap-3 py-2"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`font-medium text-sm ${!player.is_active ? 'text-muted-foreground' : ''}`}>
+                    <span className={cn('truncate font-medium', !player.is_active && 'text-muted-foreground line-through decoration-muted-foreground/40')}>
                       {player.name}
                     </span>
                     {isMyPlayer(player) && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge className="shrink-0">
                         <UserCheck className="h-3 w-3 mr-1" />
                         You
                       </Badge>
                     )}
                     {player.user_id && !isMyPlayer(player) && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="shrink-0 text-muted-foreground">
                         <UserCheck className="h-3 w-3 mr-1" />
                         Claimed
                       </Badge>
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-1.5">
                     {/* Claim button for unclaimed players */}
                     {!player.user_id && onRequestClaim && (
                       hasRequestedPlayer?.(player.id) ? (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-muted-foreground">
                           Pending
                         </Badge>
                       ) : (
@@ -158,8 +163,8 @@ export function PlayerList({
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <>
-                              <Hand className="h-4 w-4 mr-1" />
-                              Claim
+                              <Hand />
+                              This is me
                             </>
                           )}
                         </Button>
@@ -167,8 +172,8 @@ export function PlayerList({
                     )}
                     
                     {isOwner && (
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`active-${player.id}`} className="text-xs text-muted-foreground">
+                      <div className="flex min-h-[44px] items-center gap-2 px-1">
+                        <Label htmlFor={`active-${player.id}`} className="hidden text-xs text-muted-foreground min-[400px]:block">
                           Active
                         </Label>
                         <Switch
@@ -184,13 +189,13 @@ export function PlayerList({
                     {isOwner && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" aria-label={`Delete ${player.name}`} className="text-muted-foreground hover:text-destructive">
+                            <Trash2 />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Player</AlertDialogTitle>
+                            <AlertDialogTitle>Delete {player.name}?</AlertDialogTitle>
                             <AlertDialogDescription>
                               Are you sure you want to delete {player.name}? This will fail if they have session history.
                             </AlertDialogDescription>
@@ -199,7 +204,7 @@ export function PlayerList({
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => onDeletePlayer(player.id)}
-                              className="bg-destructive hover:bg-destructive/90"
+                              className="bg-destructive bg-none text-destructive-foreground shadow-none hover:bg-destructive/90"
                             >
                               Delete
                             </AlertDialogAction>
