@@ -186,6 +186,12 @@
       0 6px 18px -8px hsl(40 70% 50% / 0.55);
   }
 
+  /* Gradient for clipped text: same ramp as .gold-fill, without the button shadows
+     (which otherwise draw a hairline and a glow box around the text). */
+  .gold-text-fill {
+    background-image: linear-gradient(180deg, hsl(var(--gold-bright)) 0%, hsl(var(--gold)) 55%, hsl(38 52% 46%) 100%);
+  }
+
   .gold-hairline {
     background-image: linear-gradient(90deg, transparent, hsl(var(--gold) / 0.55), transparent);
   }

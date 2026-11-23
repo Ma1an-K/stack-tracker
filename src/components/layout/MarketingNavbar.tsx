@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 
 export const goldGradient =
-  'gold-fill bg-clip-text text-transparent';
+  'gold-text-fill bg-clip-text text-transparent';
 
 export const btnGold =
   'inline-flex items-center justify-center gap-2 rounded-lg gold-fill text-background font-semibold px-6 py-3 min-h-[48px] shadow-[0_8px_28px_-6px_hsl(var(--gold)/0.55)] ring-1 ring-inset ring-[rgba(255,235,180,0.25)] hover:brightness-110 transition-[filter,transform] duration-200 active:scale-[0.98]';
