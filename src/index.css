@@ -303,6 +303,13 @@ select:-webkit-autofill {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Keyboard focus and in-page jumps never land under the fixed header or a
+   sticky action bar (WCAG 2.2 focus-not-obscured). */
+#main {
+  scroll-padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 0.75rem);
+  scroll-padding-bottom: 9rem;
+}
+
 /* Main content bottom padding: tab bar + home indicator + breathing room */
 .main-pb {
   padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 1.25rem);

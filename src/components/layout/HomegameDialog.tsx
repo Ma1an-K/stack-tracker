@@ -84,7 +84,8 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create' }: Ho
             <TabsTrigger value="join">Join Existing</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="create" className="space-y-4 mt-4">
+          <TabsContent value="create" asChild>
+            <form className="space-y-4 mt-4" onSubmit={(e) => { e.preventDefault(); handleCreateHomegame(); }}>
             <div className="space-y-2">
               <Label htmlFor="homegame-name">Homegame Name</Label>
               <Input
@@ -92,45 +93,37 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create' }: Ho
                 placeholder="e.g., Friday Night Poker"
                 value={newHomegameName}
                 onChange={(e) => setNewHomegameName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateHomegame()}
                 autoFocus={defaultTab === 'create'}
+                autoComplete="off"
               />
             </div>
-            <Button 
-              onClick={handleCreateHomegame} 
-              disabled={loading}
-              size="lg"
-              className="w-full"
-            >
+            <Button type="submit" disabled={loading} size="lg" className="w-full">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Homegame
             </Button>
+            </form>
           </TabsContent>
 
-          <TabsContent value="join" className="space-y-4 mt-4">
+          <TabsContent value="join" asChild>
+            <form className="space-y-4 mt-4" onSubmit={(e) => { e.preventDefault(); handleJoinHomegame(); }}>
             <div className="space-y-2">
               <Label htmlFor="invite-code">Invite Code</Label>
               <Input
                 id="invite-code"
                 placeholder="e.g., ABCD1234"
                 value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === 'Enter' && handleJoinHomegame()}
+                onChange={(e) => setInviteCode(e.target.value.replace(/[\s-]/g, '').toUpperCase())}
                 autoFocus={defaultTab === 'join'}
                 autoCapitalize="characters"
                 autoComplete="off"
                 className="font-mono tracking-[0.2em] text-center text-lg"
               />
             </div>
-            <Button 
-              onClick={handleJoinHomegame} 
-              disabled={loading}
-              size="lg"
-              className="w-full"
-            >
+            <Button type="submit" disabled={loading} size="lg" className="w-full">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Join Homegame
             </Button>
+            </form>
           </TabsContent>
         </Tabs>
       </DialogContent>

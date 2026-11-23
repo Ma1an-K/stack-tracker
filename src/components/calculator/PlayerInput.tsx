@@ -53,17 +53,16 @@ export function PlayerInput({
     )}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-1">
-          <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
-            <User className="w-3.5 h-3.5 text-primary" />
+          <div className="w-7 h-7 shrink-0 rounded-full bg-primary/20 flex items-center justify-center">
+            <User className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
           </div>
           <Input
             value={player.name}
             onChange={(e) => onUpdate({ ...player, name: e.target.value })}
             placeholder={`Player ${index + 1}`}
-            className={cn(
-              "max-w-[120px]",
-              isMobile ? "h-8 text-sm" : "h-8"
-            )}
+            aria-label={`Player ${index + 1} name`}
+            autoComplete="off"
+            className="h-11 max-w-[160px] md:h-11"
           />
         </div>
         {canRemove && (
@@ -71,8 +70,8 @@ export function PlayerInput({
             variant="ghost"
             size="icon"
             onClick={onRemove}
-            aria-label="Remove"
-          className="-mr-2 text-muted-foreground hover:text-destructive"
+            aria-label={`Remove ${player.name || `player ${index + 1}`}`}
+            className="-mr-2 text-muted-foreground hover:text-destructive"
           >
             <Trash2 />
           </Button>
@@ -106,19 +105,21 @@ export function PlayerInput({
         isMobile ? "flex-row" : "gap-4"
       )}>
         <div className="flex-1">
-          <Label className="text-xs text-muted-foreground">Stack / Bet</Label>
+          <Label htmlFor={`stack-${player.id}`} className="text-xs text-muted-foreground">Stack / Bet</Label>
           <Input
+            id={`stack-${player.id}`}
             type="number"
             inputMode="decimal"
             value={player.stackSize || ''}
             onChange={(e) => onUpdate({ ...player, stackSize: Number(e.target.value) || 0 })}
             placeholder="0"
-            className="h-8"
+            className="h-11 tabular-nums md:h-11"
           />
         </div>
         <div className="flex items-center gap-2 pt-4">
-          <Label className="text-xs">All-in</Label>
+          <Label htmlFor={`allin-${player.id}`} className="text-xs">All-in</Label>
           <Switch
+            id={`allin-${player.id}`}
             checked={player.isAllIn}
             onCheckedChange={(checked) => onUpdate({ ...player, isAllIn: checked })}
           />

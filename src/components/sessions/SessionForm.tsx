@@ -99,6 +99,7 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
   const focusNextField = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     const fields = Array.from(
       e.currentTarget.form?.querySelectorAll<HTMLInputElement>('[data-entry-field]') ?? []
     );
@@ -330,7 +331,13 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
               aria-label="New player name"
               value={newPlayerName}
               onChange={(e) => setNewPlayerName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNewPlayer())}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                // Enter that confirms an IME composition must not add the player.
+                if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+                handleAddNewPlayer();
+              }}
               className="h-11 flex-1"
               autoFocus
             />

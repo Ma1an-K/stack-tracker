@@ -14,7 +14,7 @@ import { AboutPage } from "@/pages/AboutPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/common/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -168,9 +168,9 @@ function PasswordResetDialog() {
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
             <Label htmlFor="new-password">New Password</Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
+              autoComplete="new-password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -179,9 +179,9 @@ function PasswordResetDialog() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">Confirm Password</Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
+              autoComplete="new-password"
               placeholder="••••••••"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}

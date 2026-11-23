@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { PokerChipSpade } from '@/components/icons/PokerChipSpade';
 import { SplashScreen } from '@/components/common/SplashScreen';
+import { PasswordInput } from '@/components/common/PasswordInput';
 import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
@@ -51,14 +52,32 @@ function AuthScreen({ eyebrow, headline, children }: { eyebrow?: string; headlin
   );
 }
 
-function Field({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+function Field({ id, label, error, children }: { id: string; label: string; error?: string | null; children: ReactNode }) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       {children}
+      {error && (
+        <p id={`${id}-error`} role="alert" className="text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
+
+/** Problem with the whole submit (wrong password, server error): stays until the next try. */
+function FormError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 px-3.5 py-3 text-sm text-destructive">
+      {message}
+    </p>
+  );
+}
+
+// Invite codes: ignore spaces and hyphens people paste in, compare in capitals.
+const normaliseCode = (v: string) => v.replace(/[\s-]/g, '').toUpperCase().slice(0, 8);
 
 function TextLink({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
@@ -99,6 +118,26 @@ export function AuthPage() {
   const [signupForm, setSignupForm] = useState({ email: '', password: '', username: '' });
   const [setupForm, setSetupForm] = useState({ homegameName: '', inviteCode: '' });
   const [setupMode, setSetupMode] = useState<'create' | 'join'>('create');
+  // Inline errors: one field at a time (next to the field), or one for the whole form.
+  const [fieldError, setFieldError] = useState<{ id: string; message: string } | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const flagField = (id: string, message: string) => {
+    setFieldError({ id, message });
+    requestAnimationFrame(() => document.getElementById(id)?.focus());
+  };
+  const errorFor = (id: string) => (fieldError?.id === id ? fieldError.message : null);
+  const invalidProps = (id: string) =>
+    fieldError?.id === id ? { 'aria-invalid': true as const, 'aria-describedby': `${id}-error` } : {};
+  const clearErrors = (id?: string) => {
+    if (!id || fieldError?.id === id) setFieldError(null);
+    setFormError(null);
+  };
+  const goTo = (next: Step) => {
+    setFieldError(null);
+    setFormError(null);
+    setStep(next);
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -113,28 +152,34 @@ export function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
     const result = loginSchema.safeParse(loginForm);
     if (!result.success) {
-      toast({ title: 'Validation Error', description: result.error.errors[0].message, variant: 'destructive' });
+      const issue = result.error.errors[0];
+      flagField(`login-${String(issue.path[0])}`, issue.message);
       return;
     }
     setLoading(true);
     const { error } = await signIn(loginForm.email, loginForm.password);
     setLoading(false);
     if (error) {
-      toast({
-        title: 'Login Failed',
-        description: error.message === 'Invalid login credentials' ? 'Invalid email or password' : error.message,
-        variant: 'destructive',
-      });
+      const message = error.message === 'Invalid login credentials' ? 'Invalid email or password' : error.message;
+      setFormError(
+        error.message === 'Invalid login credentials'
+          ? 'That email and password don’t match. Check them, or reset your password below.'
+          : message
+      );
+      toast({ title: 'Login Failed', description: message, variant: 'destructive' });
     }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
     const result = signupSchema.safeParse(signupForm);
     if (!result.success) {
-      toast({ title: 'Validation Error', description: result.error.errors[0].message, variant: 'destructive' });
+      const issue = result.error.errors[0];
+      flagField(`signup-${String(issue.path[0])}`, issue.message);
       return;
     }
     setLoading(true);
@@ -142,8 +187,10 @@ export function AuthPage() {
     setLoading(false);
     if (error) {
       if (error.message?.includes('already registered')) {
+        setFormError('An account with this email already exists. Sign in instead, or reset your password.');
         toast({ title: 'Signup Failed', description: 'An account with this email already exists', variant: 'destructive' });
       } else {
+        setFormError(error.message || 'Failed to create account. Check your connection and try again.');
         toast({ title: 'Signup Failed', description: error.message || 'Failed to create account', variant: 'destructive' });
       }
     } else {
@@ -151,21 +198,23 @@ export function AuthPage() {
       setConfirmEmail(signupForm.email);
       setLoginForm({ email: signupForm.email, password: '' });
       setSignupForm({ email: '', password: '', username: '' });
-      setStep('auth');
+      goTo('auth');
       toast({ title: 'Account Created', description: 'Please check your email to confirm, then sign in.' });
     }
   };
 
   const handleCreateHomegame = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
     if (!setupForm.homegameName.trim()) {
-      toast({ title: 'Error', description: 'Please enter a homegame name', variant: 'destructive' });
+      flagField('setup-name', 'Enter a name for your game.');
       return;
     }
     setLoading(true);
     const { error } = await createHomegame(setupForm.homegameName);
     setLoading(false);
     if (error) {
+      setFormError('Couldn’t create the game. Check your connection and try again.');
       toast({ title: 'Error', description: 'Failed to create homegame', variant: 'destructive' });
     } else {
       startTour('owner');
@@ -174,14 +223,16 @@ export function AuthPage() {
 
   const handleJoinHomegame = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
     if (!setupForm.inviteCode.trim()) {
-      toast({ title: 'Error', description: 'Please enter an invite code', variant: 'destructive' });
+      flagField('setup-code', 'Enter the invite code your host shared.');
       return;
     }
     setLoading(true);
     const { error } = await joinHomegame(setupForm.inviteCode);
     setLoading(false);
     if (error) {
+      setFormError(`${error.message || 'Failed to join homegame'}. Check the code with your host and try again.`);
       toast({ title: 'Error', description: error.message || 'Failed to join homegame', variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'You have joined the homegame' });
@@ -190,24 +241,26 @@ export function AuthPage() {
 
   const handleBackToLogin = async () => {
     await signOut();
-    setStep('auth');
+    goTo('auth');
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
     if (!forgotEmail.trim()) {
-      toast({ title: 'Error', description: 'Please enter your email', variant: 'destructive' });
+      flagField('forgot-email', 'Enter the email you signed up with.');
       return;
     }
     setLoading(true);
     const { error } = await resetPasswordForEmail(forgotEmail);
     setLoading(false);
     if (error) {
+      setFormError(error.message || 'Failed to send reset email. Try again in a minute.');
       toast({ title: 'Error', description: error.message || 'Failed to send reset email', variant: 'destructive' });
     } else {
       toast({ title: 'Reset email sent', description: 'Check your inbox for a password reset link.' });
       setForgotEmail('');
-      setStep('auth');
+      goTo('auth');
     }
   };
 
@@ -230,37 +283,39 @@ export function AuthPage() {
           </div>
         )}
         <form onSubmit={handleLogin} className="space-y-4">
-          <Field id="login-email" label="Email">
+          <Field id="login-email" label="Email" error={errorFor('login-email')}>
             <Input
               id="login-email"
               type="email"
               inputMode="email"
               value={loginForm.email}
-              onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+              onChange={(e) => { clearErrors('login-email'); setLoginForm({ ...loginForm, email: e.target.value }); }}
               required
               autoComplete="email"
+              {...invalidProps('login-email')}
             />
           </Field>
-          <Field id="login-password" label="Password">
-            <Input
+          <Field id="login-password" label="Password" error={errorFor('login-password')}>
+            <PasswordInput
               id="login-password"
-              type="password"
               value={loginForm.password}
-              onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+              onChange={(e) => { clearErrors('login-password'); setLoginForm({ ...loginForm, password: e.target.value }); }}
               required
               autoComplete="current-password"
+              {...invalidProps('login-password')}
             />
           </Field>
+          <FormError message={formError} />
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading && <Loader2 className="animate-spin" />}
             Sign in
           </Button>
         </form>
-        <Button type="button" variant="secondary" size="lg" className="mt-3 w-full" onClick={() => setStep('signup')}>
+        <Button type="button" variant="secondary" size="lg" className="mt-3 w-full" onClick={() => goTo('signup')}>
           Create account
         </Button>
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Forgot password? <TextLink onClick={() => setStep('forgot')}>Reset it</TextLink>
+          Forgot password? <TextLink onClick={() => goTo('forgot')}>Reset it</TextLink>
         </p>
       </AuthScreen>
     );
@@ -272,47 +327,51 @@ export function AuthPage() {
     return (
       <AuthScreen eyebrow="Free forever" headline="Join the table.">
         <form onSubmit={handleSignup} className="space-y-4">
-          <Field id="signup-username" label="Username">
+          <Field id="signup-username" label="Username" error={errorFor('signup-username')}>
             <Input
               id="signup-username"
               type="text"
               value={signupForm.username}
-              onChange={(e) => setSignupForm({ ...signupForm, username: e.target.value })}
+              onChange={(e) => { clearErrors('signup-username'); setSignupForm({ ...signupForm, username: e.target.value }); }}
+              {...invalidProps('signup-username')}
               required
               maxLength={20}
               autoComplete="username"
               autoCapitalize="none"
             />
           </Field>
-          <Field id="signup-email" label="Email">
+          <Field id="signup-email" label="Email" error={errorFor('signup-email')}>
             <Input
               id="signup-email"
               type="email"
               inputMode="email"
               value={signupForm.email}
-              onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+              onChange={(e) => { clearErrors('signup-email'); setSignupForm({ ...signupForm, email: e.target.value }); }}
+              {...invalidProps('signup-email')}
               required
               autoComplete="email"
             />
           </Field>
-          <Field id="signup-password" label="Password">
-            <Input
+          <Field id="signup-password" label="Password" error={errorFor('signup-password')}>
+            <PasswordInput
               id="signup-password"
-              type="password"
               value={signupForm.password}
-              onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
+              onChange={(e) => { clearErrors('signup-password'); setSignupForm({ ...signupForm, password: e.target.value }); }}
               required
               autoComplete="new-password"
+              aria-describedby={fieldError?.id === 'signup-password' ? 'signup-password-error signup-password-hint' : 'signup-password-hint'}
+              aria-invalid={fieldError?.id === 'signup-password' || undefined}
             />
-            <p className="text-xs text-muted-foreground">At least 6 characters.</p>
+            <p id="signup-password-hint" className="text-xs text-muted-foreground">At least 6 characters.</p>
           </Field>
+          <FormError message={formError} />
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading && <Loader2 className="animate-spin" />}
             Create account
           </Button>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Already have an account? <TextLink onClick={() => setStep('auth')}>Sign in</TextLink>
+          Already have an account? <TextLink onClick={() => goTo('auth')}>Sign in</TextLink>
         </p>
       </AuthScreen>
     );
@@ -324,25 +383,28 @@ export function AuthPage() {
     return (
       <AuthScreen eyebrow="Account" headline="Reset your password.">
         <form onSubmit={handleForgotPassword} className="space-y-4">
-          <Field id="forgot-email" label="Email">
+          <Field id="forgot-email" label="Email" error={errorFor('forgot-email')}>
             <Input
               id="forgot-email"
               type="email"
               inputMode="email"
               value={forgotEmail}
-              onChange={(e) => setForgotEmail(e.target.value)}
+              onChange={(e) => { clearErrors('forgot-email'); setForgotEmail(e.target.value); }}
               required
               autoComplete="email"
               autoFocus
+              aria-describedby={fieldError?.id === 'forgot-email' ? 'forgot-email-error forgot-email-hint' : 'forgot-email-hint'}
+              aria-invalid={fieldError?.id === 'forgot-email' || undefined}
             />
-            <p className="text-xs text-muted-foreground">We'll send a reset link straight to your inbox.</p>
+            <p id="forgot-email-hint" className="text-xs text-muted-foreground">We'll send a reset link straight to your inbox.</p>
           </Field>
+          <FormError message={formError} />
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading && <Loader2 className="animate-spin" />}
             Send reset link
           </Button>
         </form>
-        <Button type="button" variant="ghost" size="lg" className="mt-3 w-full" onClick={() => setStep('auth')}>
+        <Button type="button" variant="ghost" size="lg" className="mt-3 w-full" onClick={() => goTo('auth')}>
           <ArrowLeft /> Back to sign in
         </Button>
       </AuthScreen>
@@ -363,7 +425,7 @@ export function AuthPage() {
             type="button"
             role="tab"
             aria-selected={setupMode === mode}
-            onClick={() => setSetupMode(mode)}
+            onClick={() => { clearErrors(); setSetupMode(mode); }}
             className={cn(
               'pressable flex min-h-[48px] items-center justify-center gap-2 rounded-lg text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               setupMode === mode
@@ -378,17 +440,20 @@ export function AuthPage() {
       </div>
       {setupMode === 'create' ? (
         <form onSubmit={handleCreateHomegame} className="space-y-4">
-          <Field id="setup-name" label="Game name">
+          <Field id="setup-name" label="Game name" error={errorFor('setup-name')}>
             <Input
               id="setup-name"
               type="text"
               placeholder="Friday Night Game"
               value={setupForm.homegameName}
-              onChange={(e) => setSetupForm({ ...setupForm, homegameName: e.target.value })}
+              onChange={(e) => { clearErrors('setup-name'); setSetupForm({ ...setupForm, homegameName: e.target.value }); }}
               required
               autoFocus
+              autoComplete="off"
+              {...invalidProps('setup-name')}
             />
           </Field>
+          <FormError message={formError} />
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading && <Loader2 className="animate-spin" />}
             Create game
@@ -396,20 +461,21 @@ export function AuthPage() {
         </form>
       ) : (
         <form onSubmit={handleJoinHomegame} className="space-y-4">
-          <Field id="setup-code" label="Invite code">
+          <Field id="setup-code" label="Invite code" error={errorFor('setup-code')}>
             <Input
               id="setup-code"
               type="text"
               placeholder="ABCD1234"
               value={setupForm.inviteCode}
-              onChange={(e) => setSetupForm({ ...setupForm, inviteCode: e.target.value.toUpperCase() })}
+              onChange={(e) => { clearErrors('setup-code'); setSetupForm({ ...setupForm, inviteCode: normaliseCode(e.target.value) }); }}
+              {...invalidProps('setup-code')}
               className="text-center font-mono text-lg tracking-[0.2em]"
-              maxLength={8}
               autoCapitalize="characters"
               autoComplete="off"
               required
             />
           </Field>
+          <FormError message={formError} />
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading && <Loader2 className="animate-spin" />}
             Join game
