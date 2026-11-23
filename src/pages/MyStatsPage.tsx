@@ -1,4 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useStaleWhileLoading } from '@/hooks/useStaleWhileLoading';
+import { PageHeader } from '@/components/common/PageHeader';
+import { PageSkeleton } from '@/components/common/PageSkeleton';
+import { EmptyState } from '@/components/common/EmptyState';
+import { RefreshingDot } from '@/components/common/RefreshingDot';
+import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { usePersonalStats, HomegameStats, RecentSession } from '@/hooks/usePersonalStats';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -15,68 +22,73 @@ import { PlayerBadges } from '@/components/badges/PlayerBadges';
 import { ProfitChart } from '@/components/stats/ProfitChart';
 
 export function MyStatsPage() {
-  const { profile } = useAuthContext();
-  const { homegameStats, recentSessions, overallStats, allSessionHistory, loading } = usePersonalStats();
+  const { profile, homegames } = useAuthContext();
+  const stats = usePersonalStats();
+  const fresh = useMemo(
+    () => ({
+      homegameStats: stats.homegameStats,
+      recentSessions: stats.recentSessions,
+      overallStats: stats.overallStats,
+      allSessionHistory: stats.allSessionHistory,
+    }),
+    [stats.homegameStats, stats.recentSessions, stats.overallStats, stats.allSessionHistory]
+  );
+  const { data, isFirstLoad, isRefreshing } = useStaleWhileLoading(profile?.id ? `mystats:${profile.id}` : null, fresh, stats.loading);
+  const { homegameStats, recentSessions, overallStats, allSessionHistory } = data;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  if (isFirstLoad) return <PageSkeleton rows={3} hero />;
 
   const hasClaimedPlayers = homegameStats.length > 0;
+  const currencies = new Set(homegames.map((h) => h.currency || '$'));
+  const cur = currencies.size === 1 ? [...currencies][0] : '';
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto overflow-hidden">
-      <div className="flex items-center gap-2">
-        <Trophy className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">My Stats</h1>
-      </div>
+    <div className="space-y-6">
+      <PageHeader eyebrow={profile?.username ? `${profile.username}#${profile.discriminator}` : 'You'} title="My stats" action={<RefreshingDot show={isRefreshing} />} />
 
       {!hasClaimedPlayers ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Claimed Players</h3>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              To see your personal stats, go to the Players page and claim a player that represents you.
-              Once approved by the homegame owner, your stats will appear here.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="Claim your player first"
+          description="Find your name in Players and tap “This is me”. Once the owner approves it, your results show up here."
+          action={
+            <Button asChild>
+              <Link to="/players">Go to Players</Link>
+            </Button>
+          }
+        />
       ) : (
         <>
           {/* Hero Card */}
           {overallStats && (
-            <Card className="overflow-hidden w-full">
-              <div className={`p-6 ${overallStats.totalProfit >= 0 ? 'bg-gradient-to-br from-green-500/10 to-green-600/5' : 'bg-gradient-to-br from-red-500/10 to-red-600/5'}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-muted-foreground">Lifetime Profit</span>
-                  <Badge variant="outline" className="text-xs">
+            <Card className="relative w-full overflow-hidden">
+              <div aria-hidden="true" className="gold-hairline absolute inset-x-6 top-0 h-px" />
+              <div className="p-5 sm:p-6">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="section-header">Lifetime profit</span>
+                  <Badge variant="outline" className="tabular-nums">
                     {overallStats.sessionsPlayed} sessions
                   </Badge>
                 </div>
-                <div className={`text-4xl font-bold tabular-nums mb-1 ${overallStats.totalProfit >= 0 ? 'profit' : 'loss'}`}>
-                  {formatProfit(overallStats.totalProfit)}
+                <div className={`font-display text-[3.25rem] font-semibold leading-none tabular-nums ${overallStats.totalProfit >= 0 ? 'profit' : 'loss'}`}>
+                  {formatProfit(overallStats.totalProfit, cur)}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {overallStats.totalProfit >= 0 ? 'You\'re up!' : 'Keep grinding!'}
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {overallStats.totalProfit >= 0 ? 'You\'re up. Nicely played.' : 'Keep grinding.'}
                 </p>
               </div>
               <CardContent className="pt-4 space-y-4">
                 {/* Quick stats row */}
                 <div className="flex gap-4 overflow-x-auto">
-                  <StatPill icon={<Target className="h-4 w-4" />} label="Avg/Session" value={formatProfit(overallStats.avgProfit)} positive={overallStats.avgProfit >= 0} />
-                  <StatPill icon={<Flame className="h-4 w-4" />} label="Best Win" value={formatProfit(overallStats.biggestWin)} positive />
-                  <StatPill icon={<Wallet className="h-4 w-4" />} label="Buy-ins" value={formatCurrency(overallStats.totalBuyIn)} />
+                  <StatPill icon={<Target className="h-4 w-4" />} label="Avg/Session" value={formatProfit(overallStats.avgProfit, cur)} positive={overallStats.avgProfit >= 0} />
+                  <StatPill icon={<Flame className="h-4 w-4" />} label="Best Win" value={formatProfit(overallStats.biggestWin, cur)} positive />
+                  <StatPill icon={<Wallet className="h-4 w-4" />} label="Buy-ins" value={formatCurrency(overallStats.totalBuyIn, cur)} />
                 </div>
 
                 {/* Analytics row */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-border/40 pt-4">
                   <AnalyticTile label="Win Rate" value={`${Math.round(overallStats.winRate)}%`} icon={<Activity className="h-3.5 w-3.5" />} positive={overallStats.winRate >= 50} />
-                  <AnalyticTile label="Std Dev" value={formatCurrency(Math.round(overallStats.stdDev))} icon={<BarChart2 className="h-3.5 w-3.5" />} />
+                  <AnalyticTile label="Std Dev" value={formatCurrency(Math.round(overallStats.stdDev), cur)} icon={<BarChart2 className="h-3.5 w-3.5" />} />
                   <AnalyticTile label="Best Streak" value={`${overallStats.longestWinStreak}W`} icon={<Zap className="h-3.5 w-3.5" />} positive />
                   <AnalyticTile label="Worst Streak" value={`${overallStats.longestLossStreak}L`} icon={<ShieldOff className="h-3.5 w-3.5" />} negative />
                 </div>
@@ -112,7 +124,7 @@ export function MyStatsPage() {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {recentSessions.map((session, index) => (
                     <SessionRow key={`${session.id}-${session.date}-${index}`} session={session} />
                   ))}
@@ -124,7 +136,7 @@ export function MyStatsPage() {
           {/* Per Homegame Stats */}
           {homegameStats.length > 0 && (
             <div className="space-y-4">
-              <h2 className="text-sm font-medium text-muted-foreground px-1">By Homegame</h2>
+              <h2 className="section-header px-1">By homegame</h2>
               {homegameStats.map((hgStats) => (
                 <HomegameStatsCard key={hgStats.homegame.id} stats={hgStats} userId={profile?.id} />
               ))}
@@ -141,7 +153,7 @@ function StatPill({ icon, label, value, positive, negative }: {
 }) {
   return (
     <div className="flex items-center gap-3 min-w-0 flex-1">
-      <div className="p-2 rounded-full bg-muted/50 flex-shrink-0 text-muted-foreground">{icon}</div>
+      <div className="p-2 rounded-full bg-gold/10 flex-shrink-0 text-gold">{icon}</div>
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground whitespace-nowrap">{label}</p>
         <p className={`text-sm font-semibold tabular-nums ${positive ? 'profit' : negative ? 'loss' : ''}`}>{value}</p>
@@ -154,10 +166,10 @@ function AnalyticTile({ label, value, icon, positive, negative }: {
   label: string; value: string; icon: React.ReactNode; positive?: boolean; negative?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg bg-muted/30 px-3 py-2.5">
-      <div className={`flex items-center gap-1.5 text-muted-foreground ${positive ? 'text-green-400/70' : negative ? 'text-red-400/70' : ''}`}>
+    <div className="flex flex-col gap-1 rounded-xl border border-border/50 bg-muted/40 px-3 py-2.5">
+      <div className="flex items-center gap-1.5 text-muted-foreground">
         {icon}
-        <span className="text-[10px] uppercase tracking-wider font-medium">{label}</span>
+        <span className="text-[0.6875rem] uppercase tracking-[0.1em] font-medium">{label}</span>
       </div>
       <p className={`text-base font-bold tabular-nums ${positive ? 'profit' : negative ? 'loss' : ''}`}>{value}</p>
     </div>
@@ -167,8 +179,8 @@ function AnalyticTile({ label, value, icon, positive, negative }: {
 function SessionRow({ session }: { session: RecentSession }) {
   const isWin = session.profit >= 0;
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isWin ? 'bg-green-500/5 hover:bg-green-500/10' : 'bg-red-500/5 hover:bg-red-500/10'}`}>
-      <div className={`flex-shrink-0 w-1 h-10 rounded-full ${isWin ? 'bg-green-500' : 'bg-red-500'}`} />
+    <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-3">
+      <div className={`flex-shrink-0 w-1 h-10 rounded-full ${isWin ? 'bg-success' : 'bg-destructive'}`} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{session.homegameName}</p>
         <p className="text-xs text-muted-foreground">
@@ -223,7 +235,7 @@ function HomegameStatsCard({ stats, userId }: { stats: HomegameStats; userId?: s
             <p className="text-xs text-muted-foreground mt-0.5">Playing as {player.name}</p>
           </div>
           <div className="text-right">
-            <p className={`text-lg font-bold tabular-nums ${isPositive ? 'profit' : 'loss'}`}>
+            <p className={`font-display text-[1.6rem] leading-none font-semibold tabular-nums ${isPositive ? 'profit' : 'loss'}`}>
               {formatProfit(playerStats.totalProfit, homegame.currency)}
             </p>
             <p className="text-xs text-muted-foreground">{playerStats.sessionsPlayed} sessions</p>
@@ -271,7 +283,7 @@ function HomegameStatsCard({ stats, userId }: { stats: HomegameStats; userId?: s
         {badges && badges.length > 0 && (
           <div className="border-t border-border/40 pt-3">
             <div className="flex items-center gap-2 mb-2">
-              <Award className="h-3.5 w-3.5 text-primary" />
+              <Award className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
               <p className="text-xs font-medium text-muted-foreground">Badges</p>
             </div>
             <PlayerBadges badges={badges} currency={homegame.currency} size="md" />
@@ -281,7 +293,10 @@ function HomegameStatsCard({ stats, userId }: { stats: HomegameStats; userId?: s
         {/* Settlements with transfer tracking */}
         {pendingSettlements.length > 0 && (
           <div className="border-t border-border/40 pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Settlements</p>
+            <div className="mb-2 flex items-baseline justify-between gap-2">
+              <p className="section-header">Settle up</p>
+              <p className="text-[0.6875rem] text-muted-foreground">Ticks are saved on this device only</p>
+            </div>
             <div className="space-y-2">
               {pendingSettlements.map((settlement, idx) => {
                 const isOwing = settlement.from.id === player.id;
@@ -290,10 +305,12 @@ function HomegameStatsCard({ stats, userId }: { stats: HomegameStats; userId?: s
                 return (
                   <div
                     key={idx}
-                    className={`flex items-center justify-between text-sm p-2.5 rounded-lg transition-colors
-                      ${done ? 'bg-muted/30 opacity-60' : isOwing ? 'bg-red-500/5' : 'bg-green-500/5'}`}
+                    className={cn(
+                      'flex min-h-[56px] items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm transition-[opacity,background-color]',
+                      done ? 'border-border/40 bg-muted/30 opacity-60' : isOwing ? 'border-destructive/25 bg-destructive/[0.06]' : 'border-success/25 bg-success/[0.06]'
+                    )}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
                       <span className={`font-medium whitespace-nowrap ${done ? 'text-muted-foreground' : isOwing ? 'loss' : 'profit'}`}>
                         {isOwing ? 'Pay' : 'Receive from'}
                       </span>
@@ -308,7 +325,8 @@ function HomegameStatsCard({ stats, userId }: { stats: HomegameStats; userId?: s
                       variant="ghost"
                       size="sm"
                       onClick={() => togglePaid(key)}
-                      className={`h-7 gap-1.5 text-xs flex-shrink-0 ml-2 ${done ? 'text-muted-foreground' : isOwing ? 'text-red-400 hover:text-red-300' : 'text-green-400 hover:text-green-300'}`}
+                      aria-pressed={done}
+                      className={cn('shrink-0 gap-1.5 text-xs', done ? 'text-muted-foreground' : isOwing ? 'loss' : 'profit')}
                     >
                       {done
                         ? <><CheckCircle2 className="h-3.5 w-3.5" /> Done</>

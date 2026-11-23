@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { SessionDataPoint } from '@/hooks/usePersonalStats';
@@ -11,9 +11,10 @@ interface ProfitChartProps {
 }
 
 export function ProfitChart({ data, currency = '$', height = 160 }: ProfitChartProps) {
-  const isPositive = (data[data.length - 1]?.cumProfit ?? 0) >= 0;
-  const colour = isPositive ? '#4ade80' : '#f87171';
-  const colourMuted = isPositive ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)';
+  // Brand line (gold) with a 20% fill; sign is carried by the axis and tooltip
+  // values, not by hue alone (chart guidance from the design skill).
+  const colour = 'hsl(var(--gold))';
+  const gradientId = `profitGradient-${useId().replace(/:/g, '')}`;
 
   const ticks = useMemo(() => {
     if (data.length <= 6) return data.map(d => d.sessionNumber);
@@ -27,35 +28,37 @@ export function ProfitChart({ data, currency = '$', height = 160 }: ProfitChartP
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 6, right: 4, left: 0, bottom: 0 }}>
         <defs>
-          <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={colour} stopOpacity={0.25} />
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={colour} stopOpacity={0.22} />
             <stop offset="95%" stopColor={colour} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <ReferenceLine y={0} stroke="hsl(38 18% 18%)" strokeDasharray="3 3" />
+        <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.45} strokeDasharray="4 4" />
         <XAxis
           dataKey="sessionNumber"
           ticks={ticks}
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 10, fill: 'hsl(225 10% 45%)' }}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
           tickFormatter={v => `#${v}`}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
           width={52}
-          tick={{ fontSize: 10, fill: 'hsl(225 10% 45%)' }}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
           tickFormatter={v => `${currency}${Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
         />
         <Tooltip
           contentStyle={{
-            background: 'hsl(225 22% 8%)',
-            border: '1px solid hsl(38 18% 18%)',
-            borderRadius: 8,
+            background: 'hsl(var(--popover))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 12,
             fontSize: 12,
+            boxShadow: '0 12px 30px -12px rgb(0 0 0 / 0.9)',
           }}
-          labelStyle={{ color: 'hsl(225 10% 55%)', marginBottom: 4 }}
+          labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: 4 }}
+          itemStyle={{ color: 'hsl(var(--foreground))' }}
           labelFormatter={(v, payload) => {
             const d = payload?.[0]?.payload as SessionDataPoint | undefined;
             return d ? `Session #${v} · ${format(parseISO(d.date), 'MMM d, yyyy')}` : `Session #${v}`;
@@ -68,9 +71,9 @@ export function ProfitChart({ data, currency = '$', height = 160 }: ProfitChartP
           dataKey="cumProfit"
           stroke={colour}
           strokeWidth={2}
-          fill="url(#profitGradient)"
+          fill={`url(#${gradientId})`}
           dot={false}
-          activeDot={{ r: 4, fill: colour, strokeWidth: 0 }}
+          activeDot={{ r: 5, fill: colour, stroke: 'hsl(var(--background))', strokeWidth: 2 }}
         />
       </AreaChart>
     </ResponsiveContainer>

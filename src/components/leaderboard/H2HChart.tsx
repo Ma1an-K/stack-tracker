@@ -48,15 +48,15 @@ export function H2HChart({ results, myName, opponentName, currency }: H2HChartPr
       <CardContent className="py-3 px-4">
         <div className="flex items-center gap-1.5 mb-3">
           <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Cumulative P&L</span>
+          <span className="section-header">Cumulative P&L</span>
         </div>
         <div className="flex items-center gap-4 mb-2 text-xs">
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#22c55e' }} />
+            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: 'hsl(var(--gold))' }} />
             <span className="text-muted-foreground truncate max-w-[80px]">{myName}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#ef4444' }} />
+            <div className="h-0.5 w-4 border-t-2 border-dashed" style={{ borderColor: "hsl(var(--chart-4))" }} />
             <span className="text-muted-foreground truncate max-w-[80px]">{opponentName}</span>
           </div>
         </div>
@@ -90,17 +90,18 @@ export function H2HChart({ results, myName, opponentName, currency }: H2HChartPr
             <Line
               type="monotone"
               dataKey={myName}
-              stroke="#22c55e"
+              stroke="hsl(var(--gold))"
               strokeWidth={2}
-              dot={{ r: 3, fill: '#22c55e' }}
+              dot={{ r: 3, fill: 'hsl(var(--gold))' }}
               activeDot={{ r: 5 }}
             />
             <Line
               type="monotone"
               dataKey={opponentName}
-              stroke="#ef4444"
+              stroke="hsl(var(--chart-4))"
               strokeWidth={2}
-              dot={{ r: 3, fill: '#ef4444' }}
+              strokeDasharray="5 4"
+              dot={{ r: 3, fill: 'hsl(var(--chart-4))' }}
               activeDot={{ r: 5 }}
             />
           </LineChart>
