@@ -60,7 +60,7 @@ export const PLAYER_TOUR: TourStep[] = [
   },
   {
     targetId: 'tutorial-nav-players',
-    title: 'Claim Your Player ⚡',
+    title: 'Claim your player',
     description: "Find your name in the Players list and tap Claim. This links your account to your player profile — so all your session results show up under My Stats. Without it, your stats won't appear under your account.",
   },
   {

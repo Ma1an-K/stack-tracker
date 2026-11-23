@@ -4,8 +4,11 @@ const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
   // Read synchronously on first render to avoid an h-9 → h-10 layout jump after mount.
+  // Prerendered (SSR) pages must start from the server value to hydrate cleanly.
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(() =>
-    typeof window !== "undefined" ? window.innerWidth < MOBILE_BREAKPOINT : undefined,
+    typeof window !== "undefined" && document.documentElement.dataset.prerendered !== "true"
+      ? window.innerWidth < MOBILE_BREAKPOINT
+      : undefined,
   );
 
   React.useEffect(() => {

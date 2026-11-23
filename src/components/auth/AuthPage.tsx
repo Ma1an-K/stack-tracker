@@ -386,6 +386,7 @@ export function AuthPage() {
               value={setupForm.homegameName}
               onChange={(e) => setSetupForm({ ...setupForm, homegameName: e.target.value })}
               required
+              autoFocus
             />
           </Field>
           <Button type="submit" size="lg" className="w-full" disabled={loading}>

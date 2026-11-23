@@ -201,7 +201,7 @@ export function TutorialOverlay({ steps, currentStep, onNext, onSkip, installPro
             size="sm"
             onClick={onNext}
           >
-            {currentStep === steps.length - 1 ? 'Got it ✓' : 'Next →'}
+            {currentStep === steps.length - 1 ? 'Got it' : 'Next'}
           </Button>
         </div>
       </div>

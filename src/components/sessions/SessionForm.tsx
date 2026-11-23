@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2, UserPlus, ArrowRight } from 'lucide-react';
+import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2, UserPlus, ArrowRight, CheckCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -86,6 +86,25 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
       ...selectedPlayers,
       { player_id: playerId, buy_in: '', cash_out: '' },
     ]);
+  };
+
+  const addEveryone = () => {
+    setSelectedPlayers([
+      ...selectedPlayers,
+      ...availablePlayers.map(p => ({ player_id: p.id, buy_in: '', cash_out: '' })),
+    ]);
+  };
+
+  /** Keyboard "Next"/Enter walks buy-in → cash-out → next row instead of submitting. */
+  const focusNextField = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const fields = Array.from(
+      e.currentTarget.form?.querySelectorAll<HTMLInputElement>('[data-entry-field]') ?? []
+    );
+    const next = fields[fields.indexOf(e.currentTarget) + 1];
+    if (next) next.focus();
+    else e.currentTarget.blur();
   };
 
   const removePlayer = (playerId: string) => {
@@ -267,9 +286,14 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
       <section className="surface space-y-4 p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <h2 className="section-header">Players</h2>
-          {selectedPlayers.length > 0 && (
+          {availablePlayers.length > 1 ? (
+            <Button type="button" variant="ghost" size="sm" className="-mr-2 text-gold" onClick={addEveryone}>
+              <CheckCheck />
+              Add everyone
+            </Button>
+          ) : selectedPlayers.length > 0 ? (
             <span className="text-xs text-muted-foreground tabular-nums">{selectedPlayers.length} at the table</span>
-          )}
+          ) : null}
         </div>
 
         {(availablePlayers.length > 0 || onAddPlayer) && (
@@ -372,6 +396,9 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
                         placeholder="0.00"
                         value={entry.buy_in}
                         onChange={(e) => updatePlayer(entry.player_id, 'buy_in', e.target.value)}
+                        onKeyDown={focusNextField}
+                        enterKeyHint="next"
+                        data-entry-field
                         className={cn(fieldH, 'tabular-nums')}
                       />
                     </label>
@@ -385,6 +412,9 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
                         placeholder="0.00"
                         value={entry.cash_out}
                         onChange={(e) => updatePlayer(entry.player_id, 'cash_out', e.target.value)}
+                        onKeyDown={focusNextField}
+                        enterKeyHint="next"
+                        data-entry-field
                         className={cn(fieldH, 'tabular-nums')}
                       />
                     </label>
