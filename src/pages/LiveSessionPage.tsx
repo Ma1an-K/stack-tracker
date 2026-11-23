@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
@@ -8,7 +8,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { formatCurrency } from '@/lib/settlement';
 import { cn } from '@/lib/utils';
 import { Player, LiveSessionPlayer } from '@/types/database';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,8 +23,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Minus, Trash2, Users, Clock, Flag, Radio, UserPlus, Play, ArrowLeft, LogOut, Undo2, ArrowRight } from 'lucide-react';
+import { Loader2, Plus, Minus, Trash2, Users, Clock, Flag, Radio, UserPlus, Play, ArrowLeft, LogOut, Undo2, ArrowRight, Pencil, Check, CheckCheck } from 'lucide-react';
+import { PageSkeleton } from '@/components/common/PageSkeleton';
+import { EmptyState } from '@/components/common/EmptyState';
 import { LivePulse } from '@/components/sessions/LivePulse';
 
 /* ------------------------------------------------------------------ */
@@ -44,6 +44,27 @@ function useElapsed(startedAt: string | undefined) {
   const m = mins % 60;
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
+
+/** Large tappable name chip used for seat selection and payment pickers. */
+function NameChip({ on, onClick, children, disabled }: { on: boolean; onClick: () => void; children: React.ReactNode; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={on}
+      className={cn(
+        'pressable inline-flex h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40',
+        on ? 'gold-fill border-transparent text-primary-foreground' : 'border-border/80 bg-secondary/70 hover:border-gold/40 hover:bg-accent'
+      )}
+    >
+      {on ? <Check className="h-4 w-4" aria-hidden="true" /> : <Plus className="h-4 w-4 text-gold" aria-hidden="true" />}
+      {children}
+    </button>
+  );
+}
+
+const BUY_IN_PRESETS = [20, 50, 100, 200];
 
 /* ------------------------------------------------------------------ */
 /* Setup — pick who's playing and the default buy-in                    */
@@ -70,14 +91,30 @@ function SetupView({ players, onStart }: { players: Player[]; onStart: (p: LiveS
     setStarting(false);
   };
 
+  const allOn = selected.length === players.length && players.length > 0;
+
   return (
     <div className="space-y-5">
-      <Card>
-        <CardHeader className="pb-3">
-          <span className="section-header">Buy-in</span>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Label htmlFor="default-buy-in" className="text-sm">Standard buy-in</Label>
+      <section className="surface space-y-3 p-4 sm:p-5">
+        <h2 className="section-header">Standard buy-in</h2>
+        <div className="grid grid-cols-4 gap-2" role="group" aria-label="Buy-in presets">
+          {BUY_IN_PRESETS.map(v => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setDefaultBuyIn(String(v))}
+              aria-pressed={amount === v}
+              className={cn(
+                'pressable h-11 rounded-xl border text-sm font-semibold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                amount === v ? 'border-gold/60 bg-gold/15 text-gold' : 'border-border/70 bg-secondary/60 hover:bg-accent'
+              )}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="default-buy-in">Or enter an amount</Label>
           <Input
             id="default-buy-in"
             type="number"
@@ -86,49 +123,46 @@ function SetupView({ players, onStart }: { players: Player[]; onStart: (p: LiveS
             min="0"
             value={defaultBuyIn}
             onChange={e => setDefaultBuyIn(e.target.value)}
-            className={cn('bg-muted/30', isMobile && 'h-10')}
+            className={cn('tabular-nums', isMobile ? 'h-12' : 'h-11')}
           />
-          <p className="text-xs text-muted-foreground">
-            Everyone starts with this. Rebuys use it as the quick-tap amount.
-          </p>
-        </CardContent>
-      </Card>
+          <p className="text-xs text-muted-foreground">Everyone starts with this. Rebuys use it as the quick-tap amount.</p>
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <span className="section-header">Who's playing</span>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {players.map(p => {
-              const on = selected.includes(p.id);
-              return (
-                <Button
-                  key={p.id}
-                  type="button"
-                  variant={on ? 'default' : 'secondary'}
-                  size="sm"
-                  onClick={() => toggle(p.id)}
-                  className={isMobile ? 'h-9' : 'h-8'}
-                >
-                  {on ? null : <Plus className="mr-1 h-3.5 w-3.5" />}
-                  {p.name}
-                </Button>
-              );
-            })}
-          </div>
-          {selected.length > 0 && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              {selected.length} selected · {formatCurrency(selected.length * amount)} on the table to start
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <section className="surface space-y-3 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="section-header">Who's playing</h2>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelected(allOn ? [] : players.map(p => p.id))}
+            className="text-gold"
+          >
+            <CheckCheck />
+            {allOn ? 'Clear' : 'Everyone'}
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {players.map(p => (
+            <NameChip key={p.id} on={selected.includes(p.id)} onClick={() => toggle(p.id)}>
+              {p.name}
+            </NameChip>
+          ))}
+        </div>
+      </section>
 
-      <Button className={cn('w-full', isMobile && 'h-11')} disabled={!canStart || starting} onClick={handleStart}>
-        {starting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4 fill-current" />}
-        Start Session
-      </Button>
+      <div className="sticky bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+0.75rem)] z-10 -mx-1 rounded-2xl border border-border/70 bg-[hsl(var(--popover)/0.92)] p-2.5 shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.95)] backdrop-blur-xl md:bottom-4">
+        <p role="status" className="mb-2 text-center text-[0.8125rem] font-medium text-muted-foreground tabular-nums">
+          {selected.length < 2
+            ? `Pick ${2 - selected.length} more player${selected.length === 1 ? '' : 's'}`
+            : `${selected.length} players · ${formatCurrency(selected.length * amount)} on the table`}
+        </p>
+        <Button size="lg" className="w-full" disabled={!canStart || starting} onClick={handleStart}>
+          {starting ? <Loader2 className="animate-spin" /> : <Play className="fill-current" />}
+          Start session
+        </Button>
+      </div>
     </div>
   );
 }
@@ -194,211 +228,216 @@ function TrackerView({ players }: { players: Player[] }) {
     if (!error) setPaymentOpen(false);
   };
 
+  const openCustom = (player?: Player) => {
+    if (player) {
+      setCustomFor(player);
+      setCustomAmount('');
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <Card className="border-gold/40">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <LivePulse />
-                <span className="section-header">Live Session</span>
-              </div>
-              <div className="mt-1.5 flex items-center gap-3 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{elapsed}</span>
-                <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{seatedCount}</span>
-                <span>{format(parseISO(liveSession.started_at), 'h:mm a')}</span>
-              </div>
+      <section className="relative overflow-hidden rounded-xl border border-gold/45 bg-[linear-gradient(135deg,hsl(var(--gold)/0.14),hsl(var(--card))_55%)] p-4 shadow-[0_0_32px_-12px_hsl(var(--gold)/0.55)]">
+        <div className="flex items-end justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <LivePulse />
+              <span className="section-header">Live</span>
             </div>
-            <div className="shrink-0 text-right">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">On the table</div>
-              <div className="text-2xl font-bold tabular-nums text-gold">{formatCurrency(totalPot, currency)}</div>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-muted-foreground">
+              <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" aria-hidden="true" />{elapsed}</span>
+              <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" aria-hidden="true" />{seatedCount} seated</span>
+              <span>since {format(parseISO(liveSession.started_at), 'h:mm a')}</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="shrink-0 text-right">
+            <div className="text-[0.6875rem] uppercase tracking-[0.12em] text-muted-foreground">On the table</div>
+            <div className="font-display text-[2.4rem] font-semibold leading-none tabular-nums text-gold">{formatCurrency(totalPot, currency)}</div>
+          </div>
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <span className="section-header">Buy-ins</span>
-            {bench.length > 0 && (
-              <Button variant="outline" size="sm" className="h-8 border-dashed" onClick={() => setAddOpen(true)}>
-                <UserPlus className="mr-1 h-3.5 w-3.5" />
-                Add Player
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {seated.map(sp => {
-            const player = players.find(p => p.id === sp.player_id);
-            const left = sp.cash_out !== undefined;
-            return (
-              <div key={sp.player_id} className={cn('rounded-lg bg-muted/30 p-3', left && 'opacity-80')}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 truncate text-sm font-medium">
-                    {nameOf(sp.player_id)}
-                    {left && (
-                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                        Left
-                      </span>
-                    )}
-                  </span>
-                  {left ? (
-                    <span className="text-sm tabular-nums">
-                      <span className="text-muted-foreground">{formatCurrency(Number(sp.buy_in), currency)} → </span>
-                      <span className="font-bold text-gold">{formatCurrency(Number(sp.cash_out), currency)}</span>
+      <section className="surface space-y-2 p-3 sm:p-4">
+        <div className="flex items-center justify-between gap-2 px-1 pb-1">
+          <h2 className="section-header">Buy-ins</h2>
+          <Button variant="outline" size="sm" className="border-dashed" onClick={() => setAddOpen(true)}>
+            <UserPlus />
+            Add player
+          </Button>
+        </div>
+
+        {seated.map(sp => {
+          const player = players.find(p => p.id === sp.player_id);
+          const left = sp.cash_out !== undefined;
+          const name = nameOf(sp.player_id);
+          return (
+            <div key={sp.player_id} className={cn('rounded-xl border border-border/60 bg-muted/40 p-3', left && 'opacity-80')}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-2 font-medium">
+                  <span className="truncate">{name}</span>
+                  {left && (
+                    <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Left
                     </span>
-                  ) : (
-                    <button
-                      type="button"
-                      className="text-lg font-bold tabular-nums text-gold"
-                      onClick={() => { if (player) { setCustomFor(player); setCustomAmount(''); } }}
-                    >
-                      {formatCurrency(Number(sp.buy_in), currency)}
-                    </button>
                   )}
-                </div>
+                </span>
                 {left ? (
-                  <div className="mt-2.5 flex items-center gap-1.5">
-                    <span className={cn('flex-1 text-xs tabular-nums', lossOf(sp) > 0 ? 'text-destructive' : 'text-success')}>
-                      {lossOf(sp) > 0 ? `Down ${formatCurrency(lossOf(sp), currency)}` : `Up ${formatCurrency(-lossOf(sp), currency)}`}
-                    </span>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="h-9 text-xs"
-                      onClick={() => openPayment(sp.player_id, lossOf(sp) > 0 ? lossOf(sp).toFixed(2) : '')}
-                    >
-                      Record payment
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 text-xs text-muted-foreground"
-                      onClick={() => { if (player) { setCashOutFor(player); setCashOutAmount(String(sp.cash_out)); } }}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 shrink-0 text-muted-foreground"
-                      onClick={() => rejoin(sp.player_id)}
-                      aria-label={`${nameOf(sp.player_id)} rejoins`}
-                    >
-                      <Undo2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <span className="text-sm tabular-nums">
+                    <span className="text-muted-foreground">{formatCurrency(Number(sp.buy_in), currency)} → </span>
+                    <span className="font-semibold text-gold">{formatCurrency(Number(sp.cash_out), currency)}</span>
+                  </span>
                 ) : (
-                  <div className="mt-2.5 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    className="pressable -mr-1 flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-lg font-semibold tabular-nums text-gold hover:bg-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => openCustom(player)}
+                    aria-label={`${name} buy-in ${formatCurrency(Number(sp.buy_in), currency)}. Edit`}
+                  >
+                    {formatCurrency(Number(sp.buy_in), currency)}
+                    <Pencil className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              {left ? (
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className={cn('flex-1 text-[0.8125rem] font-medium tabular-nums', lossOf(sp) > 0 ? 'loss' : 'profit')}>
+                    {lossOf(sp) > 0 ? `Down ${formatCurrency(lossOf(sp), currency)}` : `Up ${formatCurrency(-lossOf(sp), currency)}`}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => openPayment(sp.player_id, lossOf(sp) > 0 ? lossOf(sp).toFixed(2) : '')}
+                  >
+                    Payment
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={() => { if (player) { setCashOutFor(player); setCashOutAmount(String(sp.cash_out)); } }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={() => rejoin(sp.player_id)}
+                    aria-label={`${name} rejoins`}
+                  >
+                    <Undo2 />
+                    Rejoin
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-2 grid grid-cols-4 gap-1.5">
+                    <Button
+                      variant="ghost"
+                      className="h-11 border border-border/60 px-0 text-muted-foreground tabular-nums"
+                      onClick={() => addBuyIn(sp.player_id, -base)}
+                      disabled={Number(sp.buy_in) <= 0}
+                      aria-label={`Remove ${base} from ${name}`}
+                    >
+                      <Minus className="!size-3.5" aria-hidden="true" />
+                      {base}
+                    </Button>
                     {chips.map(amt => (
                       <Button
                         key={amt}
                         variant="secondary"
-                        size="sm"
-                        className="h-9 flex-1 text-xs"
+                        className="h-11 px-0 tabular-nums"
                         onClick={() => addBuyIn(sp.player_id, amt)}
+                        aria-label={`Add ${amt} to ${name}`}
                       >
-                        <Plus className="mr-0.5 h-3 w-3" />
+                        <Plus className="!size-3.5 text-gold" aria-hidden="true" />
                         {amt}
                       </Button>
                     ))}
                     <Button
                       variant="secondary"
-                      size="sm"
-                      className="h-9 flex-1 text-xs"
-                      onClick={() => { if (player) { setCustomFor(player); setCustomAmount(''); } }}
+                      className="h-11 px-0"
+                      onClick={() => openCustom(player)}
                     >
                       Other
                     </Button>
+                  </div>
+                  <div className="mt-1 flex justify-end">
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 shrink-0 text-muted-foreground"
-                      onClick={() => addBuyIn(sp.player_id, -base)}
-                      disabled={Number(sp.buy_in) <= 0}
-                      aria-label={`Remove ${base} from ${nameOf(sp.player_id)}`}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 shrink-0 text-muted-foreground"
+                      size="sm"
+                      className="-mb-1 -mr-1 text-muted-foreground"
                       onClick={() => { if (player) { setCashOutFor(player); setCashOutAmount(''); } }}
-                      aria-label={`${nameOf(sp.player_id)} cashes out`}
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut />
+                      Cash out {name.split(' ')[0]}
                     </Button>
                   </div>
-                )}
-              </div>
-            );
-          })}
+                </>
+              )}
+            </div>
+          );
+        })}
 
-          <div className="flex items-center justify-between border-t border-border/50 pt-3">
-            <span className="text-sm text-muted-foreground">Total buy-ins</span>
-            <span className="font-semibold tabular-nums">{formatCurrency(totalBuyIn, currency)}</span>
+        <dl className="grid grid-cols-2 gap-2 border-t border-border/50 px-1 pt-3 text-sm">
+          <div>
+            <dt className="text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">Total buy-ins</dt>
+            <dd className="font-semibold tabular-nums">{formatCurrency(totalBuyIn, currency)}</dd>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">On the table</span>
-            <span className="font-semibold tabular-nums">{formatCurrency(totalPot, currency)}</span>
+          <div className="text-right">
+            <dt className="text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">On the table</dt>
+            <dd className="font-semibold tabular-nums">{formatCurrency(totalPot, currency)}</dd>
           </div>
-        </CardContent>
-      </Card>
+        </dl>
+      </section>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <span className="section-header">Payments</span>
-            <Button variant="outline" size="sm" className="h-8 border-dashed" onClick={() => openPayment()}>
-              <Plus className="mr-1 h-3.5 w-3.5" />
-              Record Payment
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {payments.length === 0 ? (
-            <p className="py-2 text-center text-xs text-muted-foreground">
-              Cash that changes hands mid-game (like someone paying up before leaving) gets subtracted from the final settlement.
-            </p>
-          ) : (
-            payments.map((p, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2.5 text-sm">
-                <span className="font-medium">{nameOf(p.from_player_id)}</span>
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="font-medium">{nameOf(p.to_player_id)}</span>
-                <span className="ml-auto font-semibold tabular-nums text-gold">{formatCurrency(Number(p.amount), currency)}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={() => removePayment(i)}
-                  aria-label="Remove payment"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+      <section className="surface space-y-2 p-3 sm:p-4">
+        <div className="flex items-center justify-between gap-2 px-1 pb-1">
+          <h2 className="section-header">Payments</h2>
+          <Button variant="outline" size="sm" className="border-dashed" onClick={() => openPayment()}>
+            <Plus />
+            Record payment
+          </Button>
+        </div>
+        {payments.length === 0 ? (
+          <p className="px-1 pb-1 text-xs text-muted-foreground">
+            Cash that changes hands mid-game (like someone paying up before leaving) gets subtracted from the final settlement.
+          </p>
+        ) : (
+          payments.map((p, i) => (
+            <div key={i} className="flex min-h-[48px] items-center gap-2 rounded-xl bg-muted/40 pl-3 text-sm">
+              <span className="font-medium">{nameOf(p.from_player_id)}</span>
+              <ArrowRight className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
+              <span className="font-medium">{nameOf(p.to_player_id)}</span>
+              <span className="ml-auto font-semibold tabular-nums text-gold">{formatCurrency(Number(p.amount), currency)}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-destructive"
+                onClick={() => removePayment(i)}
+                aria-label="Remove payment"
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          ))
+        )}
+      </section>
 
-      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Radio className="h-3 w-3 text-success" />
-        Every tap saves instantly — close the app and pick up where you left off.
+      <p className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
+        <Radio className="h-3 w-3 text-success" aria-hidden="true" />
+        Every tap saves instantly. Close the app and pick up where you left off.
       </p>
 
-      <div className="pt-1">
+      <div className="sticky bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+0.75rem)] z-10 -mx-1 rounded-2xl border border-border/70 bg-[hsl(var(--popover)/0.92)] p-2.5 shadow-[0_16px_40px_-16px_hsl(0_0%_0%/0.95)] backdrop-blur-xl md:bottom-4">
         <Button
-          className={cn('w-full', isMobile && 'h-11')}
+          size="lg"
+          className="w-full"
           disabled={seated.length < 2}
           onClick={() => navigate('/new-session?from=live')}
         >
-          <Flag className="mr-2 h-4 w-4" />
-          End Session &amp; Cash Out
+          <Flag />
+          End session &amp; cash out
         </Button>
       </div>
 
@@ -407,10 +446,16 @@ function TrackerView({ players }: { players: Player[] }) {
         <DialogContent className="sm:max-w-xs">
           <DialogHeader>
             <DialogTitle>{customFor?.name}</DialogTitle>
+            {customFor && (
+              <p className="text-sm text-muted-foreground tabular-nums">
+                Currently {formatCurrency(Number(seated.find(sp => sp.player_id === customFor.id)?.buy_in ?? 0), currency)} in
+              </p>
+            )}
           </DialogHeader>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Amount</Label>
+            <Label htmlFor="custom-amount">Amount</Label>
             <Input
+              id="custom-amount"
               type="number"
               inputMode="decimal"
               step="0.01"
@@ -419,11 +464,12 @@ function TrackerView({ players }: { players: Player[] }) {
               value={customAmount}
               onChange={e => setCustomAmount(e.target.value)}
               autoFocus
-              className="h-11 text-lg"
+              className="h-14 text-center font-display text-3xl tabular-nums"
             />
           </div>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
             <Button
+              size="lg"
               className="w-full"
               disabled={!customAmount}
               onClick={() => { if (customFor) addBuyIn(customFor.id, parseFloat(customAmount) || 0); setCustomFor(null); }}
@@ -432,6 +478,7 @@ function TrackerView({ players }: { players: Player[] }) {
             </Button>
             <Button
               variant="secondary"
+              size="lg"
               className="w-full"
               disabled={!customAmount}
               onClick={() => { if (customFor) setBuyIn(customFor.id, parseFloat(customAmount) || 0); setCustomFor(null); }}
@@ -444,7 +491,7 @@ function TrackerView({ players }: { players: Player[] }) {
                 className="w-full text-muted-foreground hover:text-destructive"
                 onClick={() => { removePlayer(customFor.id); setCustomFor(null); }}
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 />
                 Remove from session
               </Button>
             )}
@@ -458,21 +505,28 @@ function TrackerView({ players }: { players: Player[] }) {
           <DialogHeader>
             <DialogTitle>Add player</DialogTitle>
           </DialogHeader>
-          <p className="text-xs text-muted-foreground">Joins with a {formatCurrency(base, currency)} buy-in — adjust after.</p>
-          <div className="flex flex-wrap gap-2">
-            {bench.map(p => (
-              <Button
-                key={p.id}
-                variant="secondary"
-                size="sm"
-                className="h-9"
-                onClick={() => { addPlayer(p.id, base); setAddOpen(false); }}
-              >
-                <Plus className="mr-1 h-3.5 w-3.5" />
-                {p.name}
+          {bench.length > 0 ? (
+            <>
+              <p className="text-sm text-muted-foreground">Joins with a {formatCurrency(base, currency)} buy-in. Adjust after.</p>
+              <div className="flex flex-wrap gap-2">
+                {bench.map(p => (
+                  <NameChip key={p.id} on={false} onClick={() => { addPlayer(p.id, base); setAddOpen(false); }}>
+                    {p.name}
+                  </NameChip>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Everyone on the roster is already seated. New players are added on the Players screen; the live game keeps running.</p>
+              <Button asChild variant="secondary" className="w-full">
+                <Link to="/players">
+                  <UserPlus />
+                  Go to Players
+                </Link>
               </Button>
-            ))}
-          </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -483,8 +537,9 @@ function TrackerView({ players }: { players: Player[] }) {
             <DialogTitle>{cashOutFor?.name} cashes out</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Chips on the table</Label>
+            <Label htmlFor="cash-out-amount">Chips they're taking</Label>
             <Input
+              id="cash-out-amount"
               type="number"
               inputMode="decimal"
               step="0.01"
@@ -493,15 +548,15 @@ function TrackerView({ players }: { players: Player[] }) {
               value={cashOutAmount}
               onChange={e => setCashOutAmount(e.target.value)}
               autoFocus
-              className="h-11 text-lg"
+              className="h-14 text-center font-display text-3xl tabular-nums"
             />
             <p className="text-xs text-muted-foreground">
               Locks their result. You can edit it until the session ends.
             </p>
           </div>
           <DialogFooter>
-            <Button className="w-full" disabled={cashOutAmount === ''} onClick={submitCashOut}>
-              <LogOut className="mr-2 h-4 w-4" />
+            <Button size="lg" className="w-full" disabled={cashOutAmount === ''} onClick={submitCashOut}>
+              <LogOut />
               Cash out
             </Button>
           </DialogFooter>
@@ -514,32 +569,35 @@ function TrackerView({ players }: { players: Player[] }) {
           <DialogHeader>
             <DialogTitle>Record payment</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">From</Label>
-              <Select value={payFrom} onValueChange={setPayFrom}>
-                <SelectTrigger className="h-10"><SelectValue placeholder="Who paid" /></SelectTrigger>
-                <SelectContent>
-                  {seated.map(sp => (
-                    <SelectItem key={sp.player_id} value={sp.player_id}>{nameOf(sp.player_id)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-[0.8125rem] font-medium text-secondary-foreground">From</p>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Who paid">
+                {seated.map(sp => (
+                  <NameChip
+                    key={sp.player_id}
+                    on={payFrom === sp.player_id}
+                    onClick={() => { setPayFrom(sp.player_id); if (payTo === sp.player_id) setPayTo(''); }}
+                  >
+                    {nameOf(sp.player_id)}
+                  </NameChip>
+                ))}
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">To</Label>
-              <Select value={payTo} onValueChange={setPayTo}>
-                <SelectTrigger className="h-10"><SelectValue placeholder="Who received it" /></SelectTrigger>
-                <SelectContent>
-                  {seated.filter(sp => sp.player_id !== payFrom).map(sp => (
-                    <SelectItem key={sp.player_id} value={sp.player_id}>{nameOf(sp.player_id)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <p className="text-[0.8125rem] font-medium text-secondary-foreground">To</p>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Who received it">
+                {seated.filter(sp => sp.player_id !== payFrom).map(sp => (
+                  <NameChip key={sp.player_id} on={payTo === sp.player_id} onClick={() => setPayTo(sp.player_id)}>
+                    {nameOf(sp.player_id)}
+                  </NameChip>
+                ))}
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Amount</Label>
+            <div className="space-y-2">
+              <Label htmlFor="pay-amount">Amount</Label>
               <Input
+                id="pay-amount"
                 type="number"
                 inputMode="decimal"
                 step="0.01"
@@ -547,12 +605,13 @@ function TrackerView({ players }: { players: Player[] }) {
                 placeholder="0.00"
                 value={payAmount}
                 onChange={e => setPayAmount(e.target.value)}
-                className="h-11 text-lg"
+                className="h-12 text-lg tabular-nums"
               />
             </div>
           </div>
           <DialogFooter>
             <Button
+              size="lg"
               className="w-full"
               disabled={!payFrom || !payTo || payFrom === payTo || !(Math.round((parseFloat(payAmount) || 0) * 100) / 100 > 0)}
               onClick={submitPayment}
@@ -574,8 +633,8 @@ function DiscardButton() {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-destructive">
-          <Trash2 className="mr-1.5 h-4 w-4" />
+        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+          <Trash2 />
           Discard
         </Button>
       </AlertDialogTrigger>
@@ -593,7 +652,7 @@ function DiscardButton() {
               const { error } = await finish();
               if (!error) navigate('/');
             }}
-            className="bg-destructive hover:bg-destructive/90"
+            className="bg-destructive bg-none text-destructive-foreground shadow-none hover:bg-destructive/90"
           >
             Discard
           </AlertDialogAction>
@@ -609,43 +668,41 @@ export function LiveSessionPage() {
   const { liveSession, loading, start } = useLiveSession();
   const { players, activePlayers, loading: playersLoading } = usePlayers(homegame?.id);
 
-  if (loading || playersLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  // Back must never leave the app on a deep link or cold PWA start.
+  const goBack = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) navigate(-1);
+    else navigate('/');
+  };
+
+  if ((loading && !liveSession) || (playersLoading && players.length === 0)) return <PageSkeleton rows={4} hero />;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 animate-fade-in">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="-ml-2 h-9 w-9 shrink-0"
-          onClick={() => navigate(-1)}
-          aria-label="Back"
-        >
-          <ArrowLeft className="h-5 w-5" />
+    <div className="space-y-6">
+      <header className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" className="-ml-3 shrink-0" onClick={goBack} aria-label="Back">
+          <ArrowLeft className="!size-5" />
         </Button>
-        <Radio className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">{liveSession ? 'Live Session' : 'Start Live Session'}</h1>
-        {liveSession && (
-          <div className="ml-auto">
-            <DiscardButton />
-          </div>
-        )}
-      </div>
+        <div className="min-w-0 flex-1">
+          <p className="section-header">{homegame?.name}</p>
+          <h1 className="page-title truncate">{liveSession ? 'Live game' : 'Start a live game'}</h1>
+        </div>
+        {liveSession && <DiscardButton />}
+      </header>
 
       {liveSession ? (
         <TrackerView players={players} />
       ) : activePlayers.length < 2 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            You need at least 2 active players to start a session.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="Seat at least two players"
+          description="A live game needs two or more active players in this homegame."
+          action={
+            <Button asChild>
+              <Link to="/players">Go to Players</Link>
+            </Button>
+          }
+        />
       ) : (
         <SetupView players={activePlayers} onStart={start} />
       )}
