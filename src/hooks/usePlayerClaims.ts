@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PlayerClaimRequest, PlayerClaimRequestWithDetails, ClaimStatus } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLog';
 
 export function usePlayerClaims(homegameId: string | undefined) {
   const [pendingRequests, setPendingRequests] = useState<PlayerClaimRequestWithDetails[]>([]);
@@ -99,6 +100,7 @@ export function usePlayerClaims(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error requesting claim:', err);
+      logError({ kind: 'save_failed', action: 'usePlayerClaims.requestClaim', error: err, homegameId });
       if ((err as { code?: string }).code === '23505') {
         toast({
           title: 'Already Requested',
@@ -137,6 +139,7 @@ export function usePlayerClaims(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error approving claim:', err);
+      logError({ kind: 'save_failed', action: 'usePlayerClaims.approveClaim', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to approve claim',
@@ -171,6 +174,7 @@ export function usePlayerClaims(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error rejecting claim:', err);
+      logError({ kind: 'save_failed', action: 'usePlayerClaims.rejectClaim', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to reject claim',
@@ -198,6 +202,7 @@ export function usePlayerClaims(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error cancelling request:', err);
+      logError({ kind: 'save_failed', action: 'usePlayerClaims.cancelRequest', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to cancel request',

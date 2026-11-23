@@ -4,6 +4,7 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { Json } from '@/integrations/supabase/types';
 import { ActionError, LiveSession, LiveSessionPlayer, LiveSessionPayment } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLog';
 
 interface LiveSessionContextType {
   liveSession: LiveSession | null;
@@ -101,6 +102,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
       return { error: null };
     } catch (err) {
       console.error('Error starting live session:', err);
+      logError({ kind: 'save_failed', action: 'liveSession.start', error: err, homegameId });
       toast({ title: 'Error', description: 'Failed to start live session', variant: 'destructive' });
       return { error: err as ActionError };
     }
@@ -122,6 +124,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
       .eq('id', liveSession.id);
     if (error) {
       console.error('Error updating live session:', error);
+      logError({ kind: 'save_failed', action: 'liveSession.persist', error, homegameId });
       setLiveSession(previous);
       toast({ title: 'Not saved', description: 'Check your connection and try again', variant: 'destructive' });
       return { error };
@@ -194,6 +197,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
       return { error: null };
     } catch (err) {
       console.error('Error finishing live session:', err);
+      logError({ kind: 'save_failed', action: 'liveSession.finish', error: err, homegameId });
       toast({ title: 'Error', description: 'Failed to close live session', variant: 'destructive' });
       return { error: err as ActionError };
     }

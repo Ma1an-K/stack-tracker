@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, Homegame, HomegameWithRole, HomegameRole } from '@/types/database';
+import { logError } from '@/lib/errorLog';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -176,6 +177,7 @@ export function useAuth() {
       return { error: null, homegame };
     } catch (err) {
       console.error('Error creating homegame:', err);
+      logError({ kind: 'save_failed', action: 'useAuth.createHomegame', error: err });
       return { error: err };
     }
   };
@@ -191,6 +193,7 @@ export function useAuth() {
 
       if (rpcError) {
         console.error('RPC error joining homegame:', rpcError);
+        logError({ kind: 'save_failed', action: 'useAuth.joinHomegame', error: rpcError });
         return { error: new Error('Failed to join homegame') };
       }
 
@@ -208,6 +211,7 @@ export function useAuth() {
       return { error: null };
     } catch (err) {
       console.error('Error joining homegame:', err);
+      logError({ kind: 'save_failed', action: 'useAuth.joinHomegame', error: err });
       return { error: err };
     }
   };

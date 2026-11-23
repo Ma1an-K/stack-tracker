@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLog';
 
 export function usePlayers(homegameId: string | undefined) {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -60,6 +61,7 @@ export function usePlayers(homegameId: string | undefined) {
       return { error: null, player: data as Player };
     } catch (err) {
       console.error('Error adding player:', err);
+      logError({ kind: 'save_failed', action: 'usePlayers.addPlayer', error: err, homegameId });
       if ((err as { code?: string }).code === '23505') {
         toast({
           title: 'Error',
@@ -95,6 +97,7 @@ export function usePlayers(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error updating player:', err);
+      logError({ kind: 'save_failed', action: 'usePlayers.updatePlayer', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to update player',
@@ -121,6 +124,7 @@ export function usePlayers(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error deleting player:', err);
+      logError({ kind: 'save_failed', action: 'usePlayers.deletePlayer', error: err, homegameId });
       toast({
         title: 'Error',
         description: 'Failed to delete player. They may have session history.',

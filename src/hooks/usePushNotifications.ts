@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FUNCTIONS_URL } from '@/lib/functionsUrl';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { logError } from '@/lib/errorLog';
 
 const VAPID_PUBLIC_KEY = 'BP9Z5RasNjMn4BQ_bUyAHKoIAH1t7Arh_oAuIZXjuiUULpOUbDBgRB57r998FrM1v9F9hBTY0h9lstgm4Oosu1Q';
 
@@ -115,6 +116,7 @@ export function usePushNotifications() {
       return true;
     } catch (err) {
       console.error('Error subscribing to push:', err);
+      logError({ kind: 'save_failed', action: 'usePushNotifications.subscribe', error: err, homegameId: homegame?.id });
       return false;
     }
   }, [user, homegame, isSupported]);
@@ -138,6 +140,7 @@ export function usePushNotifications() {
       return true;
     } catch (err) {
       console.error('Error unsubscribing from push:', err);
+      logError({ kind: 'save_failed', action: 'usePushNotifications.unsubscribe', error: err, homegameId: homegame?.id });
       return false;
     }
   }, []);
@@ -160,6 +163,7 @@ export function usePushNotifications() {
       });
     } catch (err) {
       console.error('Error sending push notification:', err);
+      logError({ kind: 'save_failed', action: 'usePushNotifications.sendNotification', error: err, homegameId });
     }
   }, []);
 
