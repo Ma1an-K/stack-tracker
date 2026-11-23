@@ -69,6 +69,14 @@ describe("adminPlugin middleware", () => {
     expect((await run("/__admin/api/errors", "::1", { host: "localhost:8080", via: "1.1 tunnel" })).status).toBe(403);
   });
 
+  it("refuses a cross-site browser request with 403, allows same-origin", async () => {
+    const base = { host: "localhost:8080" };
+    const bad = await run("/__admin/api/overview", "127.0.0.1", { ...base, "sec-fetch-site": "cross-site" });
+    expect(bad.status).toBe(403);
+    expect(bad.next).not.toHaveBeenCalled();
+    expect((await run("/__admin/api/overview", "127.0.0.1", { ...base, "sec-fetch-site": "same-origin" })).status).toBe(503);
+  });
+
   it("lets a local same-origin request reach the handler (503 without a key)", async () => {
     const r = await run("/__admin/api/overview", "::1", { host: "localhost:8080", origin: "http://localhost:8080" });
     expect(r.status).toBe(503);

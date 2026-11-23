@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(19);
+select plan(22);
 
 select has_table('public', 'error_log', 'error_log table exists');
 
@@ -30,6 +30,15 @@ select throws_ok(
   $$insert into public.error_log (kind, message, user_id)
     values ('crash', 'spoof', '00000000-0000-0000-0000-0000000000b1')$$,
   '42501', null, 'A cannot log as B');
+select throws_ok(
+  $$insert into public.error_log (kind, message, created_at) values ('crash', 'future', '2099-01-01')$$,
+  '42501', null, 'A cannot set created_at');
+select throws_ok(
+  $$insert into public.error_log (kind, message, fixed_at) values ('crash', 'prefixed', now())$$,
+  '42501', null, 'A cannot set fixed_at');
+select throws_ok(
+  $$insert into public.error_log (kind, message, id) values ('crash', 'own id', gen_random_uuid())$$,
+  '42501', null, 'A cannot set id');
 select throws_ok(
   $$select count(*) from public.error_log$$,
   '42501', null, 'A cannot read the log');

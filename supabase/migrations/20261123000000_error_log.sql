@@ -21,7 +21,10 @@ ALTER TABLE public.error_log ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON public.error_log FROM anon;
 REVOKE ALL ON public.error_log FROM authenticated;
-GRANT INSERT ON public.error_log TO authenticated;
+-- Column-level grant: clients cannot set id, user_id, created_at or fixed_at;
+-- the defaults fill them in (user_id = auth.uid(), created_at = now()).
+GRANT INSERT (homegame_id, kind, action, message, stack, page, user_agent, app_version)
+  ON public.error_log TO authenticated;
 
 CREATE POLICY "Members can log their own errors"
   ON public.error_log

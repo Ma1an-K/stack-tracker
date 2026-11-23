@@ -140,7 +140,7 @@ export function usePushNotifications() {
       return true;
     } catch (err) {
       console.error('Error unsubscribing from push:', err);
-      logError({ kind: 'save_failed', action: 'usePushNotifications.unsubscribe', error: err, homegameId: homegame?.id });
+      logError({ kind: 'save_failed', action: 'usePushNotifications.unsubscribe', error: err });
       return false;
     }
   }, []);

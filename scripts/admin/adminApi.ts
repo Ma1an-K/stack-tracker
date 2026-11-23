@@ -21,6 +21,17 @@ export function isSameOrigin(headers: { host?: string; origin?: string }): boole
   return origin === undefined || origin === `http://${host}`;
 }
 
+/**
+ * Browsers label every request with Sec-Fetch-Site. When present it must be
+ * same-origin or none (typed URL / bookmark); cross-site, same-site and
+ * cross-origin requests (e.g. an <img> pointing at the admin API) are refused.
+ * Non-browser clients omit the header and are not affected.
+ */
+export function isAllowedFetchSite(value: string | string[] | undefined): boolean {
+  if (value === undefined) return true;
+  return value === "same-origin" || value === "none";
+}
+
 const PROXY_HEADERS = ["x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "forwarded", "x-real-ip", "via"];
 
 /**

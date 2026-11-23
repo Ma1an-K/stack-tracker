@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createAdminHandler, hasProxyHeaders, isLoopback, isSameOrigin } from "./adminApi";
+import { createAdminHandler, hasProxyHeaders, isAllowedFetchSite, isLoopback, isSameOrigin } from "./adminApi";
 
 const ID = "3f2b8c1e-9d4a-4b7e-8f61-2a5c9e0d7b13";
 
@@ -108,6 +108,20 @@ describe("isSameOrigin", () => {
     expect(isSameOrigin({})).toBe(false);
     expect(isSameOrigin({ host: "localhost:8080", origin: "http://evil.com" })).toBe(false);
     expect(isSameOrigin({ host: "localhost:8080", origin: "http://localhost:9999" })).toBe(false);
+  });
+});
+
+describe("isAllowedFetchSite", () => {
+  it("allows a missing header, same-origin and none", () => {
+    expect(isAllowedFetchSite(undefined)).toBe(true);
+    expect(isAllowedFetchSite("same-origin")).toBe(true);
+    expect(isAllowedFetchSite("none")).toBe(true);
+  });
+  it("rejects cross-site, same-site, cross-origin and junk", () => {
+    expect(isAllowedFetchSite("cross-site")).toBe(false);
+    expect(isAllowedFetchSite("same-site")).toBe(false);
+    expect(isAllowedFetchSite("cross-origin")).toBe(false);
+    expect(isAllowedFetchSite("")).toBe(false);
   });
 });
 

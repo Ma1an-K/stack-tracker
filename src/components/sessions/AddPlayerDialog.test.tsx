@@ -32,6 +32,13 @@ describe('AddPlayerDialog', () => {
     expect(screen.getByRole('button', { name: 'Add & seat' })).toBeTruthy();
   });
 
+  it('puts the new-player field above the bench list', () => {
+    setup();
+    const field = screen.getByRole('textbox', { name: 'New player' });
+    const first = screen.getByRole('button', { name: 'Sam' });
+    expect(field.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('creates then seats', async () => {
     const p = setup();
     fireEvent.change(input(), { target: { value: 'Dana' } });

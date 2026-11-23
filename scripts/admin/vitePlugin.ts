@@ -4,7 +4,7 @@
 import type { Plugin } from "vite";
 import { loadEnv } from "vite";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { createAdminHandler, hasProxyHeaders, isLoopback, isSameOrigin, sendJson } from "./adminApi";
+import { createAdminHandler, hasProxyHeaders, isAllowedFetchSite, isLoopback, isSameOrigin, sendJson } from "./adminApi";
 
 const MOUNT = "/__admin/api";
 
@@ -23,6 +23,9 @@ export function adminPlugin(): Plugin {
         url && key ? createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }) : null;
       const handler = createAdminHandler(() => client);
 
+      // Must stay a pre-hook: registered directly in configureServer (not returned
+      // as a post-hook function) so it runs before Vite's permissive localhost
+      // CORS middleware and can refuse foreign requests first.
       server.middlewares.use((req, res, next) => {
         const path = (req.url ?? "").split("?")[0];
         if (path !== MOUNT && !path.startsWith(`${MOUNT}/`)) return next();
@@ -32,7 +35,8 @@ export function adminPlugin(): Plugin {
         if (
           !isLoopback(req.socket.remoteAddress) ||
           !isSameOrigin({ host: req.headers.host, origin: req.headers.origin }) ||
-          hasProxyHeaders(req.headers)
+          hasProxyHeaders(req.headers) ||
+          !isAllowedFetchSite(req.headers["sec-fetch-site"])
         ) {
           return sendJson(res, 403, { error: "Forbidden" });
         }

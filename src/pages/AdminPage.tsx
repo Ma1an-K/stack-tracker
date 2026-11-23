@@ -209,7 +209,7 @@ function IssueLog() {
                     <TableRow>
                       <TableCell colSpan={7}>
                         <div className="mb-1 text-xs text-muted-foreground">
-                          {r.page} · v{r.app_version} · {r.user_agent}
+                          {[r.page, r.app_version ? `v${r.app_version}` : null, r.user_agent].filter(Boolean).join(' · ')}
                         </div>
                         <pre className="overflow-x-auto whitespace-pre-wrap text-xs">{r.stack ?? "(no stack)"}</pre>
                       </TableCell>

@@ -301,13 +301,13 @@ function TrackerView({
                     </Button>
                   </div>
                 ) : (
-                  <div className="mt-2.5 flex items-center gap-1.5">
+                  <div className="mt-2.5 flex items-center gap-1">
                     {chips.map(amt => (
                       <Button
                         key={amt}
                         variant="secondary"
                         size="sm"
-                        className="h-9 flex-1 text-xs"
+                        className="h-9 min-w-0 flex-1 px-2 text-xs"
                         onClick={() => addBuyIn(sp.player_id, amt)}
                       >
                         <Plus className="mr-0.5 h-3 w-3" />
@@ -317,7 +317,7 @@ function TrackerView({
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="h-9 flex-1 text-xs"
+                      className="h-9 min-w-0 flex-1 px-2 text-xs"
                       onClick={() => { if (player) { setCustomFor(player); setCustomAmount(''); } }}
                     >
                       Other

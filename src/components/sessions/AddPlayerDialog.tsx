@@ -67,6 +67,23 @@ export function AddPlayerDialog({
         <DialogDescription className="text-xs">
           {`Joins with a ${formatCurrency(baseBuyIn, currency)} buy-in — adjust after.`}
         </DialogDescription>
+        {canCreate ? (
+          <form onSubmit={submit} className="flex gap-2 border-b border-border pb-3">
+            <Input
+              aria-label="New player"
+              placeholder="New player"
+              value={name}
+              onChange={e => setName(e.target.value)}
+            />
+            <Button type="submit" disabled={!trimmed || busy}>
+              Add &amp; seat
+            </Button>
+          </form>
+        ) : (
+          <p className="border-b border-border pb-3 text-xs text-muted-foreground">
+            {`Only the owner or an admin can create new players. Ask ${ownerName ?? 'the owner'} to make you an admin on the Members page.`}
+          </p>
+        )}
         {bench.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {bench.map(p => (
@@ -84,23 +101,6 @@ export function AddPlayerDialog({
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">Everyone's already seated</p>
-        )}
-        {canCreate ? (
-          <form onSubmit={submit} className="flex gap-2 border-t border-border pt-3">
-            <Input
-              aria-label="New player"
-              placeholder="New player"
-              value={name}
-              onChange={e => setName(e.target.value)}
-            />
-            <Button type="submit" disabled={!trimmed || busy}>
-              Add &amp; seat
-            </Button>
-          </form>
-        ) : (
-          <p className="border-t border-border pt-3 text-xs text-muted-foreground">
-            {`Only the owner or an admin can create new players. Ask ${ownerName ?? 'the owner'} to make you an admin on the Members page.`}
-          </p>
         )}
       </DialogContent>
     </Dialog>

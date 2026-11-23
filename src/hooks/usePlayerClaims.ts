@@ -100,8 +100,10 @@ export function usePlayerClaims(homegameId: string | undefined) {
       return { error: null };
     } catch (err) {
       console.error('Error requesting claim:', err);
-      logError({ kind: 'save_failed', action: 'usePlayerClaims.requestClaim', error: err, homegameId });
-      if ((err as { code?: string }).code === '23505') {
+      const isDuplicate = (err as { code?: string }).code === '23505';
+      // Duplicates are a user mistake, not a bug: toast only, don't log.
+      if (!isDuplicate) logError({ kind: 'save_failed', action: 'usePlayerClaims.requestClaim', error: err, homegameId });
+      if (isDuplicate) {
         toast({
           title: 'Already Requested',
           description: 'You have already submitted a claim for this player.',
