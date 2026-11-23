@@ -517,3 +517,8 @@ Every rule in `.claude/skills/ui-ux-pro-max/references/quick-reference.md` check
 - View cache: `clearStale()` after logging a session, adding a player, approving a claim; Sessions holds Edit/Delete/Mark settled while rows are remembered data (`hooks/useStaleWhileLoading.ts`).
 - Standings: separate switch guards for players and sessions (`pages/LeaderboardPage.tsx`).
 - Tour copy says “This is me” (`components/tutorial/tours.ts`).
+
+## 15. Invite links carry the code (ported from Variant B, hardened)
+
+Share invite now sends `/auth?mode=signup&code=XXXXXXXX` (code also repeated in plain text). The auth page prefills "Join with code" from the link, or from a device-local copy after the email-confirmation round trip, and selects the Join tab. New player with an invite link: 10 → 6 taps, no typing.
+Safety: only `^[A-Z0-9]{8}$` (after stripping spaces/hyphens) is accepted; the code is removed from the address bar after reading; the device copy expires after 7 days and is cleared on a successful join; joining always needs the player's own tap (prefill only, same `joinHomegame` call); `Referrer-Policy: strict-origin-when-cross-origin` keeps the URL from leaking to third-party origins.

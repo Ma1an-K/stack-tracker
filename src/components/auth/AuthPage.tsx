@@ -79,6 +79,41 @@ function FormError({ message }: { message: string | null }) {
 // Invite codes: ignore spaces and hyphens people paste in, compare in capitals.
 const normaliseCode = (v: string) => v.replace(/[\s-]/g, '').toUpperCase().slice(0, 8);
 
+// Invite links (`/auth?mode=signup&code=XXXXXXXX`) carry the code so a new player
+// never has to type it. The code is only ever used to PREFILL the join field;
+// joining still needs the player's own tap. Only a well-formed 8-character code is
+// accepted, and a copy is kept on this device for 7 days so it survives the
+// email-confirmation round trip (signup signs the user out until they confirm).
+const PENDING_CODE_KEY = 'pendingInviteCode';
+const PENDING_CODE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const parseInviteCode = (raw: string | null): string | null => {
+  if (!raw) return null;
+  const code = normaliseCode(raw);
+  return /^[A-Z0-9]{8}$/.test(code) ? code : null;
+};
+function savePendingCode(code: string) {
+  try {
+    localStorage.setItem(PENDING_CODE_KEY, JSON.stringify({ code, savedAt: Date.now() }));
+  } catch { /* storage unavailable: the code is still in the invite message */ }
+}
+function readPendingCode(): string | null {
+  try {
+    const raw = localStorage.getItem(PENDING_CODE_KEY);
+    if (!raw) return null;
+    const { code, savedAt } = JSON.parse(raw) as { code?: string; savedAt?: number };
+    if (typeof savedAt !== 'number' || Date.now() - savedAt > PENDING_CODE_TTL_MS) {
+      localStorage.removeItem(PENDING_CODE_KEY);
+      return null;
+    }
+    return parseInviteCode(code ?? null);
+  } catch {
+    return null;
+  }
+}
+function clearPendingCode() {
+  try { localStorage.removeItem(PENDING_CODE_KEY); } catch { /* storage unavailable */ }
+}
+
 function TextLink({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
     <button
@@ -107,7 +142,9 @@ export function AuthPage() {
   } = useAuthContext();
   const { startTour } = useTutorialContext();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Read once on mount: from the link if present, else from this device (after email confirmation).
+  const [inviteCode] = useState<string | null>(() => parseInviteCode(searchParams.get('code')) ?? readPendingCode());
   const [loading, setLoading] = useState(false);
   // Landing-page "Get started" links pass ?mode=signup so new visitors open on Create Account.
   const [step, setStep] = useState<Step>(() => (searchParams.get('mode') === 'signup' && !user ? 'signup' : 'auth'));
@@ -116,8 +153,18 @@ export function AuthPage() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [signupForm, setSignupForm] = useState({ email: '', password: '', username: '' });
-  const [setupForm, setSetupForm] = useState({ homegameName: '', inviteCode: '' });
-  const [setupMode, setSetupMode] = useState<'create' | 'join'>('create');
+  const [setupForm, setSetupForm] = useState({ homegameName: '', inviteCode: inviteCode ?? '' });
+  const [setupMode, setSetupMode] = useState<'create' | 'join'>(inviteCode ? 'join' : 'create');
+
+  // Keep the link's code on this device, then drop it from the address bar so it
+  // doesn't linger in history or get shared on with a copied URL.
+  useEffect(() => {
+    if (!searchParams.has('code')) return;
+    if (inviteCode) savePendingCode(inviteCode);
+    const next = new URLSearchParams(searchParams);
+    next.delete('code');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, inviteCode]);
   // Inline errors: one field at a time (next to the field), or one for the whole form.
   const [fieldError, setFieldError] = useState<{ id: string; message: string } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -235,6 +282,7 @@ export function AuthPage() {
       setFormError(`${error.message || 'Failed to join homegame'}. Check the code with your host and try again.`);
       toast({ title: 'Error', description: error.message || 'Failed to join homegame', variant: 'destructive' });
     } else {
+      clearPendingCode();
       toast({ title: 'Success', description: 'You have joined the homegame' });
     }
   };
@@ -475,6 +523,9 @@ export function AuthPage() {
               required
             />
           </Field>
+          {inviteCode && setupForm.inviteCode === inviteCode && (
+            <p className="-mt-2 text-sm text-muted-foreground">Filled in from your invite link.</p>
+          )}
           <FormError message={formError} />
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading && <Loader2 className="animate-spin" />}

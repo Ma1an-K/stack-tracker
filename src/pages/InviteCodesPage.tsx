@@ -43,8 +43,10 @@ export function InviteCodesPage() {
 
   // Native share sheet with a ready-to-send message; falls back to copying it.
   const handleShareCode = async (code: string) => {
-    const url = `${window.location.origin}/auth?mode=signup`;
-    const text = `Join ${homegame?.name ?? 'our homegame'} on Stack Tracker. Sign up at ${url} and enter invite code ${code}.`;
+    // The link carries the code so it's filled in on sign-up; the code is repeated in
+    // plain text in case the link is opened somewhere the prefill can't follow.
+    const url = `${window.location.origin}/auth?mode=signup&code=${encodeURIComponent(code)}`;
+    const text = `Join ${homegame?.name ?? 'our homegame'} on Stack Tracker: ${url} (invite code ${code}).`;
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Stack Tracker invite', text });
