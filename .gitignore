@@ -32,3 +32,4 @@ dist-ssr
 .superpowers/
 supabase/.temp/
 public/landing/phone-mockup.png
+supabase/.branches/
