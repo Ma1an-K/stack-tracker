@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useSessions } from '@/hooks/useSessions';
@@ -12,19 +11,21 @@ export function LeaderboardPage() {
   const { players, loading: playersLoading } = usePlayers(homegame?.id);
   const { sessions, loading: sessionsLoading } = useSessions(homegame?.id);
 
-  const fresh = useMemo(() => ({ players, sessions }), [players, sessions]);
-  const { data, isFirstLoad, isRefreshing } = useStaleWhileLoading(
-    homegame?.id ? `standings:${homegame.id}` : null,
-    fresh,
-    playersLoading || sessionsLoading
-  );
+  // One guard per input: after a homegame switch each list stays hidden until
+  // its own hook has delivered the new homegame's rows, so players from one
+  // game are never ranked against sessions from another.
+  const id = homegame?.id;
+  const p = useStaleWhileLoading(id ? `standings-players:${id}` : null, players, playersLoading);
+  const s = useStaleWhileLoading(id ? `standings-sessions:${id}` : null, sessions, sessionsLoading);
+  const isFirstLoad = p.isFirstLoad || s.isFirstLoad;
+  const isRefreshing = p.isRefreshing || s.isRefreshing;
 
   if (isFirstLoad) return <PageSkeleton rows={6} />;
 
   return (
     <Leaderboard
-      sessions={data.sessions}
-      players={data.players}
+      sessions={s.data}
+      players={p.data}
       currency={homegame?.currency || '$'}
       titleAside={<RefreshingDot show={isRefreshing} />}
     />
