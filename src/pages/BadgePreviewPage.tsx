@@ -100,12 +100,12 @@ function BadgeDisplay({ badge, size }: { badge: BadgeDef; size: number }) {
 export function BadgePreviewPage() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-5 py-10 space-y-10">
+      <div className="space-y-10">
 
         {/* Header */}
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground uppercase tracking-widest">Card Crew Ledger</p>
-          <h1 className="text-3xl font-bold tracking-tight">Badge Gallery</h1>
+          <h1 className="page-title">Badge gallery</h1>
           <p className="text-muted-foreground text-sm">Give feedback before these go live</p>
         </div>
 
@@ -202,7 +202,7 @@ export function BadgePreviewPage() {
                     <div className="flex items-center gap-2">
                       <BadgeDisplay badge={b} size={28} />
 
-                      <span className="text-sm font-semibold text-green-500 tabular-nums">
+                      <span className="text-sm font-semibold profit tabular-nums">
                         +{(1200 - i * 310).toLocaleString()}
                       </span>
                     </div>

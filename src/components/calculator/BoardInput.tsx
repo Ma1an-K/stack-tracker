@@ -67,7 +67,7 @@ export function BoardInput({
   
   return (
     <div className={cn(
-      "rounded-lg bg-card border border-border",
+      "surface",
       isMobile ? "p-3 space-y-2" : "p-4 space-y-3"
     )}>
       <div className="flex items-center justify-between">
@@ -79,9 +79,10 @@ export function BoardInput({
             variant="ghost"
             size="icon"
             onClick={onRemove}
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            aria-label="Remove"
+          className="-mr-2 text-muted-foreground hover:text-destructive"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 />
           </Button>
         )}
       </div>

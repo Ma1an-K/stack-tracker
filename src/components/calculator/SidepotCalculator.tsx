@@ -111,8 +111,8 @@ export function SidepotCalculator() {
       
       {/* Results Section */}
       <div className="pt-4 border-t border-border">
-        <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-          <Calculator className="w-5 h-5 text-primary" />
+        <h2 className="font-display text-2xl font-semibold mb-4 flex items-center gap-2">
+          <Calculator className="w-5 h-5 text-gold" aria-hidden="true" />
           Results
         </h2>
         <ResultsDisplay players={players} boards={boards} mode={mode} />

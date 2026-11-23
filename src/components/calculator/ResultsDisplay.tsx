@@ -88,7 +88,7 @@ export function ResultsDisplay({ players, boards, mode }: ResultsDisplayProps) {
       <UICard>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Coins className="w-4 h-4 text-primary" />
+            <Coins className="w-4 h-4 text-gold" aria-hidden="true" />
             Pot Structure
           </CardTitle>
         </CardHeader>
@@ -106,7 +106,7 @@ export function ResultsDisplay({ players, boards, mode }: ResultsDisplayProps) {
           ))}
           <div className="flex items-center justify-between pt-2 font-semibold">
             <span>Total</span>
-            <Badge variant="default" className="bg-primary">
+            <Badge>
               {pots.reduce((sum, p) => sum + p.amount, 0)}
             </Badge>
           </div>
@@ -118,7 +118,7 @@ export function ResultsDisplay({ players, boards, mode }: ResultsDisplayProps) {
         <UICard key={boardIdx}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-primary" />
+              <Trophy className="w-4 h-4 text-gold" aria-hidden="true" />
               {boards.length === 1 ? 'Results' : `Runout ${boardIdx + 1}`}
             </CardTitle>
           </CardHeader>
