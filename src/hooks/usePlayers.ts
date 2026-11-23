@@ -38,7 +38,7 @@ export function usePlayers(homegameId: string | undefined) {
   };
 
   const addPlayer = async (name: string) => {
-    if (!homegameId) return { error: new Error('No homegame') };
+    if (!homegameId) return { error: new Error('No homegame'), player: null };
 
     try {
       const { data, error } = await supabase
@@ -57,7 +57,7 @@ export function usePlayers(homegameId: string | undefined) {
         title: 'Success',
         description: `${name} added to the player list`,
       });
-      return { error: null };
+      return { error: null, player: data as Player };
     } catch (err) {
       console.error('Error adding player:', err);
       if ((err as { code?: string }).code === '23505') {
@@ -73,7 +73,7 @@ export function usePlayers(homegameId: string | undefined) {
           variant: 'destructive',
         });
       }
-      return { error: err };
+      return { error: err, player: null };
     }
   };
 
