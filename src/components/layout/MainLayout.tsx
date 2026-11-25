@@ -7,6 +7,7 @@ import { useTutorialContext } from '@/contexts/TutorialContext';
 import { TutorialOverlay } from '@/components/tutorial/TutorialOverlay';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { LiveSessionProvider } from '@/contexts/LiveSessionContext';
+import { OneOffGameProvider } from '@/contexts/OneOffGameContext';
 import { LiveSessionBar } from '@/components/sessions/LiveSessionBar';
 import { OfflineBanner } from '@/components/common/OfflineBanner';
 
@@ -62,38 +63,40 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <LiveSessionProvider>
-      <div className="flex flex-col h-full overflow-x-hidden md:block md:relative bg-background">
-        <div aria-hidden="true" className="pointer-events-none fixed -left-24 -top-24 z-0 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.09)_0%,transparent_65%)]" />
-        <div aria-hidden="true" className="pointer-events-none fixed -right-20 bottom-10 z-0 h-[320px] w-[320px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.05)_0%,transparent_65%)]" />
-        <a href="#main" className="skip-link">Skip to content</a>
-        <Header />
-        <main
-          id="main"
-          tabIndex={-1}
-          ref={mainRef}
-          className="relative z-[1] flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-none pt-[calc(var(--header-h)+env(safe-area-inset-top))] main-pb md:absolute md:inset-0 md:ml-60"
-          style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-        >
-          <div className="pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-4 md:px-8 md:pt-8 min-h-full">
-            <OfflineBanner />
-            <LiveSessionBar />
-            <div key={pathname} className={`page-enter mx-auto w-full ${pathname === '/calculator' ? 'max-w-5xl' : 'max-w-3xl'}`}>
-              {children}
+      <OneOffGameProvider>
+        <div className="flex flex-col h-full overflow-x-hidden md:block md:relative bg-background">
+          <div aria-hidden="true" className="pointer-events-none fixed -left-24 -top-24 z-0 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.09)_0%,transparent_65%)]" />
+          <div aria-hidden="true" className="pointer-events-none fixed -right-20 bottom-10 z-0 h-[320px] w-[320px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.05)_0%,transparent_65%)]" />
+          <a href="#main" className="skip-link">Skip to content</a>
+          <Header />
+          <main
+            id="main"
+            tabIndex={-1}
+            ref={mainRef}
+            className="relative z-[1] flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-none pt-[calc(var(--header-h)+env(safe-area-inset-top))] main-pb md:absolute md:inset-0 md:ml-60"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+          >
+            <div className="pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-4 md:px-8 md:pt-8 min-h-full">
+              <OfflineBanner />
+              <LiveSessionBar />
+              <div key={pathname} className={`page-enter mx-auto w-full ${pathname === '/calculator' ? 'max-w-5xl' : 'max-w-3xl'}`}>
+                {children}
+              </div>
             </div>
-          </div>
-        </main>
-      </div>
-      <Navigation />
+          </main>
+        </div>
+        <Navigation />
 
-      {activeTour && (
-        <TutorialOverlay
-          steps={steps}
-          currentStep={currentStep}
-          onNext={nextStep}
-          onSkip={skipTour}
-          installPrompt={installPrompt}
-        />
-      )}
+        {activeTour && (
+          <TutorialOverlay
+            steps={steps}
+            currentStep={currentStep}
+            onNext={nextStep}
+            onSkip={skipTour}
+            installPrompt={installPrompt}
+          />
+        )}
+      </OneOffGameProvider>
     </LiveSessionProvider>
   );
 }
