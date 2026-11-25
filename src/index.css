@@ -97,6 +97,20 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
+  /* iOS Safari gives native date inputs an intrinsic min-width and centred text,
+     so they overflow their container. Let them size like other inputs. */
+  input[type='date'] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    text-align: left;
+  }
+  input[type='date']::-webkit-date-and-time-value {
+    text-align: left;
+    margin: 0;
+  }
   #root {
     position: relative;
     height: 100lvh;
