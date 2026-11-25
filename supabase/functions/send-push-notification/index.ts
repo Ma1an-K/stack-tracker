@@ -1,5 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
 import { isAllowedPushEndpoint } from './endpoints.ts'
+import { buildNotification } from './payload.ts'
+
+// Minimum gap between pushes for one homegame.
+const PUSH_MIN_INTERVAL_SECONDS = 60
 
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://cardcrewledger.app'
 
@@ -245,7 +249,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    const { homegame_id, session_date, homegame_name } = await req.json()
+    const { homegame_id, session_date } = await req.json()
 
     if (!homegame_id) {
       return new Response(
@@ -293,13 +297,24 @@ Deno.serve(async (req) => {
       )
     }
 
-    const payload = JSON.stringify({
-      title: `${homegame_name || 'Homegame'} - New Session`,
-      body: `A new session has been logged${session_date ? ` for ${session_date}` : ''}. Check your results!`,
-      icon: '/icon-192x192.png',
-      badge: '/icon-192x192.png',
-      url: '/sessions',
-    })
+    // ── Throttle: at most one push per homegame per interval ────────────────
+    const { data: slotClaimed, error: slotError } = await supabaseAdmin
+      .rpc('claim_push_slot', { p_homegame_id: homegame_id, p_min_interval_seconds: PUSH_MIN_INTERVAL_SECONDS })
+    if (slotError) throw slotError
+    if (!slotClaimed) {
+      return new Response(
+        JSON.stringify({ error: 'Too many notifications, try again shortly', sent: 0 }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { data: homegame } = await supabaseAdmin
+      .from('homegames')
+      .select('name')
+      .eq('id', homegame_id)
+      .maybeSingle()
+
+    const payload = JSON.stringify(buildNotification(homegame?.name, session_date))
 
     let sent = 0
     let failed = 0
