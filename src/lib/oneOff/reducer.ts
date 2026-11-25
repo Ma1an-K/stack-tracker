@@ -26,6 +26,8 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 const money = (n: number) => round2(Math.max(0, n));
 
 const MISSING_PLAYER = 'That player is not in this game';
+const INVALID_AMOUNT = 'Enter a valid amount';
+const invalid = (state: OneOffGame): OneOffResult => ({ state, error: INVALID_AMOUNT });
 
 function updatePlayer(
   state: OneOffGame,
@@ -45,6 +47,7 @@ export function oneOffReducer(state: OneOffGame, action: OneOffAction): OneOffRe
       return { state: action.game, error: null };
 
     case 'addPlayer': {
+      if (!Number.isFinite(action.buyIn)) return invalid(state);
       const error = validateNames([...state.players.map(p => p.name), action.name]);
       if (error) return { state, error };
       const added: OneOffPlayer = {
@@ -68,13 +71,16 @@ export function oneOffReducer(state: OneOffGame, action: OneOffAction): OneOffRe
     }
 
     case 'addBuyIn':
+      if (!Number.isFinite(action.amount)) return invalid(state);
       return updatePlayer(state, action.id, p => ({ ...p, buy_in: money(p.buy_in + action.amount) }));
 
     case 'setBuyIn':
+      if (!Number.isFinite(action.total)) return invalid(state);
       return updatePlayer(state, action.id, p => ({ ...p, buy_in: money(action.total) }));
 
     case 'cashOut':
     case 'setCashOut':
+      if (!Number.isFinite(action.amount)) return invalid(state);
       return updatePlayer(state, action.id, p => ({ ...p, cash_out: money(action.amount) }));
 
     case 'rejoin':
@@ -93,7 +99,7 @@ export function oneOffReducer(state: OneOffGame, action: OneOffAction): OneOffRe
       const { from_id, to_id } = action.payment;
       const amount = round2(action.payment.amount);
       if (from_id === to_id) return { state, error: 'Pick two different players' };
-      if (!(amount > 0)) return { state, error: 'Enter an amount above 0' };
+      if (!Number.isFinite(amount) || !(amount > 0)) return { state, error: 'Enter an amount above 0' };
       const ids = new Set(state.players.map(p => p.id));
       if (!ids.has(from_id) || !ids.has(to_id)) return { state, error: MISSING_PLAYER };
       return {
@@ -103,7 +109,11 @@ export function oneOffReducer(state: OneOffGame, action: OneOffAction): OneOffRe
     }
 
     case 'removePayment': {
-      if (action.index < 0 || action.index >= state.payments.length) {
+      if (
+        !Number.isInteger(action.index) ||
+        action.index < 0 ||
+        action.index >= state.payments.length
+      ) {
         return { state, error: 'That payment is not in this game' };
       }
       return {

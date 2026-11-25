@@ -55,6 +55,23 @@ describe('oneOffReducer: buy-ins and cash-outs', () => {
     expect(base).toEqual(before);
   });
 
+  it('rejects an amount that is not a finite number', () => {
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      const actions = [
+        { type: 'addBuyIn', id: 'a', amount: bad },
+        { type: 'setBuyIn', id: 'a', total: bad },
+        { type: 'cashOut', id: 'a', amount: bad },
+        { type: 'setCashOut', id: 'a', amount: bad },
+        { type: 'addPlayer', id: 'c', name: 'Lee', buyIn: bad },
+      ] as const;
+      for (const action of actions) {
+        const r = oneOffReducer(base, action);
+        expect(r.error).toBe('Enter a valid amount');
+        expect(r.state).toBe(base);
+      }
+    }
+  });
+
   it('rejects an unknown player', () => {
     const r = oneOffReducer(base, { type: 'cashOut', id: 'zz', amount: 10 });
     expect(r.error).toBe('That player is not in this game');
@@ -143,7 +160,7 @@ describe('oneOffReducer: payments and details', () => {
   });
 
   it('addPayment rejects an amount of 0 or less', () => {
-    for (const amount of [0, -5, 0.004, Number.NaN]) {
+    for (const amount of [0, -5, 0.004, Number.NaN, Number.POSITIVE_INFINITY]) {
       const r = oneOffReducer(base, {
         type: 'addPayment',
         payment: { from_id: 'a', to_id: 'b', amount },
@@ -166,6 +183,18 @@ describe('oneOffReducer: payments and details', () => {
     const r = oneOffReducer(base, { type: 'removePayment', index: 0 });
     expect(r.error).toBe('That payment is not in this game');
     expect(r.state).toBe(base);
+  });
+
+  it('removePayment rejects an index that is not a whole number', () => {
+    const withPayment: OneOffGame = {
+      ...base,
+      payments: [{ from_id: 'a', to_id: 'b', amount: 20 }],
+    };
+    for (const index of [0.5, Number.NaN, -1]) {
+      const r = oneOffReducer(withPayment, { type: 'removePayment', index });
+      expect(r.error).toBe('That payment is not in this game');
+      expect(r.state).toBe(withPayment);
+    }
   });
 
   it('setMeta patches label, date, currency and notes', () => {

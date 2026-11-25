@@ -231,6 +231,50 @@ describe('OneOffGameProvider', () => {
     expect(result.current.game).toEqual(u1Game);
   });
 
+  it("never renders one user's game for another, even for a single render", () => {
+    const seen: { userId: string | undefined; gameId: string | null }[] = [];
+    const { result, rerender } = renderHook(
+      () => {
+        const value = useOneOffGame();
+        seen.push({ userId: auth.value.user?.id, gameId: value.game?.started_at ?? null });
+        return value;
+      },
+      { wrapper }
+    );
+    act(() => {
+      result.current.start({ mode: 'live', names: ['Dan', 'Sam'], defaultBuyIn: 50 });
+    });
+    const u1Started = result.current.game!.started_at;
+
+    seen.length = 0;
+    auth.value = { user: { id: 'u2' }, homegame: { currency: 'A$' } };
+    rerender();
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.filter(r => r.userId === 'u2' && r.gameId === u1Started)).toEqual([]);
+  });
+
+  it("a dispatch right after a user switch never writes the old user's game under the new key", () => {
+    const { result, rerender } = mount();
+    act(() => {
+      result.current.start({ mode: 'live', names: ['Dan', 'Sam'], defaultBuyIn: 50 });
+    });
+    const staleDispatch = result.current.dispatch;
+    const [dan] = result.current.game!.players;
+
+    auth.value = { user: { id: 'u2' }, homegame: { currency: 'A$' } };
+    rerender();
+    let fresh: { error: string | null } = { error: null };
+    let stale: { error: string | null } = { error: null };
+    act(() => {
+      fresh = result.current.dispatch({ type: 'addBuyIn', id: dan.id, amount: 10 });
+      stale = staleDispatch({ type: 'addBuyIn', id: dan.id, amount: 10 });
+    });
+    expect(fresh.error).toBe('No game in progress');
+    expect(stale.error).toBe('No game in progress');
+    expect(store.has('oneoff:v1:u2')).toBe(false);
+    expect(JSON.parse(store.get('oneoff:v1:u1')!).players[0].buy_in).toBe(50);
+  });
+
   it('treats a stored game without a players list as no game', () => {
     store.set('oneoff:v1:u1', JSON.stringify({ version: 1, mode: 'live' }));
     const { result } = mount();

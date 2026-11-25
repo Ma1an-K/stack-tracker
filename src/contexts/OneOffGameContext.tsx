@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useRef, useState, ReactNode } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import type { OneOffGame } from '@/lib/oneOff/types';
 import { oneOffReducer, type OneOffAction } from '@/lib/oneOff/reducer';
@@ -13,6 +13,12 @@ export interface StartOneOffInput {
 }
 
 type Result = { error: string | null };
+
+interface Slot {
+  owner: string | undefined;
+  game: OneOffGame | null;
+  storageOk: boolean;
+}
 
 interface OneOffGameContextType {
   game: OneOffGame | null;
@@ -41,33 +47,36 @@ export function OneOffGameProvider({ children }: { children: ReactNode }) {
   const { user, homegame } = useAuthContext();
   const userId = user?.id;
 
-  const [game, setGame] = useState<OneOffGame | null>(() => restore(userId));
-  const [storageOk, setStorageOk] = useState(true);
-  // The latest game, read synchronously so dispatch can return the reducer's error.
-  const gameRef = useRef(game);
-  const loadedFor = useRef(userId);
+  // The game and the user it belongs to live in one slot, and saves always use
+  // the slot's owner, so a game can never be written under another user's key.
+  const [slot, setSlot] = useState<Slot>(() => ({
+    owner: userId,
+    game: restore(userId),
+    storageOk: true,
+  }));
+  let current = slot;
+  if (slot.owner !== userId) {
+    // Reset during render (not in an effect) so the new user never sees, and
+    // nothing can act on, the previous user's game, even for one render.
+    current = { owner: userId, game: restore(userId), storageOk: true };
+    setSlot(current);
+  }
+  const { game, storageOk } = current;
+  // The latest slot, read synchronously so dispatch can return the reducer's error.
+  const slotRef = useRef(current);
+  slotRef.current = current;
 
-  useEffect(() => {
-    if (loadedFor.current === userId) return;
-    loadedFor.current = userId;
-    const restored = restore(userId);
-    gameRef.current = restored;
-    setGame(restored);
-    setStorageOk(true);
-  }, [userId]);
-
-  const commit = useCallback(
-    (next: OneOffGame) => {
-      gameRef.current = next;
-      setGame(next);
-      if (userId) setStorageOk(saveGame(userId, next));
-    },
-    [userId]
-  );
+  const commit = useCallback((next: OneOffGame) => {
+    const { owner } = slotRef.current;
+    const saved = owner ? saveGame(owner, next) : true;
+    const updated: Slot = { owner, game: next, storageOk: saved };
+    slotRef.current = updated;
+    setSlot(updated);
+  }, []);
 
   const dispatch = useCallback(
     (action: OneOffAction): Result => {
-      const current = gameRef.current;
+      const current = slotRef.current.game;
       if (!current) return { error: 'No game in progress' };
       const { state, error } = oneOffReducer(current, action);
       if (error) return { error };
@@ -108,10 +117,12 @@ export function OneOffGameProvider({ children }: { children: ReactNode }) {
   );
 
   const discard = useCallback(() => {
-    gameRef.current = null;
-    setGame(null);
-    if (userId) clearGame(userId);
-  }, [userId]);
+    const { owner, storageOk: ok } = slotRef.current;
+    if (owner) clearGame(owner);
+    const updated: Slot = { owner, game: null, storageOk: ok };
+    slotRef.current = updated;
+    setSlot(updated);
+  }, []);
 
   const players = game?.players ?? [];
   /** Money bought in by everyone, including players who have already left. */
