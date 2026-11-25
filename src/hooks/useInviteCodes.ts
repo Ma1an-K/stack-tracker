@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { InviteCode } from '@/types/database';
 import { toast } from '@/hooks/use-toast';
 import { logError } from '@/lib/errorLog';
+import { inviteExpiresAt } from '@/lib/inviteExpiry';
 
 export function useInviteCodes(homegameId: string | undefined) {
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
@@ -41,9 +42,7 @@ export function useInviteCodes(homegameId: string | undefined) {
       const { data: codeData, error: codeError } = await supabase.rpc('generate_invite_code');
       if (codeError) throw codeError;
 
-      const expiresAt = options?.expiresInDays
-        ? new Date(Date.now() + options.expiresInDays * 24 * 60 * 60 * 1000).toISOString()
-        : null;
+      const expiresAt = inviteExpiresAt(options?.expiresInDays);
 
       // Local session read (no round trip); RLS enforces auth server-side.
       const { data: authData } = await supabase.auth.getSession();
