@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(13);
 
 -- Seed: homegame with owner O, admin A, members M1 and M2.
 insert into auth.users (id, email, raw_user_meta_data) values
@@ -106,6 +106,21 @@ select ok(not has_function_privilege('anon', 'public.has_owner_role(uuid, uuid)'
 select ok(
   (select prosecdef from pg_proc where oid = 'public.has_owner_role(uuid, uuid)'::regprocedure),
   'has_owner_role is SECURITY DEFINER');
+
+-- Only the role column is updatable by clients.
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000001a0","role":"authenticated"}';
+select throws_ok(
+  $$update public.homegame_members set user_id = '00000000-0000-0000-0000-0000000001a3'
+     where homegame_id = '00000000-0000-0000-0000-00000000d001'
+       and user_id = '00000000-0000-0000-0000-0000000001a1'$$,
+  '42501', null, 'owner cannot move a membership to another user');
+select throws_ok(
+  $$update public.homegame_members set homegame_id = '00000000-0000-0000-0000-00000000d001'
+     where homegame_id = '00000000-0000-0000-0000-00000000d001'
+       and user_id = '00000000-0000-0000-0000-0000000001a1'$$,
+  '42501', null, 'owner cannot change a membership homegame');
+reset role;
 
 select * from finish();
 rollback;
