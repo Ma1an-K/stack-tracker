@@ -283,12 +283,23 @@ Deno.serve(async (req) => {
       )
     }
 
-    const { data: subscriptions, error: subError } = await supabaseAdmin
+    const { data: allSubscriptions, error: subError } = await supabaseAdmin
       .from('push_subscriptions')
       .select('*')
       .eq('homegame_id', homegame_id)
 
     if (subError) throw subError
+
+    // Only current members get notified (subscriptions outlive a removed membership).
+    const { data: members, error: membersError } = await supabaseAdmin
+      .from('homegame_members')
+      .select('user_id')
+      .eq('homegame_id', homegame_id)
+
+    if (membersError) throw membersError
+
+    const memberIds = new Set((members ?? []).map((m) => m.user_id))
+    const subscriptions = (allSubscriptions ?? []).filter((sub) => memberIds.has(sub.user_id))
 
     if (!subscriptions || subscriptions.length === 0) {
       return new Response(
