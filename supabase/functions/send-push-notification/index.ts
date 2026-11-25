@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
+import { isAllowedPushEndpoint } from './endpoints.ts'
 
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://cardcrewledger.app'
 
@@ -305,6 +306,10 @@ Deno.serve(async (req) => {
     const staleEndpoints: string[] = []
 
     for (const sub of subscriptions) {
+      if (!isAllowedPushEndpoint(sub.endpoint)) {
+        failed++
+        continue
+      }
       try {
         const res = await sendPush(
           { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
