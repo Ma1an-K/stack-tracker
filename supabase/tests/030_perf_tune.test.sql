@@ -43,7 +43,9 @@ select is(
 -- 3. policy set unchanged: same count, and every pre-migration policy still
 --    exists with the same command, roles and PERMISSIVE flag
 select is(
-  (select count(*) from pg_policies where schemaname = 'public'),
+  -- tables created after that migration are excluded
+  (select count(*) from pg_policies where schemaname = 'public'
+     and tablename not in ('oneoff_games')),
   43::bigint,
   'public schema still has 43 RLS policies');
 

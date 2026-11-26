@@ -262,6 +262,45 @@ export type Database = {
           },
         ]
       }
+      oneoff_games: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          label: string | null
+          notes: string | null
+          payments: Json
+          played_on: string
+          players: Json
+          transfers: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          id?: string
+          label?: string | null
+          notes?: string | null
+          payments?: Json
+          played_on: string
+          players: Json
+          transfers: Json
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          label?: string | null
+          notes?: string | null
+          payments?: Json
+          played_on?: string
+          players?: Json
+          transfers?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_claim_requests: {
         Row: {
           created_at: string
