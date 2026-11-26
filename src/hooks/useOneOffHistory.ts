@@ -45,20 +45,39 @@ export function useOneOffHistory() {
   }, [refetch]);
 
   const get = useCallback(async (id: string): Promise<SavedOneOffGame | null> => {
-    const { data, error } = await supabase
-      .from('oneoff_games')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-    if (error) {
-      console.error('Error fetching one-off game:', error);
+    try {
+      const { data, error } = await supabase
+        .from('oneoff_games')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as unknown as SavedOneOffGame | null;
+    } catch (err) {
+      console.error('Error fetching one-off game:', err);
       return null;
     }
-    return (data ?? null) as unknown as SavedOneOffGame | null;
   }, []);
 
   const save = useCallback(
     async (game: OneOffGame, userId: string): Promise<{ id: string | null; error: string | null }> => {
+      // Mirror the table's CHECK constraints so a bad field gets a specific
+      // message instead of the generic connection error.
+      if (game.players.length < 2 || game.players.length > 50) {
+        return { id: null, error: 'A game needs 2 to 50 players' };
+      }
+      const label = blankToNull(game.label);
+      if (label !== null && label.length > 80) {
+        return { id: null, error: 'Keep the label to 80 characters' };
+      }
+      const notes = blankToNull(game.notes);
+      if (notes !== null && notes.length > 2000) {
+        return { id: null, error: 'Keep notes to 2,000 characters' };
+      }
+      const currency = game.currency.trim();
+      if (currency.length < 1 || currency.length > 8) {
+        return { id: null, error: 'Enter a currency symbol up to 8 characters' };
+      }
       if (game.players.some((p) => p.cash_out === null)) {
         return { id: null, error: 'Cash everyone out first' };
       }
@@ -73,38 +92,44 @@ export function useOneOffHistory() {
         return { id: null, error: "Totals don't balance yet" };
       }
 
-      const { data, error } = await supabase
-        .from('oneoff_games')
-        .insert({
-          played_on: game.played_on,
-          label: blankToNull(game.label),
-          currency: game.currency,
-          notes: blankToNull(game.notes),
-          players: players as unknown as Json,
-          payments: game.payments as unknown as Json,
-          transfers: settlement.transfers as unknown as Json,
-        })
-        .select('id')
-        .single();
-
-      if (error || !data) {
+      let id: string;
+      try {
+        const { data, error } = await supabase
+          .from('oneoff_games')
+          .insert({
+            played_on: game.played_on,
+            label,
+            currency,
+            notes,
+            players: players as unknown as Json,
+            payments: game.payments as unknown as Json,
+            transfers: settlement.transfers as unknown as Json,
+          })
+          .select('id')
+          .single();
+        if (error) throw error;
+        if (!data) throw new Error('no row returned');
+        id = (data as { id: string }).id;
+      } catch (err) {
         // Keep the device copy: the game is not on the server yet.
-        logError({ kind: 'save_failed', action: 'useOneOffHistory.save', error: error ?? 'no row returned' });
+        logError({ kind: 'save_failed', action: 'useOneOffHistory.save', error: err });
         return { id: null, error: SAVE_FAILED };
       }
 
       clearGame(userId);
       void refetch();
-      return { id: (data as { id: string }).id, error: null };
+      return { id, error: null };
     },
     [refetch],
   );
 
   const remove = useCallback(
     async (id: string): Promise<{ error: string | null }> => {
-      const { error } = await supabase.from('oneoff_games').delete().eq('id', id);
-      if (error) {
-        logError({ kind: 'save_failed', action: 'useOneOffHistory.remove', error });
+      try {
+        const { error } = await supabase.from('oneoff_games').delete().eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        logError({ kind: 'save_failed', action: 'useOneOffHistory.remove', error: err });
         return { error: "Couldn't delete. Check your connection and try again." };
       }
       await refetch();

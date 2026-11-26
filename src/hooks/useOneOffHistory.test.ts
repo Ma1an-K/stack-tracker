@@ -59,6 +59,19 @@ async function renderLoaded(rows: unknown[] = []) {
   return hook;
 }
 
+/** Make the next supabase.from(...) request reject instead of resolving. */
+function failNextRequest() {
+  mocks.db.from.mockImplementationOnce(() => {
+    const builder: Record<string, unknown> = {};
+    for (const m of ["select", "eq", "in", "single", "maybeSingle", "order", "update", "insert", "delete"]) {
+      builder[m] = () => builder;
+    }
+    builder.then = (onFulfilled?: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) =>
+      Promise.reject(new TypeError("Failed to fetch")).then(onFulfilled, onRejected);
+    return builder as never;
+  });
+}
+
 const insertRequests = () => mocks.db.find("oneoff_games", (r) => r.calls.some((c) => c[0] === "insert"));
 
 describe("useOneOffHistory", () => {
@@ -184,6 +197,66 @@ describe("useOneOffHistory", () => {
     });
     await expect(removed!).resolves.toEqual({ error: null });
     expect(result.current.games.map((g) => g.id)).toEqual(["g2"]);
+  });
+
+  it("a save that throws keeps the game on the device", async () => {
+    const { result } = await renderLoaded();
+    failNextRequest();
+    let res: { id: string | null; error: string | null } | undefined;
+    await act(async () => {
+      res = await result.current.save(makeGame(), "u1");
+    });
+    expect(res).toEqual({ id: null, error: "Couldn't save. Check your connection and try again." });
+    expect(clearGame).not.toHaveBeenCalled();
+  });
+
+  it("a remove that throws returns an error", async () => {
+    const { result } = await renderLoaded();
+    failNextRequest();
+    let res: { error: string | null } | undefined;
+    await act(async () => {
+      res = await result.current.remove("g1");
+    });
+    expect(res).toEqual({ error: "Couldn't delete. Check your connection and try again." });
+  });
+
+  it("a get that throws returns null", async () => {
+    const { result } = await renderLoaded();
+    failNextRequest();
+    let res: unknown = "unset";
+    await act(async () => {
+      res = await result.current.get("g1");
+    });
+    expect(res).toBeNull();
+  });
+
+  it.each([
+    ["a label over 80 characters", { label: "x".repeat(81) }, "Keep the label to 80 characters"],
+    ["notes over 2,000 characters", { notes: "x".repeat(2001) }, "Keep notes to 2,000 characters"],
+    ["a blank currency", { currency: "  " }, "Enter a currency symbol up to 8 characters"],
+    ["a currency over 8 characters", { currency: "x".repeat(9) }, "Enter a currency symbol up to 8 characters"],
+    [
+      "fewer than 2 players",
+      { players: [{ id: "a", name: "Ana", buy_in: 50, cash_out: 50 }], payments: [] },
+      "A game needs 2 to 50 players",
+    ],
+    [
+      "more than 50 players",
+      {
+        players: Array.from({ length: 51 }, (_, i) => ({ id: `p${i}`, name: `P${i}`, buy_in: 10, cash_out: 10 })),
+        payments: [],
+      },
+      "A game needs 2 to 50 players",
+    ],
+  ] as [string, Partial<OneOffGame>, string][])("save refuses %s", async (_name, overrides, message) => {
+    const { result } = await renderLoaded();
+    let res: { id: string | null; error: string | null } | undefined;
+    await act(async () => {
+      res = await result.current.save(makeGame(overrides), "u1");
+    });
+    expect(res).toEqual({ id: null, error: message });
+    expect(insertRequests()).toHaveLength(0);
+    expect(clearGame).not.toHaveBeenCalled();
   });
 
   it("get fetches one game by id", async () => {
