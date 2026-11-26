@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(16);
+select plan(21);
 
 select has_table('public', 'oneoff_games', 'oneoff_games table exists');
 
@@ -22,7 +22,8 @@ select lives_ok(
   'A can save a one-off game');
 select throws_ok(
   $$insert into public.oneoff_games (user_id, played_on, currency, players, transfers)
-    values ('00000000-0000-0000-0000-0000000012b1', '2026-11-26', 'AUD', '[]', '[]')$$,
+    values ('00000000-0000-0000-0000-0000000012b1', '2026-11-26', 'AUD',
+            '[{"id":"p1","name":"Dan","buy_in":50,"cash_out":80},{"id":"p2","name":"Sam","buy_in":50,"cash_out":20}]', '[]')$$,
   '42501', null, 'A cannot save a game as B');
 select throws_ok(
   $$insert into public.oneoff_games (played_on, currency, players, transfers)
@@ -30,12 +31,30 @@ select throws_ok(
   '23502', null, 'players is not null');
 select throws_ok(
   $$insert into public.oneoff_games (played_on, currency, players, payments, transfers)
-    values ('2026-11-26', 'AUD', '[]', null, '[]')$$,
+    values ('2026-11-26', 'AUD', '[{"id":"p1","name":"Dan","buy_in":50,"cash_out":80},{"id":"p2","name":"Sam","buy_in":50,"cash_out":20}]', null, '[]')$$,
   '23502', null, 'payments is not null');
 select throws_ok(
   $$insert into public.oneoff_games (played_on, currency, players)
-    values ('2026-11-26', 'AUD', '[]')$$,
+    values ('2026-11-26', 'AUD', '[{"id":"p1","name":"Dan","buy_in":50,"cash_out":80},{"id":"p2","name":"Sam","buy_in":50,"cash_out":20}]')$$,
   '23502', null, 'transfers is not null');
+
+-- CHECK constraints
+select throws_ok(
+  $$insert into public.oneoff_games (played_on, label, currency, players, transfers)
+    values ('2026-11-26', repeat('x', 81), 'AUD', '[{"id":"p1","name":"Dan","buy_in":50,"cash_out":80},{"id":"p2","name":"Sam","buy_in":50,"cash_out":20}]', '[]')$$,
+  '23514', null, 'label over 80 chars is rejected');
+select throws_ok(
+  $$insert into public.oneoff_games (played_on, currency, players, transfers)
+    values ('2026-11-26', repeat('x', 9), '[{"id":"p1","name":"Dan","buy_in":50,"cash_out":80},{"id":"p2","name":"Sam","buy_in":50,"cash_out":20}]', '[]')$$,
+  '23514', null, 'currency over 8 chars is rejected');
+select throws_ok(
+  $$insert into public.oneoff_games (played_on, currency, players, transfers)
+    values ('2026-11-26', 'AUD', '{"id":"p1","name":"Dan","buy_in":50,"cash_out":80}', '[]')$$,
+  '23514', null, 'players must be an array');
+select throws_ok(
+  $$insert into public.oneoff_games (played_on, currency, players, transfers)
+    values ('2026-11-26', 'AUD', '[{"id":"p1","name":"Dan","buy_in":50,"cash_out":80}]', '[]')$$,
+  '23514', null, 'players needs at least 2 entries');
 
 select is((select count(*)::int from public.oneoff_games), 1, 'A sees own game');
 select is((select payments from public.oneoff_games), '[]'::jsonb, 'payments defaults to []');
@@ -55,8 +74,11 @@ select lives_ok(
 -- Superuser: A's row survived B's delete, and A's update changed nothing.
 reset role;
 select is(
+  (select count(*)::int from public.oneoff_games where id = '00000000-0000-0000-0000-00000000f001'),
+  1, 'B''s delete affected 0 rows');
+select is(
   (select label from public.oneoff_games where id = '00000000-0000-0000-0000-00000000f001'),
-  'Dan''s place', 'A''s update changed nothing and B''s delete affected 0 rows');
+  'Dan''s place', 'A''s update changed nothing');
 select is(
   (select user_id from public.oneoff_games where id = '00000000-0000-0000-0000-00000000f001'),
   '00000000-0000-0000-0000-0000000012a1'::uuid, 'user_id defaulted to the caller');

@@ -16,7 +16,18 @@ CREATE TABLE public.oneoff_games (
   -- [{ from_id, to_id, amount }]: who pays whom, stored at save time so a later
   -- change to the settlement math never rewrites an old game
   transfers jsonb NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  -- Client-written table: bound every field (error_log precedent).
+  CONSTRAINT oneoff_games_label_length CHECK (label IS NULL OR length(label) <= 80),
+  CONSTRAINT oneoff_games_notes_length CHECK (notes IS NULL OR length(notes) <= 2000),
+  -- a display symbol such as '$' or 'A$', not an ISO code
+  CONSTRAINT oneoff_games_currency_length CHECK (length(currency) BETWEEN 1 AND 8),
+  CONSTRAINT oneoff_games_players_shape CHECK (
+    jsonb_typeof(players) = 'array' AND jsonb_array_length(players) BETWEEN 2 AND 50),
+  CONSTRAINT oneoff_games_payments_shape CHECK (
+    jsonb_typeof(payments) = 'array' AND jsonb_array_length(payments) <= 200),
+  CONSTRAINT oneoff_games_transfers_shape CHECK (
+    jsonb_typeof(transfers) = 'array' AND jsonb_array_length(transfers) <= 100)
 );
 
 CREATE INDEX oneoff_games_user_played_idx ON public.oneoff_games (user_id, played_on DESC);
