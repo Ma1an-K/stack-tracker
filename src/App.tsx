@@ -38,6 +38,10 @@ const loaders = {
   calculator: () => import("@/pages/CalculatorPage"),
   badgePreview: () => import("@/pages/BadgePreviewPage"),
   live: () => import("@/pages/LiveSessionPage"),
+  oneOffHub: () => import("@/pages/oneoff/OneOffHubPage"),
+  oneOffLive: () => import("@/pages/oneoff/OneOffLivePage"),
+  oneOffSettle: () => import("@/pages/oneoff/OneOffSettlePage"),
+  oneOffSaved: () => import("@/pages/oneoff/SavedOneOffPage"),
 };
 
 const DashboardPage = lazy(() => loaders.dashboard().then((m) => ({ default: m.DashboardPage })));
@@ -51,6 +55,10 @@ const MembersPage = lazy(() => loaders.members().then((m) => ({ default: m.Membe
 const CalculatorPage = lazy(() => loaders.calculator().then((m) => ({ default: m.CalculatorPage })));
 const BadgePreviewPage = lazy(() => loaders.badgePreview().then((m) => ({ default: m.BadgePreviewPage })));
 const LiveSessionPage = lazy(() => loaders.live().then((m) => ({ default: m.LiveSessionPage })));
+const OneOffHubPage = lazy(() => loaders.oneOffHub().then((m) => ({ default: m.OneOffHubPage })));
+const OneOffLivePage = lazy(() => loaders.oneOffLive().then((m) => ({ default: m.OneOffLivePage })));
+const OneOffSettlePage = lazy(() => loaders.oneOffSettle().then((m) => ({ default: m.OneOffSettlePage })));
+const SavedOneOffPage = lazy(() => loaders.oneOffSaved().then((m) => ({ default: m.SavedOneOffPage })));
 
 /** Warm every signed-in screen's chunk once the shell is idle, so tab switches never wait on the network. */
 function usePrefetchRoutes(enabled: boolean) {
@@ -127,6 +135,10 @@ function AppRoutes() {
         <Route path="/calculator" element={<CalculatorPage />} />
         <Route path="/badge-preview" element={<BadgePreviewPage />} />
         <Route path="/live-session" element={<LiveSessionPage />} />
+        <Route path="/one-off" element={<OneOffHubPage />} />
+        <Route path="/one-off/live" element={<OneOffLivePage />} />
+        <Route path="/one-off/settle" element={<OneOffSettlePage />} />
+        <Route path="/one-off/saved/:id" element={<SavedOneOffPage />} />
       </Route>
       {__ADMIN_ENABLED__ && AdminPage && (
         <Route path="/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
