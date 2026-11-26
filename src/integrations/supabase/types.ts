@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.1"
   }
   graphql_public: {
     Tables: {
@@ -428,6 +428,29 @@ export type Database = {
         }
         Relationships: []
       }
+      push_send_log: {
+        Row: {
+          homegame_id: string
+          last_sent_at: string
+        }
+        Insert: {
+          homegame_id: string
+          last_sent_at?: string
+        }
+        Update: {
+          homegame_id?: string
+          last_sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_send_log_homegame_id_fkey"
+            columns: ["homegame_id"]
+            isOneToOne: true
+            referencedRelation: "homegames"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth: string
@@ -595,6 +618,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_errors: {
+        Args: { p_status?: string }
+        Returns: {
+          action: string
+          app_version: string
+          created_at: string
+          fixed_at: string
+          homegame_name: string
+          id: string
+          kind: string
+          message: string
+          page: string
+          stack: string
+          user_agent: string
+          user_label: string
+        }[]
+      }
+      admin_homegames: {
+        Args: never
+        Returns: {
+          id: string
+          last_activity: string
+          last_session: string
+          live_now: boolean
+          members: number
+          name: string
+          owner: string
+          players: number
+          sessions_30d: number
+        }[]
+      }
+      admin_overview: { Args: never; Returns: Json }
+      admin_recent_activity: { Args: { p_days?: number }; Returns: Json }
       approve_claim: {
         Args: {
           p_player_id: string
@@ -603,9 +659,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      claim_push_slot: {
+        Args: { p_homegame_id: string; p_min_interval_seconds: number }
+        Returns: boolean
+      }
       generate_invite_code: { Args: never; Returns: string }
       get_user_homegame_id: { Args: never; Returns: string }
       get_user_homegame_ids: { Args: never; Returns: string[] }
+      has_owner_role: {
+        Args: { _homegame_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_homegame_member: {
         Args: { _homegame_id: string; _user_id: string }
         Returns: boolean
