@@ -9,13 +9,13 @@ import type { Player } from '@/types/database';
 interface AddPlayerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bench: Player[];
+  bench: Pick<Player, 'id' | 'name'>[];
   canCreate: boolean;
   ownerName: string | null;
   baseBuyIn: number;
   currency?: string;
   onSeat: (playerId: string) => Promise<unknown>;
-  onCreate: (name: string) => Promise<{ error: unknown | null; player: Player | null }>;
+  onCreate: (name: string) => Promise<{ error: unknown | null; player: Pick<Player, 'id' | 'name'> | null }>;
 }
 
 export function AddPlayerDialog({
