@@ -273,4 +273,35 @@ describe("useOneOffHistory", () => {
     });
     await expect(got!).resolves.toEqual({ id: "g9" });
   });
+
+  it("fetchOne tells a missing game apart from a failed load", async () => {
+    const { result } = await renderLoaded();
+    failNextRequest();
+    let failed: unknown;
+    await act(async () => {
+      failed = await result.current.fetchOne("g1");
+    });
+    expect(failed).toEqual({
+      game: null,
+      error: "Couldn't load this game. Check your connection and try again.",
+    });
+
+    let missing: Promise<unknown>;
+    act(() => {
+      missing = result.current.fetchOne("g2");
+    });
+    const gets = () => mocks.db.find("oneoff_games", (r) => mocks.db.hasCall(r, "eq", "id", "g2"));
+    await waitFor(() => expect(gets()).toHaveLength(1));
+    await act(async () => {
+      gets()[0].resolve({ data: null, error: null });
+    });
+    await expect(missing!).resolves.toEqual({ game: null, error: null });
+  });
+
+  it("skips the list load when loadList is false", async () => {
+    const { result } = renderHook(() => useOneOffHistory({ loadList: false }));
+    expect(result.current.loading).toBe(false);
+    await act(async () => {});
+    expect(mocks.db.find("oneoff_games")).toHaveLength(0);
+  });
 });

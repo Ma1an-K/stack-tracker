@@ -8,6 +8,12 @@ import type { OneOffGame, SavedOneOffGame } from '@/lib/oneOff/types';
 import type { Json } from '@/integrations/supabase/types';
 
 const SAVE_FAILED = "Couldn't save. Check your connection and try again.";
+const LOAD_FAILED = "Couldn't load this game. Check your connection and try again.";
+
+export interface UseOneOffHistoryOptions {
+  /** Load the saved-games list on mount (default true). The detail page turns this off. */
+  loadList?: boolean;
+}
 
 const blankToNull = (value: string): string | null => {
   const trimmed = value.trim();
@@ -19,9 +25,9 @@ const blankToNull = (value: string): string | null => {
  * `user_id` defaults to auth.uid() on the server, so it is never sent from
  * here. One-offs have no homegame and send no push notifications.
  */
-export function useOneOffHistory() {
+export function useOneOffHistory({ loadList = true }: UseOneOffHistoryOptions = {}) {
   const [games, setGames] = useState<SavedOneOffGame[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(loadList);
 
   const refetch = useCallback(async () => {
     try {
@@ -41,23 +47,30 @@ export function useOneOffHistory() {
   }, []);
 
   useEffect(() => {
-    void refetch();
-  }, [refetch]);
+    if (loadList) void refetch();
+  }, [refetch, loadList]);
 
-  const get = useCallback(async (id: string): Promise<SavedOneOffGame | null> => {
-    try {
-      const { data, error } = await supabase
-        .from('oneoff_games')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-      if (error) throw error;
-      return (data ?? null) as unknown as SavedOneOffGame | null;
-    } catch (err) {
-      console.error('Error fetching one-off game:', err);
-      return null;
-    }
-  }, []);
+  /** One game by id. `game: null, error: null` means it doesn't exist (or isn't yours). */
+  const fetchOne = useCallback(
+    async (id: string): Promise<{ game: SavedOneOffGame | null; error: string | null }> => {
+      try {
+        const { data, error } = await supabase
+          .from('oneoff_games')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (error) throw error;
+        return { game: (data ?? null) as unknown as SavedOneOffGame | null, error: null };
+      } catch (err) {
+        console.error('Error fetching one-off game:', err);
+        return { game: null, error: LOAD_FAILED };
+      }
+    },
+    []
+  );
+
+  /** One game by id, or null when it is missing or couldn't be loaded. */
+  const get = useCallback(async (id: string) => (await fetchOne(id)).game, [fetchOne]);
 
   const save = useCallback(
     async (game: OneOffGame, userId: string): Promise<{ id: string | null; error: string | null }> => {
@@ -138,5 +151,5 @@ export function useOneOffHistory() {
     [refetch],
   );
 
-  return { games, loading, refetch, get, save, remove };
+  return { games, loading, refetch, get, fetchOne, save, remove };
 }

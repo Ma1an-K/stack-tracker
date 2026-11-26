@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
-import { ArrowLeft, ArrowRight, SearchX, Share2, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, SearchX, Share2, Trash2, WifiOff } from 'lucide-react';
 import { useOneOffHistory } from '@/hooks/useOneOffHistory';
 import { toast } from '@/hooks/use-toast';
 import { formatCurrency, formatProfit } from '@/lib/settlement';
@@ -26,27 +26,32 @@ import { buildOneOffShareText, shareText } from '@/components/oneoff/share';
 export function SavedOneOffPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { get, remove } = useOneOffHistory();
+  // The detail page never needs the list, so it doesn't fetch it.
+  const { fetchOne, remove } = useOneOffHistory({ loadList: false });
   const [saved, setSaved] = useState<SavedOneOffGame | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     if (!id) {
       setSaved(null);
+      setLoadError(null);
       setLoading(false);
       return;
     }
-    void get(id).then(row => {
+    void fetchOne(id).then(({ game, error }) => {
       if (cancelled) return;
-      setSaved(row);
+      setSaved(game);
+      setLoadError(error);
       setLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [id, get]);
+  }, [id, fetchOne, attempt]);
 
   // Back must never leave the app on a deep link or cold PWA start.
   const goBack = () => {
@@ -69,6 +74,20 @@ export function SavedOneOffPage() {
       </div>
     </header>
   );
+
+  if (!saved && loadError) {
+    return (
+      <div className="space-y-6">
+        {header}
+        <EmptyState
+          icon={WifiOff}
+          title="Couldn't load this game"
+          description={loadError}
+          action={<Button onClick={() => setAttempt(a => a + 1)}>Try again</Button>}
+        />
+      </div>
+    );
+  }
 
   if (!saved) {
     return (

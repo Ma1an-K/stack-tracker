@@ -125,4 +125,34 @@ describe('OneOffSettlePage', () => {
     expect(discard).toHaveBeenCalled();
     await waitFor(() => expect(screen.getByText('Hub page')).toBeInTheDocument());
   });
+
+  it('while a cash-out is missing shows only the to-enter line, not "Nobody owes anything."', () => {
+    // Ann not entered (counts as 0), Ben took everything: balanced at 100, but incomplete.
+    game = makeGame(null);
+    game.players[1].cash_out = 100;
+    game.players[0].buy_in = 0;
+    game.players[1].buy_in = 100;
+    renderPage();
+    expect(screen.getByText('Still to enter a cash-out: Ann')).toBeInTheDocument();
+    expect(screen.queryByText('Nobody owes anything.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/\w+ pays \w+ A\$/)).not.toBeInTheDocument();
+  });
+
+  it('while a cash-out is missing does not show a short/over gap either', () => {
+    game = makeGame(null);
+    renderPage();
+    expect(screen.getByText('Still to enter a cash-out: Ann')).toBeInTheDocument();
+    expect(screen.queryByText(/Cash-outs are/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the previous currency when the field is cleared', () => {
+    game = makeGame(10);
+    renderPage();
+    fireEvent.change(screen.getByLabelText('Currency'), { target: { value: '' } });
+    expect(dispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'setMeta', patch: { currency: '' } })
+    );
+    fireEvent.change(screen.getByLabelText('Currency'), { target: { value: '€' } });
+    expect(dispatch).toHaveBeenCalledWith({ type: 'setMeta', patch: { currency: '€' } });
+  });
 });

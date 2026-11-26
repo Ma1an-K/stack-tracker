@@ -146,7 +146,8 @@ export function OneOffSettlePage() {
             id="oneoff-currency"
             maxLength={8}
             value={currency}
-            onChange={e => run({ type: 'setMeta', patch: { currency: e.target.value } })}
+            // Like the date: a blank keeps the previous symbol, so amounts always show one.
+            onChange={e => { if (e.target.value.trim()) run({ type: 'setMeta', patch: { currency: e.target.value } }); }}
           />
         </div>
       </section>
@@ -156,7 +157,8 @@ export function OneOffSettlePage() {
 
       <section className="surface space-y-2 p-3 sm:p-4" aria-live="polite">
         <h2 className="section-header px-1 pb-1">Who pays whom</h2>
-        {!settlement.balanced ? (
+        {/* Until every cash-out is in, the gap and the transfers would treat the gaps as 0: say what is missing instead. */}
+        {missing.length > 0 ? null : !settlement.balanced ? (
           <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm font-medium text-destructive">
             {`Cash-outs are ${formatCurrency(settlement.difference, currency)} ${settlement.difference < 0 ? 'short' : 'over'}`}
           </p>
