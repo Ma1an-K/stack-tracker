@@ -8,10 +8,10 @@ export function storageKey(userId: string): string {
   return `oneoff:v1:${userId}`;
 }
 
-export function loadGame(userId: string): OneOffGame | null {
+/** A stored v1 payload, or null for a missing, unparseable or other-version value. */
+export function parseGame(raw: string | null): OneOffGame | null {
+  if (raw === null) return null;
   try {
-    const raw = localStorage.getItem(storageKey(userId));
-    if (raw === null) return null;
     const parsed: unknown = JSON.parse(raw);
     if (
       typeof parsed !== 'object' ||
@@ -21,6 +21,14 @@ export function loadGame(userId: string): OneOffGame | null {
       return null;
     }
     return parsed as OneOffGame;
+  } catch {
+    return null;
+  }
+}
+
+export function loadGame(userId: string): OneOffGame | null {
+  try {
+    return parseGame(localStorage.getItem(storageKey(userId)));
   } catch {
     return null;
   }

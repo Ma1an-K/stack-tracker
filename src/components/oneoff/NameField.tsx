@@ -7,11 +7,13 @@ export function NameField({
   value,
   label,
   onCommit,
+  disabled = false,
   className,
 }: {
   value: string;
   label: string;
   onCommit: (name: string) => void;
+  disabled?: boolean;
   className?: string;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
@@ -28,6 +30,7 @@ export function NameField({
   return (
     <Input
       aria-label={label}
+      disabled={disabled}
       value={draft ?? value}
       maxLength={60}
       onFocus={() => {

@@ -12,10 +12,12 @@ import { NameField } from './NameField';
 interface SettlePlayersProps {
   game: OneOffGame;
   run: (action: OneOffAction) => { error: string | null };
+  /** Locks every control, e.g. while the game is being saved. */
+  disabled?: boolean;
 }
 
 /** Every player's buy-in and cash-out on the settle screen, with add, rename and remove. */
-export function SettlePlayers({ game, run }: SettlePlayersProps) {
+export function SettlePlayers({ game, run, disabled = false }: SettlePlayersProps) {
   const [newName, setNewName] = useState('');
   const { currency } = game;
   const totalBuyIn = game.players.reduce((s, p) => s + p.buy_in, 0);
@@ -23,7 +25,7 @@ export function SettlePlayers({ game, run }: SettlePlayersProps) {
 
   const addPlayer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) return;
+    if (disabled || !newName.trim()) return;
     const { error } = run({ type: 'addPlayer', id: crypto.randomUUID(), name: newName, buyIn: 0 });
     if (!error) setNewName('');
   };
@@ -47,18 +49,21 @@ export function SettlePlayers({ game, run }: SettlePlayersProps) {
                 className="col-span-3 sm:col-span-1"
                 value={p.name}
                 label={`Name for ${p.name}`}
+                disabled={disabled}
                 onCommit={name => run({ type: 'renamePlayer', id: p.id, name })}
               />
               <MoneyField
                 value={p.buy_in}
                 currency={currency}
                 label={`Buy-in for ${p.name}`}
+                disabled={disabled}
                 onCommit={v => run({ type: 'setBuyIn', id: p.id, total: v ?? 0 })}
               />
               <MoneyField
                 value={p.cash_out}
                 currency={currency}
                 label={`Cash-out for ${p.name}`}
+                disabled={disabled}
                 allowEmpty
                 onCommit={v =>
                   run(v === null ? { type: 'rejoin', id: p.id } : { type: 'setCashOut', id: p.id, amount: v })
@@ -68,6 +73,7 @@ export function SettlePlayers({ game, run }: SettlePlayersProps) {
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:text-destructive"
+                disabled={disabled}
                 onClick={() => run({ type: 'removePlayer', id: p.id })}
                 aria-label={`Remove ${p.name}`}
               >
@@ -89,10 +95,11 @@ export function SettlePlayers({ game, run }: SettlePlayersProps) {
           placeholder="New player"
           value={newName}
           maxLength={60}
+          disabled={disabled}
           onChange={e => setNewName(e.target.value)}
           className="h-11"
         />
-        <Button type="submit" variant="outline" className="h-11 shrink-0 border-dashed" disabled={!newName.trim()}>
+        <Button type="submit" variant="outline" className="h-11 shrink-0 border-dashed" disabled={disabled || !newName.trim()}>
           <UserPlus />
           Add player
         </Button>

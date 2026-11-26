@@ -12,10 +12,12 @@ import type { OneOffAction } from '@/lib/oneOff/reducer';
 interface SettlePaymentsProps {
   game: OneOffGame;
   run: (action: OneOffAction) => { error: string | null };
+  /** Locks every control, e.g. while the game is being saved. */
+  disabled?: boolean;
 }
 
 /** Payments already made between players, with add (same picker as the live tracker) and remove. */
-export function SettlePayments({ game, run }: SettlePaymentsProps) {
+export function SettlePayments({ game, run, disabled = false }: SettlePaymentsProps) {
   const [open, setOpen] = useState(false);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -31,7 +33,7 @@ export function SettlePayments({ game, run }: SettlePaymentsProps) {
   };
 
   const submit = () => {
-    if (!from || !to || from === to || !(parsed > 0)) return;
+    if (disabled || !from || !to || from === to || !(parsed > 0)) return;
     const { error } = run({ type: 'addPayment', payment: { from_id: from, to_id: to, amount: parsed } });
     if (!error) setOpen(false);
   };
@@ -40,7 +42,7 @@ export function SettlePayments({ game, run }: SettlePaymentsProps) {
     <section className="surface space-y-2 p-3 sm:p-4">
       <div className="flex items-center justify-between gap-2 px-1 pb-1">
         <h2 className="section-header">Payments</h2>
-        <Button variant="outline" size="sm" className="border-dashed" onClick={openDialog}>
+        <Button variant="outline" size="sm" className="border-dashed" disabled={disabled} onClick={openDialog}>
           <Plus />
           Record payment
         </Button>
@@ -60,6 +62,7 @@ export function SettlePayments({ game, run }: SettlePaymentsProps) {
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:text-destructive"
+              disabled={disabled}
               onClick={() => run({ type: 'removePayment', index: i })}
               aria-label="Remove payment"
             >
@@ -69,7 +72,7 @@ export function SettlePayments({ game, run }: SettlePaymentsProps) {
         ))
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open && !disabled} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Record payment</DialogTitle>

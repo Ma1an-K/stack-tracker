@@ -1,8 +1,16 @@
-import { createContext, useCallback, useContext, useRef, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import type { OneOffGame } from '@/lib/oneOff/types';
 import { oneOffReducer, type OneOffAction } from '@/lib/oneOff/reducer';
-import { clearGame, loadGame, localDate, saveGame, validateNames } from '@/lib/oneOff/localStore';
+import {
+  clearGame,
+  loadGame,
+  localDate,
+  parseGame,
+  saveGame,
+  storageKey,
+  validateNames,
+} from '@/lib/oneOff/localStore';
 
 export interface StartOneOffInput {
   mode: 'live' | 'totals';
@@ -36,11 +44,14 @@ const OneOffGameContext = createContext<OneOffGameContextType | undefined>(undef
 
 // A stored v1 payload is only trusted as a game if it has its lists; anything
 // else (a hand-edited or half-written entry) is treated as no game.
-function restore(userId: string | undefined): OneOffGame | null {
-  if (!userId) return null;
-  const game = loadGame(userId);
+function trusted(game: OneOffGame | null): OneOffGame | null {
   if (!game || !Array.isArray(game.players) || !Array.isArray(game.payments)) return null;
   return game;
+}
+
+function restore(userId: string | undefined): OneOffGame | null {
+  if (!userId) return null;
+  return trusted(loadGame(userId));
 }
 
 export function OneOffGameProvider({ children }: { children: ReactNode }) {
@@ -65,6 +76,25 @@ export function OneOffGameProvider({ children }: { children: ReactNode }) {
   // The latest slot, read synchronously so dispatch can return the reducer's error.
   const slotRef = useRef(current);
   slotRef.current = current;
+
+  // Another tab wrote or removed this user's game: take its copy, so this tab
+  // never overwrites newer buy-ins or re-creates a game that was saved or discarded.
+  const owner = current.owner;
+  useEffect(() => {
+    if (!owner) return;
+    const key = storageKey(owner);
+    const onStorage = (e: StorageEvent) => {
+      // A null key means the other tab cleared all storage, so this game went too.
+      if (e.key !== null && e.key !== key) return;
+      const next = e.key === null ? null : trusted(parseGame(e.newValue));
+      const { storageOk: ok } = slotRef.current;
+      const updated: Slot = { owner, game: next, storageOk: ok };
+      slotRef.current = updated;
+      setSlot(updated);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [owner]);
 
   const commit = useCallback((next: OneOffGame) => {
     const { owner } = slotRef.current;

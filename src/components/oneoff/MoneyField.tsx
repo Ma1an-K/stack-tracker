@@ -10,13 +10,14 @@ interface MoneyFieldProps {
   /** Called with the new amount, or null when the field is cleared. */
   onCommit: (value: number | null) => void;
   allowEmpty?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
 const toCents = (n: number) => Math.round(n * 100) / 100;
 
 /** An amount typed freely and committed on Enter or blur; Escape or bad input reverts. */
-export function MoneyField({ value, currency, label, onCommit, allowEmpty = false, className }: MoneyFieldProps) {
+export function MoneyField({ value, currency, label, onCommit, allowEmpty = false, disabled = false, className }: MoneyFieldProps) {
   const [draft, setDraft] = useState<string | null>(null);
   const activeRef = useRef(false);
   const shown = value === null ? '' : value.toFixed(2);
@@ -47,6 +48,7 @@ export function MoneyField({ value, currency, label, onCommit, allowEmpty = fals
         min="0"
         placeholder="0.00"
         aria-label={label}
+        disabled={disabled}
         value={draft ?? shown}
         onFocus={e => {
           activeRef.current = true;

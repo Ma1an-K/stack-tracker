@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Loader2, Save, Share2, Spade } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Save, Share2, Spade, TriangleAlert } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useOneOffGame } from '@/contexts/OneOffGameContext';
 import { useOneOffHistory } from '@/hooks/useOneOffHistory';
@@ -31,10 +31,12 @@ import { buildOneOffShareText, shareText } from '@/components/oneoff/share';
 export function OneOffSettlePage() {
   const navigate = useNavigate();
   const { user } = useAuthContext();
-  const { game, dispatch, discard } = useOneOffGame();
+  const { game, storageOk, dispatch, discard } = useOneOffGame();
   const { save } = useOneOffHistory();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // The currency typed so far; committed on blur so a one-character symbol can be replaced.
+  const [currencyDraft, setCurrencyDraft] = useState<string | null>(null);
 
   // Back must never leave the app on a deep link or cold PWA start.
   const goBack = () => {
@@ -106,6 +108,7 @@ export function OneOffSettlePage() {
     if (!user || saving) return;
     setSaving(true);
     setSaveError(null);
+    // Every control is locked while saving, so nothing typed now is lost by the discard below.
     const { id, error } = await save(game, user.id);
     setSaving(false);
     if (error || !id) {
@@ -120,6 +123,13 @@ export function OneOffSettlePage() {
     <div className="space-y-4">
       {header}
 
+      {!storageOk && (
+        <p className="flex items-start gap-1.5 px-1 text-xs text-warning">
+          <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          This game is only kept until you close or refresh this page.
+        </p>
+      )}
+
       <section className="surface grid grid-cols-2 gap-3 p-3 sm:p-4">
         <div className="col-span-2 space-y-1.5">
           <Label htmlFor="oneoff-label">Label</Label>
@@ -127,6 +137,7 @@ export function OneOffSettlePage() {
             id="oneoff-label"
             placeholder="Dan's place"
             maxLength={80}
+            disabled={saving}
             value={game.label}
             onChange={e => run({ type: 'setMeta', patch: { label: e.target.value } })}
           />
@@ -136,6 +147,7 @@ export function OneOffSettlePage() {
           <Input
             id="oneoff-date"
             type="date"
+            disabled={saving}
             value={game.played_on}
             onChange={e => { if (e.target.value) run({ type: 'setMeta', patch: { played_on: e.target.value } }); }}
           />
@@ -145,15 +157,24 @@ export function OneOffSettlePage() {
           <Input
             id="oneoff-currency"
             maxLength={8}
-            value={currency}
-            // Like the date: a blank keeps the previous symbol, so amounts always show one.
-            onChange={e => { if (e.target.value.trim()) run({ type: 'setMeta', patch: { currency: e.target.value } }); }}
+            disabled={saving}
+            value={currencyDraft ?? currency}
+            onFocus={() => setCurrencyDraft(currency)}
+            onChange={e => setCurrencyDraft(e.target.value)}
+            // A blank reverts to the previous symbol, so amounts always show one.
+            onBlur={() => {
+              const next = currencyDraft;
+              setCurrencyDraft(null);
+              if (next !== null && next.trim() && next !== currency) {
+                run({ type: 'setMeta', patch: { currency: next } });
+              }
+            }}
           />
         </div>
       </section>
 
-      <SettlePlayers game={game} run={run} />
-      <SettlePayments game={game} run={run} />
+      <SettlePlayers game={game} run={run} disabled={saving} />
+      <SettlePayments game={game} run={run} disabled={saving} />
 
       <section className="surface space-y-2 p-3 sm:p-4" aria-live="polite">
         <h2 className="section-header px-1 pb-1">Who pays whom</h2>
@@ -184,6 +205,7 @@ export function OneOffSettlePage() {
         <Textarea
           id="oneoff-notes"
           maxLength={2000}
+          disabled={saving}
           value={game.notes}
           onChange={e => run({ type: 'setMeta', patch: { notes: e.target.value } })}
         />
@@ -206,7 +228,7 @@ export function OneOffSettlePage() {
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" className="w-full text-muted-foreground">Done</Button>
+            <Button variant="ghost" className="w-full text-muted-foreground" disabled={saving}>Done</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>

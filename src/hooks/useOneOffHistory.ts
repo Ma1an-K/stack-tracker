@@ -91,6 +91,9 @@ export function useOneOffHistory({ loadList = true }: UseOneOffHistoryOptions = 
       if (currency.length < 1 || currency.length > 8) {
         return { id: null, error: 'Enter a currency symbol up to 8 characters' };
       }
+      if (game.payments.length > 200) {
+        return { id: null, error: 'Too many payments to save (200 max)' };
+      }
       if (game.players.some((p) => p.cash_out === null)) {
         return { id: null, error: 'Cash everyone out first' };
       }
@@ -142,6 +145,8 @@ export function useOneOffHistory({ loadList = true }: UseOneOffHistoryOptions = 
         const { error } = await supabase.from('oneoff_games').delete().eq('id', id);
         if (error) throw error;
       } catch (err) {
+        // error_log only allows 'crash' and 'save_failed'; a failed delete is a failed
+        // write, and `action` says which one.
         logError({ kind: 'save_failed', action: 'useOneOffHistory.remove', error: err });
         return { error: "Couldn't delete. Check your connection and try again." };
       }

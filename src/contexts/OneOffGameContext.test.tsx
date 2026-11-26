@@ -282,6 +282,87 @@ describe('OneOffGameProvider', () => {
     expect(result.current.seatedCount).toBe(0);
   });
 
+  describe('another tab', () => {
+    const otherGame = (buyIn: number) => ({
+      version: 1,
+      mode: 'live',
+      label: 'Other tab',
+      played_on: '2026-11-26',
+      currency: 'A$',
+      notes: '',
+      default_buy_in: 50,
+      started_at: '2026-11-26T08:00:00.000Z',
+      players: [
+        { id: 'p1', name: 'Dan', buy_in: buyIn, cash_out: null },
+        { id: 'p2', name: 'Sam', buy_in: 50, cash_out: null },
+      ],
+      payments: [],
+    });
+    const fire = (key: string, newValue: string | null) =>
+      act(() => {
+        window.dispatchEvent(new StorageEvent('storage', { key, newValue }));
+      });
+
+    it("picks up a game another tab wrote under this user's key", () => {
+      const { result } = mount();
+      act(() => {
+        result.current.start({ mode: 'live', names: ['Dan', 'Sam'], defaultBuyIn: 50 });
+      });
+      const newer = otherGame(150);
+      fire('oneoff:v1:u1', JSON.stringify(newer));
+      expect(result.current.game).toEqual(newer);
+      expect(result.current.totalBuyIn).toBe(200);
+    });
+
+    it('clears the game when another tab removes it', () => {
+      const { result } = mount();
+      act(() => {
+        result.current.start({ mode: 'live', names: ['Dan', 'Sam'], defaultBuyIn: 50 });
+      });
+      fire('oneoff:v1:u1', null);
+      expect(result.current.game).toBeNull();
+    });
+
+    it('treats an invalid value from another tab as no game', () => {
+      const { result } = mount();
+      act(() => {
+        result.current.start({ mode: 'live', names: ['Dan', 'Sam'], defaultBuyIn: 50 });
+      });
+      fire('oneoff:v1:u1', JSON.stringify({ version: 1, mode: 'live' }));
+      expect(result.current.game).toBeNull();
+    });
+
+    it('clears the game when another tab clears all storage', () => {
+      const { result } = mount();
+      act(() => {
+        result.current.start({ mode: 'live', names: ['Dan', 'Sam'], defaultBuyIn: 50 });
+      });
+      act(() => {
+        window.dispatchEvent(new StorageEvent('storage', { key: null }));
+      });
+      expect(result.current.game).toBeNull();
+    });
+
+    it("ignores another user's key", () => {
+      const { result } = mount();
+      act(() => {
+        result.current.start({ mode: 'live', names: ['Dan', 'Sam'], defaultBuyIn: 50 });
+      });
+      const mine = result.current.game;
+      fire('oneoff:v1:u2', JSON.stringify(otherGame(150)));
+      fire('oneoff:v1:u2', null);
+      expect(result.current.game).toEqual(mine);
+    });
+
+    it('stops listening after unmount', () => {
+      const remove = vi.spyOn(window, 'removeEventListener');
+      const { unmount } = mount();
+      unmount();
+      expect(remove).toHaveBeenCalledWith('storage', expect.any(Function));
+      remove.mockRestore();
+    });
+  });
+
   it('useOneOffGame outside the provider throws', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => renderHook(() => useOneOffGame())).toThrow(

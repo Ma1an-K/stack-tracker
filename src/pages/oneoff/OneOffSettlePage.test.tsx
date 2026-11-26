@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import type { OneOffGame } from '@/lib/oneOff/types';
 
@@ -7,11 +7,12 @@ const discard = vi.fn();
 const dispatch = vi.fn(() => ({ error: null }));
 const save = vi.fn();
 let game: OneOffGame | null = null;
+let storageOk = true;
 
 vi.mock('@/contexts/OneOffGameContext', () => ({
   useOneOffGame: () => ({
     game,
-    storageOk: true,
+    storageOk,
     seatedCount: 0,
     totalBuyIn: 0,
     totalPot: 0,
@@ -72,6 +73,7 @@ beforeEach(() => {
   discard.mockReset();
   dispatch.mockClear();
   save.mockReset();
+  storageOk = true;
 });
 
 describe('OneOffSettlePage', () => {
@@ -145,14 +147,75 @@ describe('OneOffSettlePage', () => {
     expect(screen.queryByText(/Cash-outs are/)).not.toBeInTheDocument();
   });
 
-  it('keeps the previous currency when the field is cleared', () => {
+  it('lets a one-character currency be replaced, committing on blur', () => {
+    game = makeGame(10);
+    game.currency = '$';
+    renderPage();
+    const field = screen.getByLabelText('Currency');
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: '' } });
+    expect(field).toHaveValue('');
+    fireEvent.change(field, { target: { value: '€' } });
+    expect(dispatch).not.toHaveBeenCalled();
+    fireEvent.blur(field);
+    expect(dispatch).toHaveBeenCalledWith({ type: 'setMeta', patch: { currency: '€' } });
+  });
+
+  it('keeps the previous currency when the field is left blank', () => {
     game = makeGame(10);
     renderPage();
-    fireEvent.change(screen.getByLabelText('Currency'), { target: { value: '' } });
-    expect(dispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'setMeta', patch: { currency: '' } })
-    );
-    fireEvent.change(screen.getByLabelText('Currency'), { target: { value: '€' } });
-    expect(dispatch).toHaveBeenCalledWith({ type: 'setMeta', patch: { currency: '€' } });
+    const field = screen.getByLabelText('Currency');
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: '' } });
+    fireEvent.blur(field);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(field).toHaveValue('A$');
+  });
+
+  it("warns that the game won't survive a refresh when this device can't store it", () => {
+    game = makeGame(10);
+    storageOk = false;
+    renderPage();
+    expect(screen.getByText('This game is only kept until you close or refresh this page.')).toBeInTheDocument();
+  });
+
+  it('shows no storage warning when the device copy is fine', () => {
+    game = makeGame(10);
+    renderPage();
+    expect(screen.queryByText(/only kept until you close or refresh/)).not.toBeInTheDocument();
+  });
+
+  it('locks editing while a save is in flight, and unlocks if it fails', async () => {
+    game = makeGame(10);
+    let finish: (v: { id: string | null; error: string | null }) => void = () => {};
+    save.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /save to my history/i }));
+    await waitFor(() => expect(screen.getByLabelText('Label')).toBeDisabled());
+    expect(screen.getByLabelText('Currency')).toBeDisabled();
+    expect(screen.getByLabelText('Date')).toBeDisabled();
+    expect(screen.getByLabelText('Notes')).toBeDisabled();
+    expect(screen.getByLabelText('Cash-out for Ann')).toBeDisabled();
+    expect(screen.getByLabelText('Buy-in for Ann')).toBeDisabled();
+    expect(screen.getByLabelText('Name for Ann')).toBeDisabled();
+    expect(screen.getByLabelText('New player')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove Ann' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /record payment/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled();
+
+    await act(async () => {
+      finish({ id: null, error: "Couldn't save. Check your connection and try again." });
+    });
+    expect(screen.getByLabelText('Label')).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeEnabled();
+  });
+
+  it('disables removing a recorded payment while a save is in flight', async () => {
+    game = makeGame(10);
+    game.payments = [{ from_id: 'ann', to_id: 'ben', amount: 5 }];
+    save.mockReturnValue(new Promise(() => {}));
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /save to my history/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Remove payment' })).toBeDisabled());
   });
 });

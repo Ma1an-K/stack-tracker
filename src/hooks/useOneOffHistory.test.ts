@@ -143,6 +143,28 @@ describe("useOneOffHistory", () => {
     expect(clearGame).not.toHaveBeenCalled();
   });
 
+  it("save refuses more than 200 payments", async () => {
+    const { result } = await renderLoaded();
+    // 201 payments that cancel out, so the game still balances.
+    const payments = [
+      { from_id: "b", to_id: "a", amount: 20 },
+      ...Array.from({ length: 100 }, () => [
+        { from_id: "a", to_id: "b", amount: 1 },
+        { from_id: "b", to_id: "a", amount: 1 },
+      ]).flat(),
+    ];
+    expect(payments).toHaveLength(201);
+    const game = makeGame({ payments });
+
+    let res: { id: string | null; error: string | null } | undefined;
+    await act(async () => {
+      res = await result.current.save(game, "u1");
+    });
+    expect(res).toEqual({ id: null, error: "Too many payments to save (200 max)" });
+    expect(insertRequests()).toHaveLength(0);
+    expect(clearGame).not.toHaveBeenCalled();
+  });
+
   it("save refuses an unbalanced game", async () => {
     const { result } = await renderLoaded();
     const game = makeGame();
