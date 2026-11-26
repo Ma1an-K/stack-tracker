@@ -62,8 +62,9 @@ export function LiveSessionPage() {
   const navigate = useNavigate();
   const { homegame } = useAuthContext();
   const { liveSession, loading, start } = useLiveSession();
-  const { players, activePlayers, loading: playersLoading } = usePlayers(homegame?.id);
-  const controller = useHomegameLiveController();
+  const playersApi = usePlayers(homegame?.id);
+  const { players, activePlayers, loading: playersLoading } = playersApi;
+  const controller = useHomegameLiveController(playersApi);
 
   // Back must never leave the app on a deep link or cold PWA start.
   const goBack = () => {
@@ -72,9 +73,7 @@ export function LiveSessionPage() {
     else navigate('/');
   };
 
-  if ((loading && !liveSession) || (playersLoading && players.length === 0) || (liveSession && !controller)) {
-    return <PageSkeleton rows={4} hero />;
-  }
+  if ((loading && !liveSession) || (playersLoading && players.length === 0)) return <PageSkeleton rows={4} hero />;
 
   return (
     <div className="space-y-6">
@@ -89,7 +88,7 @@ export function LiveSessionPage() {
         {liveSession && <DiscardButton />}
       </header>
 
-      {liveSession && controller ? (
+      {controller ? (
         <TrackerView controller={controller} />
       ) : activePlayers.length < 2 ? (
         <EmptyState

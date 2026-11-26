@@ -1,17 +1,19 @@
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
-import { usePlayers } from '@/hooks/usePlayers';
+import type { usePlayers } from '@/hooks/usePlayers';
 import { useHomegameMembers } from '@/hooks/useHomegameMembers';
 import type { LiveGameController } from './LiveGameController';
 
+type PlayersApi = Pick<ReturnType<typeof usePlayers>, 'players' | 'loading' | 'addPlayer'>;
+
 /**
  * The homegame's live session (stored on the server) as a tracker controller.
- * Null while no game is running, or until the roster has loaded (so names never flash as "Unknown").
+ * Null while no game is running. The page owns the single `usePlayers` instance and passes it in.
  */
-export function useHomegameLiveController(): LiveGameController | null {
+export function useHomegameLiveController(playersApi: PlayersApi): LiveGameController | null {
   const { homegame, isOwner } = useAuthContext();
   const { members } = useHomegameMembers(homegame?.id);
-  const { players, loading: playersLoading, addPlayer: createPlayer } = usePlayers(homegame?.id);
+  const { players, addPlayer: createPlayer } = playersApi;
   const {
     liveSession,
     totalPot,
@@ -27,7 +29,7 @@ export function useHomegameLiveController(): LiveGameController | null {
     removePayment,
   } = useLiveSession();
 
-  if (!liveSession || (playersLoading && players.length === 0)) return null;
+  if (!liveSession) return null;
 
   return {
     players: liveSession.players,

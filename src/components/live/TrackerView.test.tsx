@@ -66,6 +66,7 @@ describe('TrackerView', () => {
 
   it('shows the pot in the controller currency', () => {
     renderTracker(fakeController({ totalPot: 123.5 }));
-    expect(screen.getAllByText('€123.50').length).toBeGreaterThan(0);
+    // Hero "On the table" figure and the summary row's "On the table".
+    expect(screen.getAllByText('€123.50')).toHaveLength(2);
   });
 });
