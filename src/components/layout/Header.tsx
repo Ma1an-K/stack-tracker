@@ -3,8 +3,9 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogOut, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2, Trash2, Image, Award, Check, Calculator, Shield, ChevronRight, LayoutGrid } from 'lucide-react';
+import { LogOut, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2, Trash2, Image, Award, Check, Calculator, Shield, ChevronRight, LayoutGrid, Spade } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useOneOffGame } from '@/contexts/OneOffGameContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
@@ -36,6 +37,7 @@ export function Header() {
   const [clubOpen, setClubOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const { isSubscribed, isSupported, subscribe, unsubscribe } = usePushNotifications();
+  const { game: oneOff } = useOneOffGame();
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
 
@@ -273,6 +275,11 @@ export function Header() {
           <div className="grid grid-cols-3 gap-2">
             <ClubTile icon={Users} label="Players" onClick={fromClub(() => navigate('/players'))} />
             <ClubTile icon={Calculator} label="Calculator" onClick={fromClub(() => navigate('/calculator'))} />
+            <ClubTile
+              icon={Spade}
+              label={oneOff ? `Resume game · ${oneOff.players.length}` : 'One-off'}
+              onClick={fromClub(() => navigate('/one-off'))}
+            />
             <ClubTile icon={UserPen} label="Profile" onClick={fromClub(openProfileDialog)} />
             {isOwner && (
               <>

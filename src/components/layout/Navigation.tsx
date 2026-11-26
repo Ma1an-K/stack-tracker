@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { Users, CalendarDays, Plus, Trophy, Calculator, Home, Play, LineChart } from 'lucide-react';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
+import { useOneOffGame } from '@/contexts/OneOffGameContext';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 
 const desktopItems = [
@@ -62,9 +63,12 @@ function TabItem({ item }: { item: Item }) {
 
 export function Navigation() {
   const { liveSession } = useLiveSession();
+  const { game: oneOff } = useOneOffGame();
   const isDesktop = useIsDesktop();
-  const isLive = !!liveSession;
-  const centreTo = isLive ? '/live-session' : '/new-session';
+  // A homegame live session wins; otherwise an in-progress one-off takes the button.
+  const oneOffTo = oneOff ? (oneOff.mode === 'live' ? '/one-off/live' : '/one-off/settle') : null;
+  const isLive = !!liveSession || !!oneOffTo;
+  const centreTo = liveSession ? '/live-session' : (oneOffTo ?? '/new-session');
 
   const mobile = (
     <nav
