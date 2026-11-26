@@ -30,8 +30,9 @@ export function SettlePlayers({ game, run }: SettlePlayersProps) {
 
   return (
     <section className="surface space-y-2 p-3 sm:p-4">
-      <div className="grid grid-cols-[1fr_6.5rem_6.5rem_2.75rem] items-end gap-1.5 px-1 pb-1 text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">
-        <h2 className="section-header">Players</h2>
+      {/* Below sm the name takes its own line above the amounts, so it is never squeezed. */}
+      <div className="grid grid-cols-[1fr_1fr_2.75rem] sm:grid-cols-[1fr_6.5rem_6.5rem_2.75rem] items-end gap-x-1.5 gap-y-2 px-1 pb-1 text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">
+        <h2 className="section-header col-span-3 sm:col-span-1">Players</h2>
         <span className="text-right">Buy-in</span>
         <span className="text-right">Cash-out</span>
         <span className="sr-only">Remove</span>
@@ -41,8 +42,9 @@ export function SettlePlayers({ game, run }: SettlePlayersProps) {
         const profit = p.cash_out === null ? null : p.cash_out - p.buy_in;
         return (
           <div key={p.id} className="rounded-xl border border-border/60 bg-muted/40 p-2">
-            <div className="grid grid-cols-[1fr_6.5rem_6.5rem_2.75rem] items-center gap-1.5">
+            <div className="grid grid-cols-[1fr_1fr_2.75rem] sm:grid-cols-[1fr_6.5rem_6.5rem_2.75rem] items-center gap-1.5">
               <NameField
+                className="col-span-3 sm:col-span-1"
                 value={p.name}
                 label={`Name for ${p.name}`}
                 onCommit={name => run({ type: 'renamePlayer', id: p.id, name })}

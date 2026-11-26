@@ -136,23 +136,24 @@ export function SavedOneOffPage() {
       {header}
 
       <section className="surface space-y-2 p-3 sm:p-4">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] items-end gap-x-3 px-1 pb-1 text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">
-          <h2 className="section-header">Players</h2>
-          <span className="w-16 text-right">Buy-in</span>
-          <span className="w-16 text-right">Cash-out</span>
-          <span className="w-20 text-right">Profit</span>
+        {/* Below sm the name takes its own line above the three amounts. */}
+        <div className="grid grid-cols-3 sm:grid-cols-[1fr_auto_auto_auto] items-end gap-x-3 gap-y-2 px-1 pb-1 text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="section-header col-span-3 sm:col-span-1">Players</h2>
+          <span className="text-right sm:w-24">Buy-in</span>
+          <span className="text-right sm:w-24">Cash-out</span>
+          <span className="text-right sm:w-24">Profit</span>
         </div>
         {saved.players.map(p => {
           const profit = p.cash_out - p.buy_in;
           return (
             <div
               key={p.id}
-              className="grid min-h-[48px] grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 rounded-xl bg-muted/40 px-3 text-sm tabular-nums"
+              className="grid min-h-[48px] grid-cols-3 sm:grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 gap-y-1 rounded-xl bg-muted/40 px-3 py-2 text-sm tabular-nums"
             >
-              <span className="truncate font-medium">{p.name}</span>
-              <span className="w-16 text-right text-muted-foreground">{formatCurrency(p.buy_in, currency)}</span>
-              <span className="w-16 text-right">{formatCurrency(p.cash_out, currency)}</span>
-              <span className={cn('w-20 text-right font-semibold', profit > 0.005 ? 'profit' : profit < -0.005 ? 'loss' : 'text-muted-foreground')}>
+              <span className="col-span-3 truncate font-medium sm:col-span-1">{p.name}</span>
+              <span className="text-right text-muted-foreground sm:w-24">{formatCurrency(p.buy_in, currency)}</span>
+              <span className="text-right sm:w-24">{formatCurrency(p.cash_out, currency)}</span>
+              <span className={cn('text-right font-semibold sm:w-24', profit > 0.005 ? 'profit' : profit < -0.005 ? 'loss' : 'text-muted-foreground')}>
                 {formatProfit(profit, currency)}
               </span>
             </div>

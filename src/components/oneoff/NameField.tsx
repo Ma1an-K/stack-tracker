@@ -1,8 +1,19 @@
 import { useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 /** A player's name, renamed in place. Commits on Enter or blur; Escape reverts. */
-export function NameField({ value, label, onCommit }: { value: string; label: string; onCommit: (name: string) => void }) {
+export function NameField({
+  value,
+  label,
+  onCommit,
+  className,
+}: {
+  value: string;
+  label: string;
+  onCommit: (name: string) => void;
+  className?: string;
+}) {
   const [draft, setDraft] = useState<string | null>(null);
   const activeRef = useRef(false);
 
@@ -34,7 +45,10 @@ export function NameField({ value, label, onCommit }: { value: string; label: st
           e.currentTarget.blur();
         }
       }}
-      className="h-11 min-w-0 flex-1 border-transparent bg-transparent px-1 font-medium hover:border-border/60 focus-visible:border-gold/50"
+      className={cn(
+        'h-11 min-w-0 flex-1 border-transparent bg-transparent px-1 font-medium hover:border-border/60 focus-visible:border-gold/50',
+        className
+      )}
     />
   );
 }
