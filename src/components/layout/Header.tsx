@@ -272,7 +272,8 @@ export function Header() {
             )}
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-2">
+          {/* Owners get 6 tiles (two rows of 3), everyone else 4 (a 2x2), so the grid never ends on a lone tile. */}
+          <div className={cn('grid gap-2', isOwner ? 'grid-cols-3' : 'grid-cols-2')}>
             <ClubTile icon={Users} label="Players" onClick={fromClub(() => navigate('/players'))} />
             <ClubTile icon={Calculator} label="Calculator" onClick={fromClub(() => navigate('/calculator'))} />
             <ClubTile
@@ -283,7 +284,6 @@ export function Header() {
             <ClubTile icon={UserPen} label="Profile" onClick={fromClub(openProfileDialog)} />
             {isOwner && (
               <>
-                <ClubTile icon={Link} label="Invites" onClick={fromClub(() => navigate('/invites'))} />
                 <ClubTile icon={Shield} label="Members" onClick={fromClub(() => navigate('/members'))} />
                 <ClubTile icon={Image} label="Icon" onClick={fromClub(() => setIconPickerOpen(true))} />
               </>
@@ -292,7 +292,10 @@ export function Header() {
 
           <div className="overflow-hidden rounded-xl border border-border/60 bg-secondary/40 divide-y divide-border/50">
             {isOwner && (
-              <ClubRow icon={Award} label="Badges" onClick={fromClub(() => setBadgesDialogOpen(true))} />
+              <>
+                <ClubRow icon={Link} label="Invites" onClick={fromClub(() => navigate('/invites'))} />
+                <ClubRow icon={Award} label="Badges" onClick={fromClub(() => setBadgesDialogOpen(true))} />
+              </>
             )}
             {isSupported && (
               <ClubRow
