@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, Homegame, HomegameWithRole, HomegameRole } from '@/types/database';
 import { logError } from '@/lib/errorLog';
+import { storageKey } from '@/lib/oneOff/localStore';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -234,6 +235,20 @@ export function useAuth() {
     return { error };
   };
 
+  const deleteAccount = async () => {
+    const userId = user?.id;
+    const { error } = await supabase.rpc('delete_my_account');
+    if (error) {
+      logError({ kind: 'save_failed', action: 'useAuth.deleteAccount', error });
+      return { error };
+    }
+    localStorage.removeItem('currentHomegameId');
+    if (userId) localStorage.removeItem(storageKey(userId));
+    // The user no longer exists on the server, so only clear the local session.
+    await supabase.auth.signOut({ scope: 'local' });
+    return { error: null };
+  };
+
   const resetPasswordForEmail = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/`,
@@ -332,6 +347,7 @@ export function useAuth() {
     updateProfile,
     updateHomegame,
     deleteHomegame,
+    deleteAccount,
     resetPasswordForEmail,
     updatePassword,
     refetchUserData: () => user && fetchUserData(user.id),

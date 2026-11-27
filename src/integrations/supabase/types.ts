@@ -663,6 +663,7 @@ export type Database = {
         Args: { p_homegame_id: string; p_min_interval_seconds: number }
         Returns: boolean
       }
+      delete_my_account: { Args: never; Returns: undefined }
       generate_invite_code: { Args: never; Returns: string }
       get_user_homegame_id: { Args: never; Returns: string }
       get_user_homegame_ids: { Args: never; Returns: string[] }
