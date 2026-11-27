@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
+import { publicOrigin } from '@/lib/platform';
 
 export function InviteCodesPage() {
   const { homegame, isOwner } = useAuthContext();
@@ -45,7 +46,7 @@ export function InviteCodesPage() {
   const handleShareCode = async (code: string) => {
     // The link carries the code so it's filled in on sign-up; the code is repeated in
     // plain text in case the link is opened somewhere the prefill can't follow.
-    const url = `${window.location.origin}/auth?mode=signup&code=${encodeURIComponent(code)}`;
+    const url = `${publicOrigin()}/auth?mode=signup&code=${encodeURIComponent(code)}`;
     const text = `Join ${homegame?.name ?? 'our homegame'} on Stack Tracker: ${url} (invite code ${code}).`;
     if (navigator.share) {
       try {

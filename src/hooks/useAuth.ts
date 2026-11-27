@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Profile, Homegame, HomegameWithRole, HomegameRole } from '@/types/database';
 import { logError } from '@/lib/errorLog';
 import { storageKey } from '@/lib/oneOff/localStore';
+import { publicOrigin } from '@/lib/platform';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -129,7 +130,7 @@ export function useAuth() {
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${publicOrigin()}/`;
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -251,7 +252,7 @@ export function useAuth() {
 
   const resetPasswordForEmail = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/`,
+      redirectTo: `${publicOrigin()}/`,
     });
     return { error };
   };

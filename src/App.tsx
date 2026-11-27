@@ -8,6 +8,7 @@ import { TutorialProvider } from "@/contexts/TutorialContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { LandingPage } from "@/pages/LandingPage";
+import { isNativeApp } from "@/lib/platform";
 import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
 import { PublicHandCalculatorPage } from "@/pages/PublicHandCalculatorPage";
 import { AboutPage } from "@/pages/AboutPage";
@@ -92,7 +93,8 @@ function AppShell() {
   if (loading) return <SplashScreen />;
 
   if (!user || !homegame) {
-    if (pathname === "/") return <LandingPage />;
+    // The marketing page is for the website; the app opens straight on sign-in.
+    if (pathname === "/" && !isNativeApp()) return <LandingPage />;
     return <Navigate to="/auth" replace />;
   }
 
