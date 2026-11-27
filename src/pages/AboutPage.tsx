@@ -160,6 +160,9 @@ export function AboutPage() {
             >
               Hand Calculator
             </Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">
+              Privacy
+            </Link>
             <Link to="/auth" className="hover:text-foreground transition-colors">
               Sign In
             </Link>

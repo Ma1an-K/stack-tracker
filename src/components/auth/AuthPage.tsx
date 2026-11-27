@@ -383,6 +383,10 @@ export function AuthPage() {
             {loading && <Loader2 className="animate-spin" />}
             Create account
           </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            By creating an account you agree to how we handle your data in our{' '}
+            <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">privacy policy</Link>.
+          </p>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Already have an account? <TextLink onClick={() => goTo('auth')}>Sign in</TextLink>

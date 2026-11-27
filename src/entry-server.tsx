@@ -4,6 +4,8 @@ import { renderToString } from 'react-dom/server';
 import { PublicSettlementPage } from './pages/PublicSettlementPage';
 import { PublicHandCalculatorPage } from './pages/PublicHandCalculatorPage';
 import { AboutPage } from './pages/AboutPage';
+import { PrivacyPage } from './pages/PrivacyPage';
+import { PRIVACY_TITLE, PRIVACY_DESCRIPTION, PRIVACY_CANONICAL, PRIVACY_JSON_LD } from './pages/privacyMeta';
 
 export interface PageMetaForBuild {
   title: string;
@@ -101,6 +103,16 @@ export const ROUTES: Array<{ path: string; outFile: string; meta: PageMetaForBui
     outFile: 'about.html',
     meta: ABOUT_META,
   },
+  {
+    path: '/privacy',
+    outFile: 'privacy.html',
+    meta: {
+      title: PRIVACY_TITLE,
+      description: PRIVACY_DESCRIPTION,
+      canonical: PRIVACY_CANONICAL,
+      jsonLd: PRIVACY_JSON_LD,
+    },
+  },
 ];
 
 function ServerApp({ url }: { url: string }) {
@@ -110,6 +122,7 @@ function ServerApp({ url }: { url: string }) {
         <Route path="/poker-settlement-calculator" element={<PublicSettlementPage />} />
         <Route path="/poker-hand-calculator" element={<PublicHandCalculatorPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
       </Routes>
     </StaticRouter>
   );

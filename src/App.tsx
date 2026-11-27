@@ -11,6 +11,7 @@ import { LandingPage } from "@/pages/LandingPage";
 import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
 import { PublicHandCalculatorPage } from "@/pages/PublicHandCalculatorPage";
 import { AboutPage } from "@/pages/AboutPage";
+import { PrivacyPage } from "@/pages/PrivacyPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -123,6 +124,7 @@ function AppRoutes() {
       <Route path="/poker-settlement-calculator" element={<PublicSettlementPage />} />
       <Route path="/poker-hand-calculator" element={<PublicHandCalculatorPage />} />
       <Route path="/about" element={<AboutPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
       <Route element={<AppShell />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/sessions" element={<SessionsPage />} />

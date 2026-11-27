@@ -644,6 +644,12 @@ function Footer() {
               About
             </Link>
             <Link
+              to="/privacy"
+              className="text-foreground/60 hover:text-gold transition-colors"
+            >
+              Privacy
+            </Link>
+            <Link
               to="/auth"
               className="text-foreground/60 hover:text-gold transition-colors"
             >
