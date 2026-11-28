@@ -49,7 +49,7 @@ export function MyStatsPage() {
     <div className="space-y-6">
       <PageHeader eyebrow={profile?.username ? `${profile.username}#${profile.discriminator}` : 'You'} title="My stats" action={<RefreshingDot show={isRefreshing} />} />
 
-      {homegame && !isOwner && tips.shouldShow('mystats-member') && (
+      {homegame && !isOwner && !hasClaimedPlayers && tips.shouldShow('mystats-member') && (
         <Tip onDismiss={() => tips.markSeen('mystats-member')}>
           Your results show here once your host confirms your name.
         </Tip>
