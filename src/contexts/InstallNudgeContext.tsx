@@ -3,6 +3,7 @@ import { InstallSheet } from '@/components/install/InstallSheet';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { isPhoneContext } from '@/lib/installContext';
 import { nudgeState, readNudge, SNOOZE_MS, writeNudge } from '@/lib/installNudge';
+import { useTourHoldsInstall } from '@/contexts/TourContext';
 
 export type FirstSuccessKind = 'session' | 'claim' | 'oneoff';
 
@@ -50,6 +51,18 @@ export function InstallNudgeProvider({ children }: { children: ReactNode }) {
   // A first win queued on /welcome opens the sheet as soon as the shell shows.
   const [open, setOpen] = useState(() => onPhone && readNudge().pendingSheet === true && sheetAllowedNow());
 
+  // The feature tour goes first. While it is open (or may still auto-open on Home),
+  // a requested sheet is held rather than shown; when the hold lifts it shows,
+  // unless the snooze rules say no by then. Deriving visibility from the hold
+  // means an arrival sheet never flashes up and then sits stacked with the tour.
+  const tourHolds = useTourHoldsInstall();
+  const [prevTourHolds, setPrevTourHolds] = useState(tourHolds);
+  if (prevTourHolds !== tourHolds) {
+    setPrevTourHolds(tourHolds);
+    if (!tourHolds && open && !sheetAllowedNow()) setOpen(false);
+  }
+  const sheetOpen = open && !tourHolds;
+
   useEffect(() => {
     if (readNudge().pendingSheet) setStore(writeNudge({ pendingSheet: false }));
   }, []);
@@ -73,7 +86,7 @@ export function InstallNudgeProvider({ children }: { children: ReactNode }) {
     setHiddenThisVisit(true);
   }, []);
 
-  const bannerVisible = !open && !hiddenThisVisit && nudgeState(store, Date.now()).bannerVisible;
+  const bannerVisible = !open && !tourHolds && !hiddenThisVisit && nudgeState(store, Date.now()).bannerVisible;
 
   const value = useMemo(
     () => ({ firstSuccess, bannerVisible, dismissBanner }),
@@ -83,7 +96,7 @@ export function InstallNudgeProvider({ children }: { children: ReactNode }) {
   return (
     <InstallNudgeContext.Provider value={value}>
       {children}
-      <InstallSheet open={open} onClose={close} />
+      <InstallSheet open={sheetOpen} onClose={close} />
     </InstallNudgeContext.Provider>
   );
 }
