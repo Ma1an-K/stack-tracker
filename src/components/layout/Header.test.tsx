@@ -4,10 +4,12 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { OneOffGame } from '@/lib/oneOff/types';
 
 let game: OneOffGame | null = null;
+const FRIDAY = { id: 'hg-1', name: 'Friday game', icon_id: null, disabled_badges: [] };
+let homegame: typeof FRIDAY | null = FRIDAY;
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuthContext: () => ({
-    homegame: { id: 'hg-1', name: 'Friday game', icon_id: null, disabled_badges: [] },
+    homegame,
     homegames: [],
     profile: null,
     isOwner: false,
@@ -75,6 +77,7 @@ function openClub() {
 describe('Header club menu one-off tile', () => {
   beforeEach(() => {
     game = null;
+    homegame = FRIDAY;
   });
 
   it('shows "One-off" to a non-owner when no game is in progress', async () => {
@@ -96,5 +99,39 @@ describe('Header club menu one-off tile', () => {
     openClub();
     fireEvent.click(screen.getByRole('button', { name: 'One-off' }));
     expect(await screen.findByText('One-off hub')).toBeInTheDocument();
+  });
+});
+
+describe('Header with no homegame', () => {
+  beforeEach(() => {
+    game = null;
+    homegame = null;
+  });
+
+  it('shows the app name and "No homegame yet" with no switcher', () => {
+    renderHeader();
+    expect(screen.getByText('Stack Tracker')).toBeInTheDocument();
+    expect(screen.getByText('No homegame yet')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /switch homegame/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Select Homegame')).not.toBeInTheDocument();
+  });
+
+  it('still opens the club menu', () => {
+    renderHeader();
+    openClub();
+    expect(screen.getByRole('button', { name: 'One-off' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+  });
+});
+
+describe('Header with a homegame', () => {
+  beforeEach(() => {
+    game = null;
+    homegame = FRIDAY;
+  });
+
+  it('shows the homegame name in the switcher', () => {
+    renderHeader();
+    expect(screen.getByRole('button', { name: /switch homegame/i })).toHaveTextContent('Friday game');
   });
 });

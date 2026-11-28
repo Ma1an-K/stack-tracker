@@ -87,7 +87,8 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
         <Navigation />
 
-        {activeTour && (
+        {/* The tour points at homegame chrome, so it never shows without a homegame. */}
+        {activeTour && homegame && (
           <TutorialOverlay
             steps={steps}
             currentStep={currentStep}

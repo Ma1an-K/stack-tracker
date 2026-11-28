@@ -5,6 +5,7 @@ import { Users, CalendarDays, Plus, Trophy, Calculator, Home, Play, LineChart } 
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { useOneOffGame } from '@/contexts/OneOffGameContext';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 const desktopItems = [
   { to: '/', icon: Home, label: 'Home' },
@@ -64,11 +65,15 @@ function TabItem({ item }: { item: Item }) {
 export function Navigation() {
   const { liveSession } = useLiveSession();
   const { game: oneOff } = useOneOffGame();
+  const { homegame } = useAuthContext();
   const isDesktop = useIsDesktop();
   // A homegame live session wins; otherwise an in-progress one-off takes the button.
+  // With no homegame there's nothing to log a session to, so "new" starts a one-off.
   const oneOffTo = oneOff ? (oneOff.mode === 'live' ? '/one-off/live' : '/one-off/settle') : null;
   const isLive = !!liveSession || !!oneOffTo;
-  const centreTo = liveSession ? '/live-session' : (oneOffTo ?? '/new-session');
+  const newTo = homegame ? '/new-session' : '/one-off';
+  const newLabel = homegame ? 'New session' : 'New game';
+  const centreTo = liveSession ? '/live-session' : (oneOffTo ?? newTo);
 
   const mobile = (
     <nav
@@ -84,7 +89,7 @@ export function Navigation() {
           <NavLink
             to={centreTo}
             data-tutorial="tutorial-new-session"
-            aria-label={isLive ? 'Open live game' : 'New session'}
+            aria-label={isLive ? 'Open live game' : newLabel}
             className="group -mt-6 flex flex-col items-center gap-1 focus:outline-none"
           >
             <span
@@ -126,7 +131,7 @@ export function Navigation() {
         className="pressable gold-fill mb-3 flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-primary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {isLive ? <Play className="h-4 w-4 fill-current" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
-        <span>{isLive ? 'Back to live game' : 'New session'}</span>
+        <span>{isLive ? 'Back to live game' : newLabel}</span>
       </NavLink>
       {desktopItems.map((item) => (
         <NavLink

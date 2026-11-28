@@ -158,32 +158,44 @@ export function Header() {
       <header className="glass fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)] border-b border-gold/15">
         <div className="pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] h-14 flex items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-1 min-w-0 flex-1">
-            {isOwner ? (
-              <button
-                data-tutorial="tutorial-homegame-icon"
-                onClick={() => setIconPickerOpen(true)}
-                className="pressable shrink-0 rounded-xl p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="Change homegame icon"
-              >
-                <img src={getIconSrc(homegame?.icon_id)} alt="" className="w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
-              </button>
+            {!homegame ? (
+              <>
+                <img src="/icon-192x192.png" alt="" className="shrink-0 w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
+                <div className="flex min-h-[44px] min-w-0 flex-col items-start justify-center px-2">
+                  <span className="truncate text-[0.9375rem] font-semibold leading-tight">Stack Tracker</span>
+                  <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] leading-tight text-gold/70">No homegame yet</span>
+                </div>
+              </>
             ) : (
-              <img data-tutorial="tutorial-homegame-icon" src={getIconSrc(homegame?.icon_id)} alt="" className="shrink-0 w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
-            )}
+              <>
+                {isOwner ? (
+                  <button
+                    data-tutorial="tutorial-homegame-icon"
+                    onClick={() => setIconPickerOpen(true)}
+                    className="pressable shrink-0 rounded-xl p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Change homegame icon"
+                  >
+                    <img src={getIconSrc(homegame.icon_id)} alt="" className="w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
+                  </button>
+                ) : (
+                  <img data-tutorial="tutorial-homegame-icon" src={getIconSrc(homegame.icon_id)} alt="" className="shrink-0 w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
+                )}
 
-            <button
-              onClick={() => setSwitcherOpen(true)}
-              className="pressable flex min-h-[44px] min-w-0 max-w-[60vw] flex-col items-start justify-center rounded-xl px-2 text-left hover:bg-accent/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:max-w-xs"
-              aria-label={`Current homegame ${homegame?.name ?? ''}. Switch homegame`}
-            >
-              <span className="flex w-full min-w-0 items-center gap-1">
-                <span className="truncate text-[0.9375rem] font-semibold leading-tight">{homegame?.name || 'Select Homegame'}</span>
-                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-              </span>
-              <span className={cn('text-[0.6875rem] font-semibold uppercase tracking-[0.14em] leading-tight', isOwner ? 'text-gold' : 'text-gold/70')}>
-                {isOwner ? 'Owner' : homegame ? 'Member' : ''}
-              </span>
-            </button>
+                <button
+                  onClick={() => setSwitcherOpen(true)}
+                  className="pressable flex min-h-[44px] min-w-0 max-w-[60vw] flex-col items-start justify-center rounded-xl px-2 text-left hover:bg-accent/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:max-w-xs"
+                  aria-label={`Current homegame ${homegame.name}. Switch homegame`}
+                >
+                  <span className="flex w-full min-w-0 items-center gap-1">
+                    <span className="truncate text-[0.9375rem] font-semibold leading-tight">{homegame.name}</span>
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  </span>
+                  <span className={cn('text-[0.6875rem] font-semibold uppercase tracking-[0.14em] leading-tight', isOwner ? 'text-gold' : 'text-gold/70')}>
+                    {isOwner ? 'Owner' : 'Member'}
+                  </span>
+                </button>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0">

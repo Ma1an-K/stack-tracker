@@ -6,6 +6,7 @@ import type { OneOffGame } from '@/lib/oneOff/types';
 let liveSession: { id: string } | null = null;
 let game: OneOffGame | null = null;
 let isDesktop = false;
+let homegame: { id: string } | null = { id: 'hg1' };
 
 vi.mock('@/contexts/LiveSessionContext', () => ({
   useLiveSession: () => ({ liveSession }),
@@ -17,6 +18,10 @@ vi.mock('@/contexts/OneOffGameContext', () => ({
 
 vi.mock('@/hooks/useMediaQuery', () => ({
   useIsDesktop: () => isDesktop,
+}));
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuthContext: () => ({ homegame }),
 }));
 
 import { Navigation } from './Navigation';
@@ -52,6 +57,7 @@ describe('Navigation centre button', () => {
     liveSession = null;
     game = null;
     isDesktop = false;
+    homegame = { id: 'hg1' };
   });
 
   it('goes to /new-session when nothing is running', () => {
@@ -97,5 +103,28 @@ describe('Navigation centre button', () => {
     isDesktop = true;
     renderNav();
     expect(screen.getByRole('link', { name: /new session/i })).toHaveAttribute('href', '/new-session');
+  });
+
+  describe('with no homegame', () => {
+    beforeEach(() => {
+      homegame = null;
+    });
+
+    it('sends the centre button to /one-off', () => {
+      renderNav();
+      expect(screen.getByRole('link', { name: 'New game' })).toHaveAttribute('href', '/one-off');
+    });
+
+    it('sends the desktop button to /one-off', () => {
+      isDesktop = true;
+      renderNav();
+      expect(screen.getByRole('link', { name: /new game/i })).toHaveAttribute('href', '/one-off');
+    });
+
+    it('still resumes an in-progress one-off', () => {
+      game = makeGame('live');
+      renderNav();
+      expect(screen.getByRole('link', { name: 'Open live game' })).toHaveAttribute('href', '/one-off/live');
+    });
   });
 });

@@ -9,6 +9,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { isNativeApp } from "@/lib/platform";
+import { shellRoute } from "@/lib/shellRoute";
 import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
 import { PublicHandCalculatorPage } from "@/pages/PublicHandCalculatorPage";
 import { AboutPage } from "@/pages/AboutPage";
@@ -82,21 +83,18 @@ const queryClient = new QueryClient();
 /**
  * One persistent shell for every signed-in screen (including "/"), so Header,
  * Navigation and LiveSessionProvider are mounted once and never remount on a
- * tab change. Signed-out visitors get the landing page on "/" and are sent to
- * /auth everywhere else (same behaviour as before).
+ * tab change. Signed-in users get it with or without a homegame. Signed-out
+ * visitors get the landing page on "/" and are sent to /auth everywhere else.
  */
 function AppShell() {
   const { user, homegame, loading } = useAuthContext();
   const { pathname } = useLocation();
-  usePrefetchRoutes(!loading && !!user && !!homegame);
+  usePrefetchRoutes(!loading && !!user);
 
-  if (loading) return <SplashScreen />;
-
-  if (!user || !homegame) {
-    // The marketing page is for the website; the app opens straight on sign-in.
-    if (pathname === "/" && !isNativeApp()) return <LandingPage />;
-    return <Navigate to="/auth" replace />;
-  }
+  const route = shellRoute({ loading, user: !!user, homegame: !!homegame, pathname, native: isNativeApp() });
+  if (route === "splash") return <SplashScreen />;
+  if (route === "landing") return <LandingPage />;
+  if (route === "auth") return <Navigate to="/auth" replace />;
 
   return (
     <MainLayout>
