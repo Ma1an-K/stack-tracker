@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { useTips } from '@/hooks/useTips';
@@ -18,7 +19,7 @@ interface TourValue {
    * with no game in progress.
    */
   maybeAutoOpen: () => void;
-  /** An eligible account whose auto-open has not been decided yet this mount. */
+  /** On Home, for an eligible account whose auto-open has not been decided yet this mount. */
   autoOpenPending: boolean;
 }
 
@@ -28,6 +29,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const { profile, homegame, loading, userDataPending } = useAuthContext();
   const { liveSession, loading: liveLoading } = useLiveSession();
   const { markSeen } = useTips();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<TourRole>(() => tourRole(homegame));
   const [autoRequested, setAutoRequested] = useState(false);
@@ -55,7 +57,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (isTourEligible(profile) && !liveSession) openTour();
   }, [autoRequested, autoDecided, authReady, liveLoading, profile, liveSession, openTour]);
 
-  const autoOpenPending = !autoDecided && isTourEligible(profile);
+  // Only Home auto-opens, so only Home waits for the decision. Elsewhere (e.g. a
+  // first one-off save on /one-off) nothing is coming and the sheet shows at once.
+  const autoOpenPending = pathname === '/' && !autoDecided && isTourEligible(profile);
 
   const value = useMemo(
     () => ({ open, role, openTour, closeTour, maybeAutoOpen, autoOpenPending }),
@@ -75,8 +79,8 @@ export function useTour(): Omit<TourValue, 'autoOpenPending'> {
 
 /**
  * True while the install sheet and banner must wait for the tour: it is open,
- * or it may still auto-open this visit (so an arrival sheet doesn't show and
- * then get covered). False outside a TourProvider.
+ * or this is Home and it may still auto-open (so an arrival sheet doesn't show
+ * and then get covered). False outside a TourProvider.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useTourHoldsInstall(): boolean {

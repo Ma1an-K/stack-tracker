@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { InstallContext } from '@/lib/installContext';
+import { MemoryRouter } from 'react-router-dom';
 
 let context: InstallContext = 'ios-safari';
 vi.mock('@/hooks/useInstallPrompt', () => ({
@@ -54,18 +55,21 @@ function Controls() {
       <button onClick={closeTour}>close tour</button>
       <button onClick={maybeAutoOpen}>auto tour</button>
       <button onClick={() => firstSuccess('claim', true)}>claim</button>
+      <button onClick={() => firstSuccess('oneoff', true)}>save one-off</button>
     </>
   );
 }
 
-const renderShell = () =>
+const renderShell = (path = '/') =>
   render(
-    <TourProvider>
-      <InstallNudgeProvider>
-        <Controls />
-        <InstallBanner />
-      </InstallNudgeProvider>
-    </TourProvider>,
+    <MemoryRouter initialEntries={[path]}>
+      <TourProvider>
+        <InstallNudgeProvider>
+          <Controls />
+          <InstallBanner />
+        </InstallNudgeProvider>
+      </TourProvider>
+    </MemoryRouter>,
   );
 
 const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
@@ -141,6 +145,22 @@ describe('InstallNudgeProvider with the tour', () => {
   it('shows the arrival sheet at once for an account the tour never auto-opens for', () => {
     localStorage.setItem('install_nudge', JSON.stringify({ pendingSheet: true }));
     renderShell();
+    expect(screen.getByText(SHEET)).toBeInTheDocument();
+  });
+
+  it('shows a first one-off save at once off Home for an eligible account (no tour coming there)', () => {
+    // "Just settle tonight" from /welcome lands on /one-off; Home never called maybeAutoOpen.
+    state.auth.profile = NEW;
+    renderShell('/one-off/settle');
+    expect(screen.getByText('tour closed')).toBeInTheDocument();
+    click('save one-off');
+    expect(screen.getByText(SHEET)).toBeInTheDocument();
+  });
+
+  it('shows an arrival sheet at once off Home for an eligible account', () => {
+    state.auth.profile = NEW;
+    localStorage.setItem('install_nudge', JSON.stringify({ pendingSheet: true }));
+    renderShell('/one-off');
     expect(screen.getByText(SHEET)).toBeInTheDocument();
   });
 

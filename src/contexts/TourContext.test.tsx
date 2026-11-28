@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 type Profile = { created_at: string; seen_tips?: string[] } | null;
 
@@ -24,8 +25,14 @@ import { TourProvider, useTour, useTourHoldsInstall } from './TourContext';
 const NEW: Profile = { created_at: '2026-11-29T10:00:00Z', seen_tips: [] };
 const OLD: Profile = { created_at: '2026-10-01T10:00:00Z', seen_tips: [] };
 
-const wrapper = ({ children }: { children: ReactNode }) => <TourProvider>{children}</TourProvider>;
-const mount = () => renderHook(() => ({ tour: useTour(), holds: useTourHoldsInstall() }), { wrapper });
+const mount = (path = '/') =>
+  renderHook(() => ({ tour: useTour(), holds: useTourHoldsInstall() }), {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={[path]}>
+        <TourProvider>{children}</TourProvider>
+      </MemoryRouter>
+    ),
+  });
 
 beforeEach(() => {
   state.auth = { profile: NEW, homegame: { role: 'owner' }, loading: false, userDataPending: false };
@@ -172,6 +179,19 @@ describe('TourProvider', () => {
     act(() => result.current.tour.maybeAutoOpen());
     expect(result.current.tour.open).toBe(false);
     expect(result.current.holds).toBe(false);
+  });
+
+  it('does not hold the install sheet off Home before a decision (only Home auto-opens)', () => {
+    const { result } = mount('/one-off');
+    expect(result.current.tour.open).toBe(false);
+    expect(result.current.holds).toBe(false);
+  });
+
+  it('still holds off Home while the tour is open', () => {
+    state.auth.profile = OLD;
+    const { result } = mount('/sessions');
+    act(() => result.current.tour.openTour());
+    expect(result.current.holds).toBe(true);
   });
 
   it('useTour throws outside the provider', () => {
