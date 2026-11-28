@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { usePersonalStats } from '@/hooks/usePersonalStats';
@@ -33,9 +33,16 @@ import { useGettingStarted } from '@/hooks/useGettingStarted';
 import { useTips } from '@/hooks/useTips';
 import { Tip } from '@/components/tips/Tip';
 import { InstallBanner } from '@/components/install/InstallBanner';
+import { useTour } from '@/contexts/TourContext';
 
 export function DashboardPage() {
   const { homegame } = useAuthContext();
+  const { maybeAutoOpen } = useTour();
+  // Here rather than in either branch, so it covers both and a homegame switch
+  // doesn't remount it into a second request.
+  useEffect(() => {
+    maybeAutoOpen();
+  }, [maybeAutoOpen]);
   return homegame ? <HomegameDashboard /> : <NoHomegameHome />;
 }
 

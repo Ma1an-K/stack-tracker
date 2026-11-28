@@ -50,17 +50,25 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   const maybeAutoOpen = useCallback(() => setAutoRequested(true), []);
 
+  // A request belongs to the Home visit that made it. Leaving Home before the
+  // decision drops it, so the tour never opens over another page; Home asks
+  // again on its next mount.
+  const onHome = pathname === '/';
+  useEffect(() => {
+    if (!onHome) setAutoRequested(false);
+  }, [onHome]);
+
   // Decide once: when Home has asked, auth is ready and the live-session fetch
   // is back (so a game in progress is known before the tour can cover it).
   useEffect(() => {
-    if (!autoRequested || autoDecided || !authReady || liveLoading) return;
+    if (!onHome || !autoRequested || autoDecided || !authReady || liveLoading) return;
     setAutoDecided(true);
     if (isTourEligible(profile) && !liveSession) openTour();
-  }, [autoRequested, autoDecided, authReady, liveLoading, profile, liveSession, openTour]);
+  }, [onHome, autoRequested, autoDecided, authReady, liveLoading, profile, liveSession, openTour]);
 
   // Only Home auto-opens, so only Home waits for the decision. Elsewhere (e.g. a
   // first one-off save on /one-off) nothing is coming and the sheet shows at once.
-  const autoOpenPending = pathname === '/' && !autoDecided && isTourEligible(profile);
+  const autoOpenPending = onHome && !autoDecided && isTourEligible(profile);
 
   const value = useMemo(
     () => ({ open, role, openTour, closeTour, maybeAutoOpen, autoOpenPending }),

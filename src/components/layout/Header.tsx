@@ -3,9 +3,10 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogOut, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2, Trash2, Image, Award, Check, Calculator, Shield, ChevronRight, LayoutGrid, Spade } from 'lucide-react';
+import { LogOut, ChevronDown, Users, Link, Plus, UserPlus, Bell, BellOff, UserPen, Loader2, Trash2, Image, Award, Check, Calculator, Shield, ChevronRight, LayoutGrid, Spade, Compass } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useOneOffGame } from '@/contexts/OneOffGameContext';
+import { useTour } from '@/contexts/TourContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
@@ -42,6 +43,7 @@ export function Header() {
   // (a leftover subscription can still be turned off).
   const showNotificationsRow = isSupported && (!!homegame || isSubscribed);
   const { game: oneOff } = useOneOffGame();
+  const { openTour } = useTour();
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
 
@@ -321,8 +323,9 @@ export function Header() {
             </div>
           )}
 
-          {/* Account exits kept apart from everyday settings */}
+          {/* Shown to everyone (no homegame too); account exits kept apart from everyday settings */}
           <div className="mt-2 overflow-hidden rounded-xl border border-border/60 bg-secondary/40 divide-y divide-border/50">
+            <ClubRow icon={Compass} label="Take the tour" onClick={fromClub(openTour)} />
             <ClubRow icon={LogOut} label="Sign out" onClick={fromClub(handleSignOut)} />
             {isOwner && (
               <ClubRow icon={Trash2} label="Delete homegame" destructive onClick={fromClub(() => setDeleteDialogOpen(true))} />

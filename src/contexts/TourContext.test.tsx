@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, render, screen, fireEvent } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 
 type Profile = { created_at: string; seen_tips?: string[] } | null;
 
@@ -192,6 +192,53 @@ describe('TourProvider', () => {
     const { result } = mount('/sessions');
     act(() => result.current.tour.openTour());
     expect(result.current.holds).toBe(true);
+  });
+
+  it('drops a pending auto-open when the user leaves Home before the decision', () => {
+    state.live = { liveSession: null, loading: true };
+    const { result, rerender } = renderHook(
+      () => ({ tour: useTour(), navigate: useNavigate() }),
+      {
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <MemoryRouter initialEntries={['/']}>
+            <TourProvider>{children}</TourProvider>
+          </MemoryRouter>
+        ),
+      },
+    );
+    act(() => result.current.tour.maybeAutoOpen());
+    act(() => result.current.navigate('/sessions'));
+
+    // The live-session check comes back while the user is on another page.
+    state.live = { liveSession: null, loading: false };
+    rerender();
+    expect(result.current.tour.open).toBe(false);
+
+    // Back on Home without a fresh request: the old one is gone.
+    act(() => result.current.navigate('/'));
+    expect(result.current.tour.open).toBe(false);
+
+    // Home asks again on its next mount, and that one opens.
+    act(() => result.current.tour.maybeAutoOpen());
+    expect(result.current.tour.open).toBe(true);
+  });
+
+  it('openTour shows the real tour sheet with the first card', () => {
+    function Opener() {
+      const { openTour } = useTour();
+      return <button onClick={openTour}>open</button>;
+    }
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <TourProvider>
+          <Opener />
+        </TourProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'open' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Log every game' })).toBeInTheDocument();
   });
 
   it('useTour throws outside the provider', () => {

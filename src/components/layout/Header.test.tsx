@@ -7,6 +7,11 @@ let game: OneOffGame | null = null;
 const FRIDAY = { id: 'hg-1', name: 'Friday game', icon_id: null, disabled_badges: [] };
 let homegame: typeof FRIDAY | null = FRIDAY;
 let pushSupported = false;
+const openTour = vi.fn();
+
+vi.mock('@/contexts/TourContext', () => ({
+  useTour: () => ({ open: false, role: 'host', openTour, closeTour: vi.fn(), maybeAutoOpen: vi.fn() }),
+}));
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuthContext: () => ({
@@ -151,5 +156,29 @@ describe('Header with a homegame', () => {
   it('shows the homegame name in the switcher', () => {
     renderHeader();
     expect(screen.getByRole('button', { name: /switch homegame/i })).toHaveTextContent('Friday game');
+  });
+});
+
+describe('Header "Take the tour" row', () => {
+  beforeEach(() => {
+    game = null;
+    pushSupported = false;
+    openTour.mockClear();
+  });
+
+  it('shows with a homegame and opens the tour', () => {
+    homegame = FRIDAY;
+    renderHeader();
+    openClub();
+    fireEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
+    expect(openTour).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows with no homegame and opens the tour', () => {
+    homegame = null;
+    renderHeader();
+    openClub();
+    fireEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
+    expect(openTour).toHaveBeenCalledTimes(1);
   });
 });
