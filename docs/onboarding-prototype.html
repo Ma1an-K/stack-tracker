@@ -1,0 +1,580 @@
+<title>Stack Tracker Onboarding</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: review notes on the left, a phone running the clickable flow on the right; stacks on narrow screens.
+   Single dark look on purpose: the app itself is dark-only. */
+:root {
+  color-scheme: dark;
+  --bg: hsl(24 10% 4%);
+  --page: hsl(24 9% 6%);
+  --card: hsl(24 8% 7.5%);
+  --raised: hsl(24 7% 11%);
+  --fg: hsl(38 30% 92%);
+  --muted: hsl(32 10% 63%);
+  --border: hsl(36 22% 17%);
+  --gold: hsl(40 58% 56%);
+  --gold-bright: hsl(43 75% 70%);
+  --gold-ink: hsl(24 10% 6%);
+  --gold-soft: hsl(40 58% 56% / .12);
+  --success: hsl(150 50% 50%);
+  --danger: hsl(2 66% 62%);
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --r: 14px;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--page); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: start; }
+@media (max-width: 860px) { .wrap { grid-template-columns: 1fr; gap: 28px; } .stage { order: -1; } }
+
+/* ---------- Review panel ---------- */
+.eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 38px); line-height: 1.1; margin: 6px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 60ch; margin: 0 0 22px; }
+.paths { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.path-btn { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 500; }
+.path-btn[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.steps { list-style: none; padding: 0; margin: 0 0 22px; display: grid; gap: 4px; }
+.steps button { width: 100%; text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 10px; display: flex; gap: 10px; align-items: baseline; color: var(--muted); }
+.steps button .n { font-variant-numeric: tabular-nums; font-size: 12px; min-width: 18px; }
+.steps button[aria-current="step"] { background: var(--card); color: var(--fg); }
+.steps button[aria-current="step"] .n { color: var(--gold); }
+.note { border: 1px solid var(--border); background: var(--card); border-radius: var(--r); padding: 16px 18px; }
+.note h2 { font-family: var(--font-display); font-weight: 600; font-size: 20px; margin: 0 0 8px; }
+.note p { margin: 0 0 10px; color: var(--muted); max-width: 62ch; }
+.note p:last-child { margin-bottom: 0; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; margin-right: 6px; vertical-align: 1px; }
+.tag.new { background: var(--gold-soft); color: var(--gold-bright); }
+.tag.today { background: var(--raised); color: var(--muted); }
+.open-q { margin-top: 18px; border-left: 2px solid var(--gold); padding: 4px 0 4px 14px; color: var(--muted); font-size: 14px; }
+.open-q strong { color: var(--fg); font-weight: 600; }
+
+/* ---------- Phone ---------- */
+.stage { position: sticky; top: 20px; justify-self: center; }
+.phone { width: min(375px, 100%); height: 760px; max-height: calc(100vh - 40px); min-height: 600px; background: var(--bg); border: 1px solid var(--border); border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 30px 80px -30px hsl(40 58% 56% / .18); }
+.screen { flex: 1; overflow-y: auto; padding: 26px 22px 24px; display: flex; flex-direction: column; animation: in .22s ease-out; }
+@keyframes in { from { opacity: .4; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .screen { animation: none; } }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: .22em; color: var(--muted); font-weight: 600; margin-bottom: 26px; }
+.chip-logo { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); display: grid; place-items: center; background: radial-gradient(circle, hsl(40 58% 56% / .35) 0 38%, transparent 40%), var(--card); }
+.chip-logo::after { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px dashed var(--gold); }
+.s-eyebrow { font-size: 11px; letter-spacing: .14em; color: var(--gold); font-weight: 600; text-transform: uppercase; }
+.s-title { font-family: var(--font-display); font-weight: 500; font-size: 34px; line-height: 1.08; margin: 8px 0 6px; text-wrap: balance; }
+.s-sub { color: var(--muted); margin: 0 0 22px; font-size: 14px; }
+.rule { width: 90px; height: 1px; background: linear-gradient(90deg, var(--gold), transparent); margin: 4px 0 22px; }
+.progress { display: flex; gap: 6px; margin-bottom: 22px; }
+.progress span { flex: 1; height: 3px; border-radius: 3px; background: var(--raised); }
+.progress span.on { background: var(--gold); }
+.back { background: none; border: 0; color: var(--muted); font-size: 13px; padding: 0; margin-bottom: 14px; align-self: flex-start; }
+
+.choice { display: grid; gap: 12px; }
+.choice button { text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; display: grid; grid-template-columns: 40px 1fr; gap: 4px 14px; align-items: center; }
+.choice button:hover { border-color: var(--gold-soft); background: var(--raised); }
+.choice .ic { grid-row: span 2; width: 40px; height: 40px; border-radius: 12px; background: var(--gold-soft); color: var(--gold); display: grid; place-items: center; font-size: 18px; }
+.choice b { font-weight: 600; font-size: 16px; }
+.choice small { color: var(--muted); font-size: 13px; }
+.choice button.featured { border-color: hsl(40 58% 56% / .45); }
+
+label.f { display: block; font-size: 13px; color: var(--fg); margin-bottom: 6px; font-weight: 500; }
+.input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; color: var(--fg); font: inherit; }
+.input::placeholder { color: hsl(32 10% 45%); }
+.field { margin-bottom: 16px; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.spacer { flex: 1; min-height: 16px; }
+.btn { width: 100%; border: 0; border-radius: 12px; padding: 14px; font-weight: 600; background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: var(--gold-ink); box-shadow: 0 8px 24px -10px hsl(40 58% 56% / .6); }
+.btn.ghost { background: var(--card); color: var(--fg); border: 1px solid var(--border); box-shadow: none; }
+.btn + .btn { margin-top: 10px; }
+.link { background: none; border: 0; color: var(--gold); font-weight: 500; padding: 10px; font-size: 14px; }
+.center { text-align: center; }
+
+.crew { display: grid; gap: 8px; margin-bottom: 12px; }
+.crew-row { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; }
+.av { width: 30px; height: 30px; border-radius: 50%; background: var(--raised); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--gold); flex: none; }
+.crew-row input { flex: 1; min-width: 0; background: none; border: 0; color: var(--fg); font: inherit; padding: 4px 0; }
+.crew-row .you { font-size: 11px; color: var(--gold); border: 1px solid hsl(40 58% 56% / .4); border-radius: 6px; padding: 1px 6px; }
+.crew-row .x { background: none; border: 0; color: var(--muted); font-size: 16px; padding: 2px 6px; }
+.add-row { border: 1px dashed var(--border); background: none; border-radius: 12px; padding: 10px; color: var(--muted); width: 100%; font-size: 14px; }
+.count { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.count.ok { color: var(--success); }
+
+.invite-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 18px; text-align: center; margin-bottom: 14px; }
+.code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 26px; letter-spacing: .18em; color: var(--gold-bright); margin: 6px 0 4px; }
+.share-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.share-row button { background: var(--raised); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 500; }
+
+.mode { display: grid; gap: 12px; }
+.mode button { text-align: left; border-radius: var(--r); padding: 18px; border: 1px solid var(--border); background: var(--card); }
+.mode button.primary { background: linear-gradient(160deg, hsl(43 70% 64%), hsl(38 52% 44%)); color: var(--gold-ink); border: 0; }
+.mode b { display: block; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
+.mode small { font-size: 13px; opacity: .8; }
+
+.who { display: grid; gap: 8px; }
+.who button { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; text-align: left; }
+.who button .meta { font-size: 12px; color: var(--muted); }
+.who button[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); }
+.who button .tick { margin-left: auto; color: var(--gold); visibility: hidden; }
+.who button[aria-pressed="true"] .tick { visibility: visible; }
+
+.result { display: grid; gap: 8px; margin-bottom: 16px; }
+.pay { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-size: 14px; }
+.pay .arrow { color: var(--muted); }
+.pay .amt { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--gold-bright); }
+.totals { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 16px; font-variant-numeric: tabular-nums; }
+.totals td { padding: 8px 4px; border-bottom: 1px solid var(--border); }
+.totals td:last-child { text-align: right; font-weight: 600; }
+.up { color: var(--success); } .down { color: var(--danger); }
+.toast { background: var(--raised); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 13px; display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+.toast::before { content: "✓"; color: var(--success); font-weight: 700; }
+
+/* Home screens with app chrome */
+.app { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.topbar { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.topbar .gname { font-weight: 600; font-size: 15px; line-height: 1.1; }
+.topbar .role { font-size: 10px; letter-spacing: .14em; color: var(--gold); font-weight: 600; }
+.topbar .sp { flex: 1; }
+.topbar .ib { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); display: grid; place-items: center; color: var(--muted); font-size: 14px; background: none; }
+.app .body { flex: 1; overflow-y: auto; padding: 18px 16px; animation: in .22s ease-out; }
+.hello { font-size: 11px; letter-spacing: .14em; color: var(--gold); font-weight: 600; }
+.hname { font-family: var(--font-display); font-size: 26px; margin: 2px 0 16px; font-weight: 500; }
+.hero2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.hero2 button { text-align: left; border-radius: var(--r); padding: 14px; min-height: 104px; border: 1px solid var(--border); background: var(--card); display: flex; flex-direction: column; justify-content: flex-end; }
+.hero2 button.primary { background: linear-gradient(160deg, hsl(43 70% 64%), hsl(38 52% 44%)); color: var(--gold-ink); border: 0; }
+.hero2 b { font-size: 15px; font-weight: 600; }
+.hero2 small { font-size: 12px; opacity: .75; }
+.sec { font-size: 11px; letter-spacing: .14em; color: var(--gold); font-weight: 600; margin: 18px 0 8px; text-transform: uppercase; }
+.empty { border: 1px dashed var(--border); border-radius: var(--r); padding: 18px; text-align: center; color: var(--muted); font-size: 13px; }
+.crew-cta { border: 1px solid hsl(40 58% 56% / .35); background: var(--gold-soft); border-radius: var(--r); padding: 16px; }
+.crew-cta b { display: block; font-size: 15px; margin-bottom: 4px; }
+.crew-cta p { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.crew-cta .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.crew-cta .two button { border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); background: var(--card); }
+.crew-cta .two button:first-child { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.check { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; margin-bottom: 14px; }
+.check-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.check-head b { font-size: 14px; }
+.check-head span { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { height: 4px; border-radius: 4px; background: var(--raised); overflow: hidden; margin-bottom: 10px; }
+.bar i { display: block; height: 100%; background: var(--gold); }
+.check ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+.check li { display: flex; gap: 8px; align-items: center; }
+.check li .bx { width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--border); flex: none; display: grid; place-items: center; font-size: 10px; }
+.check li.done { color: var(--muted); text-decoration: line-through; }
+.check li.done .bx { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+.check li button { margin-left: auto; background: none; border: 0; color: var(--gold); font-size: 12px; font-weight: 600; padding: 0; }
+.stand { display: grid; gap: 6px; }
+.stand .r { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.stand .r .pos { color: var(--muted); width: 14px; font-size: 12px; }
+.stand .r .v { margin-left: auto; font-weight: 600; }
+.tabbar { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--border); padding: 8px 6px 12px; font-size: 10px; color: var(--muted); text-align: center; align-items: end; }
+.tabbar span.on { color: var(--gold); }
+.tabbar .plus { width: 44px; height: 44px; border-radius: 50%; margin: -22px auto 2px; background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: var(--gold-ink); display: grid; place-items: center; font-size: 22px; font-weight: 600; }
+.tabbar .dim { opacity: .45; }
+.tip { position: absolute; left: 16px; right: 16px; bottom: 86px; background: var(--raised); border: 1px solid hsl(40 58% 56% / .45); border-radius: var(--r); padding: 14px 16px; box-shadow: 0 20px 40px -12px #000; animation: in .25s ease-out; }
+.tip b { display: block; font-size: 14px; margin-bottom: 4px; }
+.tip p { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+.tip button { background: var(--gold); color: var(--gold-ink); border: 0; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; }
+.tip::after { content: ""; position: absolute; bottom: -7px; left: 50%; width: 12px; height: 12px; background: var(--raised); border-right: 1px solid hsl(40 58% 56% / .45); border-bottom: 1px solid hsl(40 58% 56% / .45); transform: translateX(-50%) rotate(45deg); }
+.phone-caption { text-align: center; font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+/* ---------- Install path ---------- */
+.path-btn.install { border-color: hsl(40 58% 56% / .45); }
+.app-icon { width: 64px; height: 64px; border-radius: 15px; display: block; box-shadow: 0 10px 30px -8px hsl(40 58% 56% / .45); }
+.homescreen { background: radial-gradient(120% 90% at 50% 0%, hsl(30 30% 18%), hsl(24 12% 8%)); border: 1px solid var(--border); border-radius: 20px; padding: 18px 12px 14px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 8px; margin: 4px 0 22px; }
+.homescreen div { display: grid; justify-items: center; gap: 5px; font-size: 10px; color: hsl(38 20% 80%); }
+.homescreen i { width: 46px; height: 46px; border-radius: 11px; background: hsl(24 6% 20%); display: block; }
+.homescreen img { width: 46px; height: 46px; border-radius: 11px; animation: pop 1.6s ease-in-out infinite alternate; }
+@keyframes pop { from { transform: scale(1); } to { transform: scale(1.08); box-shadow: 0 0 0 4px hsl(40 58% 56% / .35); } }
+@media (prefers-reduced-motion: reduce) { .homescreen img { animation: none; } }
+.perks { list-style: none; padding: 0; margin: 0 0 20px; display: grid; gap: 8px; font-size: 14px; color: var(--muted); }
+.perks li::before { content: "✓"; color: var(--gold); margin-right: 8px; font-weight: 700; }
+.guide { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 10px; }
+.guide li { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-size: 14px; }
+.guide .num { width: 26px; height: 26px; border-radius: 50%; background: var(--gold-soft); color: var(--gold); display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.guide .glyph { width: 34px; height: 34px; border-radius: 9px; background: var(--raised); display: grid; place-items: center; color: hsl(210 90% 66%); }
+.guide .glyph svg { width: 18px; height: 18px; }
+.callout { font-size: 12px; color: var(--muted); background: var(--raised); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; }
+.callout b { color: var(--fg); }
+.safari { border-top: 1px solid var(--border); background: hsl(24 8% 9%); padding: 10px 24px 16px; display: flex; justify-content: space-between; align-items: center; color: hsl(210 90% 66%); position: relative; }
+.safari svg { width: 20px; height: 20px; }
+.safari .share { position: relative; }
+.safari .share::after { content: ""; position: absolute; inset: -8px; border-radius: 10px; border: 2px solid var(--gold); animation: ring 1.2s ease-out infinite; }
+@keyframes ring { from { opacity: 1; transform: scale(.9); } to { opacity: 0; transform: scale(1.35); } }
+@media (prefers-reduced-motion: reduce) { .safari .share::after { animation: none; } }
+.pointer { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); font-size: 12px; color: var(--gold-bright); font-weight: 600; white-space: nowrap; }
+.scrim { position: absolute; inset: 0; background: hsl(0 0% 0% / .55); display: flex; align-items: flex-end; animation: in .2s ease-out; }
+.sheet { width: 100%; background: var(--raised); border-top: 1px solid var(--border); border-radius: 22px 22px 0 0; padding: 22px 20px 24px; }
+.sheet .grab { width: 40px; height: 4px; border-radius: 4px; background: var(--border); margin: -8px auto 16px; }
+.sheet-head { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; }
+.sheet-head .app-icon { width: 52px; height: 52px; border-radius: 12px; }
+.sheet h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px; margin: 0; line-height: 1.15; }
+.sheet p { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+.sysdialog { width: calc(100% - 40px); margin: 0 auto 30px; background: hsl(220 8% 18%); color: hsl(0 0% 94%); border-radius: 26px; padding: 22px; font-family: system-ui, sans-serif; }
+.sysdialog .row { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+.sysdialog .row img { width: 44px; height: 44px; border-radius: 50%; }
+.sysdialog small { color: hsl(0 0% 70%); display: block; }
+.sysdialog .acts { display: flex; justify-content: flex-end; gap: 20px; color: hsl(210 90% 72%); font-weight: 600; font-size: 14px; }
+.banner { display: flex; align-items: center; gap: 10px; background: var(--gold-soft); border: 1px solid hsl(40 58% 56% / .35); border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; }
+.banner img { width: 28px; height: 28px; border-radius: 7px; }
+.banner span { flex: 1; }
+.banner button { background: none; border: 0; padding: 2px 4px; }
+.banner .how { color: var(--gold); font-weight: 600; }
+.banner .x { color: var(--muted); }
+.badges { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.badges button { background: hsl(0 0% 2%); border: 1px solid hsl(0 0% 30%); border-radius: 10px; padding: 8px 10px; text-align: left; line-height: 1.1; }
+.badges small { font-size: 9px; display: block; color: hsl(0 0% 75%); }
+.badges b { font-size: 15px; font-weight: 600; }
+.copyrow { display: flex; gap: 8px; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; }
+.copyrow code { flex: 1; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copyrow button { background: none; border: 0; color: var(--gold); font-weight: 600; font-size: 13px; }
+.wa-bar { background: hsl(160 30% 12%); padding: 12px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; border-bottom: 1px solid var(--border); }
+.wa-bar .dots { margin-left: auto; font-size: 18px; color: var(--fg); position: relative; }
+.wa-bar .dots::after { content: ""; position: absolute; inset: -6px -8px; border-radius: 8px; border: 2px solid var(--gold); animation: ring 1.2s ease-out infinite; }
+
+/* Laptop frame */
+.phone.laptop { width: min(620px, 100%); height: 420px; min-height: 0; border-radius: 14px; }
+.lap-bar { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--border); align-items: center; }
+.lap-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--raised); }
+.lap-bar span { margin-left: 12px; flex: 1; background: var(--card); border-radius: 6px; font-size: 11px; color: var(--muted); padding: 3px 10px; }
+.lap { flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; padding: 28px 30px; align-items: center; animation: in .22s ease-out; }
+.lap h4 { font-family: var(--font-display); font-weight: 500; font-size: 34px; line-height: 1.05; margin: 8px 0 10px; }
+.lap h4 em { color: var(--gold); font-style: normal; }
+.lap p { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+.qr-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 18px; text-align: center; }
+.qr { width: 132px; height: 132px; margin: 0 auto 12px; background: hsl(38 30% 94%); border-radius: 8px; padding: 8px; display: grid; grid-template-columns: repeat(21, 1fr); }
+.qr i { display: block; }
+.qr i.on { background: hsl(24 10% 6%); }
+.qr-card b { display: block; font-size: 14px; margin-bottom: 2px; }
+.qr-card small { color: var(--muted); font-size: 12px; }
+.lap .btn { width: auto; padding: 10px 18px; font-size: 13px; }
+@media (max-width: 560px) { .lap { grid-template-columns: 1fr; padding: 18px; } .lap h4 { font-size: 26px; } .phone.laptop { height: auto; } }
+</style>
+
+<div class="wrap">
+  <section>
+    <div class="eyebrow">Draft for review · v2 · 28 Nov 2026</div>
+    <h1>New first-run flow</h1>
+    <p class="lede">A clickable mock of the proposed onboarding. Pick a path, then tap through the phone or jump to any step from the list. Gold "New" tags mark what changes compared with today.</p>
+
+    <div class="paths" role="group" aria-label="Path">
+      <button class="path-btn" data-path="host">Host a regular game</button>
+      <button class="path-btn" data-path="join">Join with an invite</button>
+      <button class="path-btn" data-path="quick">Just settle tonight</button>
+      <button class="path-btn install" data-path="install">Get it on the phone</button>
+    </div>
+
+    <ol class="steps" id="steps"></ol>
+    <div class="note" id="note"></div>
+
+    <div class="open-q"><strong>Still open:</strong> after a quick game, should "Play with this crew again?" copy those players and that game into a new homegame, or just open the host path? Copying is noticeably more work. The mock shows the simple version.</div>
+  </section>
+
+  <div class="stage">
+    <div class="phone" id="phone"></div>
+    <div class="phone-caption">Mock only, nothing is saved</div>
+  </div>
+</div>
+
+<script>
+const PATHS = {
+  host: ['welcome', 'h-name', 'h-crew', 'h-invite', 'h-first', 'h-home'],
+  join: ['welcome', 'j-code', 'j-who', 'j-home'],
+  quick: ['welcome', 'q-start', 'q-settle', 'q-home'],
+  install: ['i-landing', 'i-ios', 'i-android', 'i-inapp', 'i-laptop', 'i-after', 'i-banner', 'i-store'],
+};
+const SVG = {
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>',
+  plusSq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  fwd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/></svg>',
+  tabs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="13" height="13" rx="2"/><path d="M8 20h10a2 2 0 0 0 2-2V8"/></svg>',
+};
+const ICON = 'icon.png';
+const LABELS = {
+  'welcome': 'What brings you here?',
+  'h-name': 'Name your game', 'h-crew': 'Add your crew', 'h-invite': 'Invite them', 'h-first': 'Log your first game', 'h-home': 'Home with checklist',
+  'j-code': 'Enter invite code', 'j-who': 'Which one is you?', 'j-home': 'Home as a member',
+  'q-start': 'Who played?', 'q-settle': 'Who pays whom', 'q-home': 'Home without a homegame',
+  'i-landing': 'Phone landing page', 'i-ios': 'iPhone: how to add it', 'i-android': 'Android: one tap', 'i-inapp': 'Opened from WhatsApp or Instagram',
+  'i-laptop': 'Laptop: scan to get it', 'i-after': 'Second ask, after a win', 'i-banner': 'Gentle reminder on Home', 'i-store': 'Later: store badges',
+};
+const NOTES = {
+  'welcome': ['new', 'Replaces the create-or-join wall', 'Today a new account hits a screen with only "Create game" and "Join with code", and can\'t get into the app without one. This screen adds a third way in, "Just settle tonight", which opens the one-off game flow that already exists but is currently hidden in the club menu.', 'Anyone arriving from an invite link skips this screen and lands on the code step with the code filled in.'],
+  'h-name': ['today', 'Name your game', 'Same field as today, now step 1 of 4 with a progress bar so the host knows setup is short.'],
+  'h-crew': ['new', 'Add your crew before anything else', 'Today the tour only says "Add your crew here before logging sessions", and tapping + with no players ends at "Seat at least two players". Here the host adds people inline, starting with themselves, so the first game can be logged straight away.', 'Players added here are unclaimed until friends join and pick their name.'],
+  'h-invite': ['new', 'Invite them, or skip', 'The invite code and link move out of Settings and into setup. Skipping is fine: it stays on the Home checklist.'],
+  'h-first': ['new', 'Log your first game', 'Two clear choices, the same ones as the dashboard: play live (track buy-ins as you go) or enter final totals for a game that already happened. Either one opens the existing session flow with the crew already seated. "Later" goes to Home.'],
+  'h-home': ['new', 'Home with a getting-started checklist', 'Replaces the 8-step icon tour. The checklist shows what\'s done and links to what isn\'t, and it disappears once all four items are ticked. It\'s worked out from real data (players, invites, sessions), so it\'s correct on any device.', 'Tap "Got it" on the tip to see how the old tour shrinks to one or two one-time hints.'],
+  'j-code': ['today', 'Enter invite code', 'Same as today. With an invite link the code is already filled in and this screen is one tap.'],
+  'j-who': ['new', '"Which one is you?" becomes a real step', 'Today this is buried in tour step 3 ("Find your name in the Players list and tap This is me"), and if you skip it your results never show under My Stats. Now it comes straight after joining. The host still approves the claim, just like now.', '"I\'m not on the list" adds them as a new player the host can merge later.'],
+  'j-home': ['new', 'Home as a member', 'Lands on the homegame they just joined, with their claim shown as pending until the host approves it. No tour, just one tip on My Stats the first time they open it.'],
+  'q-start': ['today', 'Who played?', 'This is the existing one-off start screen (names, live or totals). The only change is that a brand-new user can reach it.'],
+  'q-settle': ['today', 'Who pays whom', 'The existing settle screen. Saving keeps the game in their private history.'],
+  'i-landing': ['new', 'On a phone, the landing page is one screen', 'Today a phone gets the full laptop marketing page, and installing is one small grey line under the buttons. On a phone browser the first thing you see now is an app-style screen whose main job is getting Stack Tracker onto the home screen. The full marketing page stays for laptops and for "Learn more".', 'Install comes before sign-up on purpose. On iPhone, a home-screen app doesn\'t share sign-in with Safari, so someone who signs up in Safari and then installs has to sign in again. Installing first means they sign up once, inside the app.', 'If the site is already open from the home screen, none of this shows.'],
+  'i-ios': ['new', 'iPhone: a drawn three-step guide', 'iPhone has no install button that a website can trigger, so the guide shows exactly what to tap, with Safari\'s own icons and a pulsing ring on the Share button at the bottom.', 'If the visitor came from an invite link, the code is shown here too, because the installed app can\'t read the link they arrived on.'],
+  'i-android': ['new', 'Android: the real install prompt', 'Chrome on Android lets the site trigger its own install prompt, so the gold button opens it straight away. If Chrome hasn\'t made the prompt available yet, we fall back to a short guide: ⋮ menu, then "Install app".'],
+  'i-inapp': ['new', 'Invite links opened inside other apps', 'Most invites will be tapped in WhatsApp, Messenger or Instagram, which open links in their own built-in browser. Those can\'t add to the home screen at all. We detect that and ask the visitor to open the page in Safari or Chrome first, with a copy-link button as a backup.'],
+  'i-laptop': ['new', 'Laptop: scan to open on your phone', 'The laptop keeps the marketing page, but the hero now offers a QR code to open Stack Tracker on your phone, plus a plain "use it here" link for anyone who wants to stay on the laptop.'],
+  'i-after': ['new', 'A second ask, at a good moment', 'Anyone who chose "Continue in browser" is asked once more right after something works: the first game saved, a claim sent, or a quick game settled. "Not now" hides it for 7 days.'],
+  'i-banner': ['new', 'A small reminder on Home', 'After that, a slim banner on Home until they install or close it. Closing it twice stops it for good. All of this disappears once the app runs from the home screen.'],
+  'i-store': ['new', 'When the store apps are live', 'The same spots switch to App Store and Google Play buttons, and the home-screen guide moves behind a small "or add it from your browser" link. That way none of this design is thrown away when the store apps launch.'],
+  'q-home': ['new', 'Home without a homegame', 'New: an account with no homegame gets a real Home instead of being sent back to sign-in. It leads with the two quick-game actions and saved games, with a card offering to start or join a homegame. Tabs that need a homegame (Sessions, Standings) show the same start-or-join card instead of being locked away.'],
+};
+
+let path = 'host', idx = 0, tipShown = true, picked = 1;
+const phone = document.getElementById('phone');
+
+function progress(n, of) { return '<div class="progress">' + Array.from({ length: of }, (_, i) => `<span class="${i < n ? 'on' : ''}"></span>`).join('') + '</div>'; }
+function back() { return '<button class="back" data-back>‹ Back</button>'; }
+function brand() { return '<div class="brand"><span class="chip-logo"></span>STACK TRACKER</div>'; }
+function tabbar(on, dim) {
+  const t = (k, l) => `<span class="${on === k ? 'on' : ''} ${dim && k !== 'home' && k !== 'stats' ? 'dim' : ''}">${l}</span>`;
+  return `<div class="tabbar">${t('home', '⌂<br>Home')}${t('sessions', '▦<br>Sessions')}<span><div class="plus">+</div>New</span>${t('standings', '♛<br>Standings')}${t('stats', '↗<br>Stats')}</div>`;
+}
+
+const SCREENS = {
+  'welcome': () => `<div class="screen">${brand()}
+    <div class="s-eyebrow">Welcome, Sam</div>
+    <div class="s-title">What brings you here?</div>
+    <div class="rule"></div>
+    <div class="choice">
+      <button class="featured" data-pick="host"><span class="ic">♠</span><b>I run a regular game</b><small>Track your crew, standings and who owes what</small></button>
+      <button data-pick="join"><span class="ic">⛓</span><b>I've got an invite</b><small>Join your friends' homegame with a code</small></button>
+      <button data-pick="quick"><span class="ic">⚡</span><b>Just settle tonight</b><small>Work out who pays whom. No setup.</small></button>
+    </div>
+    <div class="spacer"></div>
+    <p class="center s-sub" style="margin:0">You can do the others any time.</p></div>`,
+
+  'h-name': () => `<div class="screen">${back()}${progress(1, 4)}
+    <div class="s-eyebrow">Step 1 of 4</div>
+    <div class="s-title">Name your game</div>
+    <p class="s-sub">This is what your crew sees when they join.</p>
+    <div class="field"><label class="f" for="gname">Game name</label><input class="input" id="gname" value="Friday Night Game"></div>
+    <div class="spacer"></div><button class="btn" data-next>Continue</button></div>`,
+
+  'h-crew': () => `<div class="screen">${back()}${progress(2, 4)}
+    <div class="s-eyebrow">Step 2 of 4</div>
+    <div class="s-title">Who plays?</div>
+    <p class="s-sub">Add the regulars. They can link their own accounts later.</p>
+    <div class="crew">
+      <div class="crew-row"><span class="av">S</span><input id="c0" value="Sam" aria-label="Player 1"><span class="you">You</span></div>
+      <div class="crew-row"><span class="av">D</span><input id="c1" value="Dan" aria-label="Player 2"><button class="x" aria-label="Remove">×</button></div>
+      <div class="crew-row"><span class="av">M</span><input id="c2" value="Maya" aria-label="Player 3"><button class="x" aria-label="Remove">×</button></div>
+      <div class="crew-row"><span class="av">+</span><input id="c3" placeholder="Add a name" aria-label="Player 4"></div>
+    </div>
+    <div class="count ok">3 players · ready for a first game</div>
+    <div class="spacer"></div><button class="btn" data-next>Continue</button></div>`,
+
+  'h-invite': () => `<div class="screen">${back()}${progress(3, 4)}
+    <div class="s-eyebrow">Step 3 of 4</div>
+    <div class="s-title">Bring them in</div>
+    <p class="s-sub">Friends who join can see standings and claim their name.</p>
+    <div class="invite-box"><div class="s-sub" style="margin:0">Invite code</div><div class="code">K7Q-4MX</div>
+      <div class="share-row"><button>Copy link</button><button>Share…</button></div></div>
+    <div class="spacer"></div><button class="btn" data-next>Done</button>
+    <button class="link center" data-next>Skip for now</button></div>`,
+
+  'h-first': () => `<div class="screen">${back()}${progress(4, 4)}
+    <div class="s-eyebrow">Step 4 of 4</div>
+    <div class="s-title">Log your first game</div>
+    <p class="s-sub">Sam, Dan and Maya are seated. Playing now, or catching up on one you already played?</p>
+    <div class="mode">
+      <button class="primary" data-next><b>Play live</b><small>Track buy-ins and rebuys as you go</small></button>
+      <button data-next><b>Enter final totals</b><small>The game's done, just add the numbers</small></button>
+    </div>
+    <div class="spacer"></div><button class="link center" data-next>I'll do this later</button></div>`,
+
+  'h-home': () => `<div class="app">
+    <div class="topbar"><span class="chip-logo"></span><div><div class="gname">Friday Night Game</div><div class="role">OWNER</div></div><span class="sp"></span><button class="ib" aria-label="Players">👤</button><button class="ib" aria-label="Menu">▦</button></div>
+    <div class="body">
+      <div class="toast">First game saved. Maya's up $45.</div>
+      <div class="check"><div class="check-head"><b>Getting started</b><span>3 of 4</span></div><div class="bar"><i style="width:75%"></i></div>
+        <ul><li class="done"><span class="bx">✓</span>Create your game</li><li class="done"><span class="bx">✓</span>Add 2 or more players</li>
+        <li><span class="bx"></span>Invite your crew<button>Share</button></li><li class="done"><span class="bx">✓</span>Log your first game</li></ul></div>
+      <div class="sec">Standings</div>
+      <div class="stand"><div class="r"><span class="pos">1</span>Maya<span class="v up">+$45</span></div><div class="r"><span class="pos">2</span>Sam<span class="v up">+$10</span></div><div class="r"><span class="pos">3</span>Dan<span class="v down">−$55</span></div></div>
+    </div>${tabbar('home')}
+    ${tipShown ? '<div class="tip" style="left:auto;right:16px;width:250px;bottom:84px"><b>Next game starts here</b><p>Tap + to log another game. Your crew stays seated.</p><button data-tip>Got it</button></div>' : ''}</div>`,
+
+  'j-code': () => `<div class="screen">${back()}
+    <div class="s-eyebrow">Join a homegame</div>
+    <div class="s-title">Enter your invite code</div>
+    <p class="s-sub">Your host can find it under Invite.</p>
+    <div class="field"><label class="f" for="code">Invite code</label><input class="input" id="code" value="K7Q-4MX" style="letter-spacing:.14em;font-family:ui-monospace,Menlo,monospace"><div class="hint">Filled in from your invite link.</div></div>
+    <div class="spacer"></div><button class="btn" data-next>Join Friday Night Game</button></div>`,
+
+  'j-who': () => `<div class="screen">${back()}
+    <div class="s-eyebrow">Friday Night Game</div>
+    <div class="s-title">Which one is you?</div>
+    <p class="s-sub">This links your results to your account, so they show up under My Stats.</p>
+    <div class="who">
+      ${[['Sam', 'Host · 12 games'], ['Dan', '11 games'], ['Maya', '9 games'], ['Jordan', '4 games']].map((p, i) =>
+        `<button data-who="${i}" aria-pressed="${picked === i}"><span class="av">${p[0][0]}</span><span><div>${p[0]}</div><div class="meta">${p[1]}</div></span><span class="tick">✓</span></button>`).join('')}
+    </div>
+    <button class="link center" style="margin-top:6px">I'm not on the list</button>
+    <div class="spacer"></div><button class="btn" data-next>That's me</button>
+    <button class="link center" data-next>Skip, I'm just watching</button></div>`,
+
+  'j-home': () => `<div class="app">
+    <div class="topbar"><span class="chip-logo"></span><div><div class="gname">Friday Night Game</div><div class="role">MEMBER</div></div><span class="sp"></span><button class="ib" aria-label="Menu">▦</button></div>
+    <div class="body">
+      <div class="toast">You're in. Sam will confirm you're Dan.</div>
+      <div class="hello">Good evening</div><div class="hname">Dan</div>
+      <div class="hero2"><button class="primary"><b>Start live game</b><small>Track buy-ins as you play</small></button><button><b>Log a result</b><small>Game already finished</small></button></div>
+      <div class="sec">Standings · this month</div>
+      <div class="stand"><div class="r"><span class="pos">1</span>Maya<span class="v up">+$310</span></div><div class="r"><span class="pos">2</span>Dan <span class="meta" style="font-size:11px;color:var(--muted)">· pending</span><span class="v up">+$95</span></div><div class="r"><span class="pos">3</span>Sam<span class="v down">−$140</span></div></div>
+    </div>${tabbar('home')}</div>`,
+
+  'q-start': () => `<div class="screen">${back()}
+    <div class="s-eyebrow">Quick game · no homegame needed</div>
+    <div class="s-title">Who played?</div>
+    <div class="crew" style="margin-top:12px">
+      <div class="crew-row"><span class="av">S</span><input id="q0" value="Sam" aria-label="Player 1"><span class="you">You</span></div>
+      <div class="crew-row"><span class="av">A</span><input id="q1" value="Alex" aria-label="Player 2"></div>
+      <div class="crew-row"><span class="av">R</span><input id="q2" value="Riley" aria-label="Player 3"></div>
+    </div>
+    <button class="add-row">+ Add player</button>
+    <div class="spacer"></div>
+    <div class="mode"><button class="primary" data-next><b>Play live</b><small>Default buy-in $50</small></button><button data-next><b>Enter final totals</b><small>Game's already finished</small></button></div></div>`,
+
+  'q-settle': () => `<div class="screen">${back()}
+    <div class="s-eyebrow">Tonight · $</div>
+    <div class="s-title">Who pays whom</div>
+    <table class="totals"><tr><td>Alex</td><td class="up">+$70</td></tr><tr><td>Sam</td><td class="up">+$15</td></tr><tr><td>Riley</td><td class="down">−$85</td></tr></table>
+    <div class="result"><div class="pay">Riley <span class="arrow">→</span> Alex<span class="amt">$70</span></div><div class="pay">Riley <span class="arrow">→</span> Sam<span class="amt">$15</span></div></div>
+    <div class="spacer"></div><button class="btn" data-next>Save to my history</button><button class="btn ghost" data-next>Share results</button></div>`,
+
+  'q-home': () => `<div class="app">
+    <div class="topbar"><span class="chip-logo"></span><div><div class="gname">Stack Tracker</div><div class="role">NO HOMEGAME YET</div></div><span class="sp"></span><button class="ib" aria-label="Menu">▦</button></div>
+    <div class="body">
+      <div class="toast">Saved. Only you can see it.</div>
+      <div class="hello">Good evening</div><div class="hname">Sam</div>
+      <div class="hero2"><button class="primary"><b>Start live game</b><small>Track buy-ins as you play</small></button><button><b>Enter final totals</b><small>Game already finished</small></button></div>
+      <div class="crew-cta"><b>Play with the same crew?</b><p>A homegame keeps running standings, badges and history for everyone.</p><div class="two"><button data-goto="host">Start a homegame</button><button data-goto="join">Join with code</button></div></div>
+      <div class="sec">Saved games</div>
+      <div class="stand"><div class="r">Tonight · 3 players<span class="v up">+$15</span></div></div>
+    </div>${tabbar('home', true)}</div>`,
+};
+
+const QR = (() => { let s = 7, out = ''; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const finder = (r, c) => [[0, 0], [0, 14], [14, 0]].some(([a, b]) => { const y = r - a, x = c - b; return y >= 0 && y < 7 && x >= 0 && x < 7 && (y === 0 || y === 6 || x === 0 || x === 6 || (y > 1 && y < 5 && x > 1 && x < 5)); });
+  const zone = (r, c) => [[0, 0], [0, 14], [14, 0]].some(([a, b]) => r >= a && r < a + 8 && c >= b && c < b + 8);
+  for (let r = 0; r < 21; r++) for (let c = 0; c < 21; c++) out += `<i class="${finder(r, c) || (!zone(r, c) && rnd() > .52) ? 'on' : ''}"></i>`;
+  return out; })();
+
+function homescreen() {
+  return `<div class="homescreen" aria-hidden="true">${['Photos', 'Maps', 'Music', 'Notes', 'Mail', 'Camera', 'Clock'].map(n => `<div><i></i>${n}</div>`).join('')}<div><img src="${ICON}" alt="">Stack Tracker</div></div>`;
+}
+
+Object.assign(SCREENS, {
+  'i-landing': () => `<div class="screen">${brand()}
+    <div class="s-title" style="margin-top:0">Your poker night, one tap away.</div>
+    <p class="s-sub">Log games, settle up and track standings. Built for the phone in your pocket.</p>
+    ${homescreen()}
+    <button class="btn" data-next>Add to Home Screen</button>
+    <button class="btn ghost" data-step="5">Continue in browser</button>
+    <div class="spacer"></div>
+    <p class="center s-sub" style="margin:8px 0 0">Free · No ads · <u>Learn more</u></p></div>`,
+
+  'i-ios': () => `<div class="app"><div class="screen" style="padding-bottom:12px">${back()}
+    <div class="s-eyebrow">On iPhone</div>
+    <div class="s-title" style="font-size:30px">Add it in three taps</div>
+    <ol class="guide">
+      <li><span class="num">1</span><span>Tap <b>Share</b> in Safari's bar</span><span class="glyph">${SVG.share}</span></li>
+      <li><span class="num">2</span><span>Scroll down, tap <b>Add to Home Screen</b></span><span class="glyph">${SVG.plusSq}</span></li>
+      <li><span class="num">3</span><span>Tap <b>Add</b>, then open Stack Tracker from your Home Screen</span><img class="app-icon" src="${ICON}" alt="" style="width:34px;height:34px;border-radius:9px;box-shadow:none"></li>
+    </ol>
+    <div class="callout"><b>Joining a game?</b> Keep your code handy: <b>K7Q-4MX</b>. The app asks for it once you open it.</div>
+    <div class="spacer"></div><button class="link center" data-step="5">Skip, use it in Safari</button></div>
+    <div class="safari"><span class="pointer">Tap here ↓</span>${SVG.back}${SVG.fwd}<span class="share">${SVG.share}</span>${SVG.book}${SVG.tabs}</div></div>`,
+
+  'i-android': () => `<div class="screen" style="position:relative">${brand()}
+    <div class="s-title" style="margin-top:0">Your poker night, one tap away.</div>
+    <p class="s-sub">Log games, settle up and track standings.</p>
+    ${homescreen()}
+    <div class="scrim"><div class="sysdialog" role="dialog" aria-label="Install app">
+      <div style="font-size:20px;margin-bottom:16px">Install app?</div>
+      <div class="row"><img src="${ICON}" alt=""><div>Stack Tracker<small>stack-tracker.com</small></div></div>
+      <div class="acts"><button data-step="5" style="background:none;border:0;color:inherit;font-weight:600">Cancel</button><button data-next style="background:none;border:0;color:inherit;font-weight:600">Install</button></div></div></div></div>`,
+
+  'i-inapp': () => `<div class="app"><div class="wa-bar"><span style="font-size:16px">×</span><span><b>stack-tracker.com</b><br><span style="color:var(--muted);font-size:11px">Opened in WhatsApp</span></span><span class="dots">⋯</span></div>
+    <div class="screen">
+    <div class="s-eyebrow">One quick step</div>
+    <div class="s-title" style="font-size:30px">Open this in Safari first</div>
+    <p class="s-sub">WhatsApp's built-in browser can't add apps to your Home Screen. Tap <b>⋯</b> at the top, then <b>Open in Safari</b>.</p>
+    <div class="copyrow"><code>stack-tracker.com/join?code=K7Q-4MX</code><button>Copy</button></div>
+    <p class="s-sub" style="font-size:13px">Or copy the link and paste it into Safari.</p>
+    <div class="spacer"></div><button class="link center" data-step="5">Join here anyway</button></div></div>`,
+
+  'i-laptop': () => `<div class="lap-bar"><i></i><i></i><i></i><span>stack-tracker.com</span></div>
+    <div class="lap"><div><div class="s-eyebrow">Poker homegame manager</div>
+      <h4>Track every hand.<br><em>Settle every debt.</em></h4>
+      <p>Stack Tracker lives on your phone, next to the cards. Scan the code to put it on your home screen.</p>
+      <button class="btn" data-next>Or use it here</button></div>
+      <div class="qr-card"><div class="qr" aria-hidden="true">${QR}</div><b>Scan with your phone camera</b><small>Opens Stack Tracker, ready to add</small></div></div>`,
+
+  'i-after': () => `<div class="app" style="position:relative">
+    <div class="topbar"><img src="${ICON}" alt="" style="width:34px;height:34px;border-radius:50%"><div><div class="gname">Friday Night Game</div><div class="role">OWNER</div></div><span class="sp"></span><button class="ib" aria-label="Menu">▦</button></div>
+    <div class="body"><div class="toast">First game saved. Maya's up $45.</div>
+      <div class="stand"><div class="r"><span class="pos">1</span>Maya<span class="v up">+$45</span></div><div class="r"><span class="pos">2</span>Sam<span class="v up">+$10</span></div><div class="r"><span class="pos">3</span>Dan<span class="v down">−$55</span></div></div></div>${tabbar('home')}
+    <div class="scrim"><div class="sheet"><div class="grab"></div>
+      <div class="sheet-head"><img class="app-icon" src="${ICON}" alt=""><h3>Keep it one tap away for next Friday</h3></div>
+      <p>Add Stack Tracker to your Home Screen. It opens full screen, loads faster and keeps you signed in.</p>
+      <button class="btn" data-step="1">Show me how</button><button class="link center" style="width:100%" data-next>Not now</button></div></div></div>`,
+
+  'i-banner': () => `<div class="app">
+    <div class="topbar"><img src="${ICON}" alt="" style="width:34px;height:34px;border-radius:50%"><div><div class="gname">Friday Night Game</div><div class="role">OWNER</div></div><span class="sp"></span><button class="ib" aria-label="Menu">▦</button></div>
+    <div class="body"><div class="banner"><img src="${ICON}" alt=""><span>Put Stack Tracker on your Home Screen</span><button class="how" data-step="1">How</button><button class="x" aria-label="Dismiss">×</button></div>
+      <div class="hello">Good evening</div><div class="hname">Sam</div>
+      <div class="hero2"><button class="primary"><b>Start live game</b><small>Track buy-ins as you play</small></button><button><b>Log a result</b><small>Game already finished</small></button></div>
+      <div class="sec">Standings</div>
+      <div class="stand"><div class="r"><span class="pos">1</span>Maya<span class="v up">+$45</span></div><div class="r"><span class="pos">2</span>Sam<span class="v up">+$10</span></div></div></div>${tabbar('home')}</div>`,
+
+  'i-store': () => `<div class="screen">${brand()}
+    <div class="s-title" style="margin-top:0">Your poker night, one tap away.</div>
+    <p class="s-sub">Log games, settle up and track standings.</p>
+    ${homescreen()}
+    <div class="badges"><button><small>Download on the</small><b>App Store</b></button><button><small>Get it on</small><b>Google Play</b></button></div>
+    <button class="link center">or add it from your browser</button>
+    <div class="spacer"></div><p class="center s-sub" style="margin:0">Mock badges. Real store artwork goes here at launch.</p></div>`,
+});
+
+function render() {
+  const steps = PATHS[path];
+  const key = steps[idx];
+  phone.classList.toggle('laptop', key === 'i-laptop');
+  phone.innerHTML = SCREENS[key]();
+  document.querySelectorAll('.path-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.path === path));
+  document.getElementById('steps').innerHTML = steps.map((k, i) =>
+    `<li><button data-step="${i}" ${i === idx ? 'aria-current="step"' : ''}><span class="n">${i + 1}</span>${LABELS[k]}</button></li>`).join('');
+  const [kind, title, ...paras] = NOTES[key];
+  document.getElementById('note').innerHTML = `<h2><span class="tag ${kind}">${kind === 'new' ? 'New' : 'As today'}</span>${title}</h2>` + paras.map(p => `<p>${p}</p>`).join('');
+  try { localStorage.setItem('onb-proto', JSON.stringify({ path, idx })); } catch (e) {}
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.path) { path = t.dataset.path; idx = 0; tipShown = true; }
+  else if (t.dataset.pick) { path = t.dataset.pick; idx = 1; }
+  else if (t.dataset.goto) { path = t.dataset.goto; idx = 1; }
+  else if (t.dataset.step !== undefined) { idx = +t.dataset.step; tipShown = true; }
+  else if ('next' in t.dataset) { idx = Math.min(idx + 1, PATHS[path].length - 1); }
+  else if ('back' in t.dataset) { idx = Math.max(idx - 1, 0); }
+  else if ('tip' in t.dataset) { tipShown = false; }
+  else if (t.dataset.who !== undefined) { picked = +t.dataset.who; }
+  else return;
+  render();
+});
+
+try { const s = JSON.parse(localStorage.getItem('onb-proto') || 'null'); if (s && PATHS[s.path] && s.idx < PATHS[s.path].length) { path = s.path; idx = s.idx; } } catch (e) {}
+render();
+</script>
