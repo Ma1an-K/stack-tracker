@@ -38,7 +38,11 @@ export function usePlayers(homegameId: string | undefined) {
     }
   };
 
-  const addPlayer = async (name: string) => {
+  /**
+   * linkUserId links the new player to an account (host setup adds the owner as
+   * "You"). quiet skips the success toast when several players are added at once.
+   */
+  const addPlayer = async (name: string, opts?: { linkUserId?: string; quiet?: boolean }) => {
     if (!homegameId) return { error: new Error('No homegame'), player: null };
 
     try {
@@ -47,6 +51,7 @@ export function usePlayers(homegameId: string | undefined) {
         .insert({
           homegame_id: homegameId,
           name: name.trim(),
+          ...(opts?.linkUserId ? { user_id: opts.linkUserId } : {}),
         })
         .select()
         .single();
@@ -54,10 +59,12 @@ export function usePlayers(homegameId: string | undefined) {
       if (error) throw error;
       
       setPlayers(prev => [...prev, data as Player].sort((a, b) => a.name.localeCompare(b.name)));
-      toast({
-        title: 'Success',
-        description: `${name} added to the player list`,
-      });
+      if (!opts?.quiet) {
+        toast({
+          title: 'Success',
+          description: `${name} added to the player list`,
+        });
+      }
       return { error: null, player: data as Player };
     } catch (err) {
       console.error('Error adding player:', err);

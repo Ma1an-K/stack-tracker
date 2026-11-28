@@ -49,6 +49,7 @@ const loaders = {
   oneOffSettle: () => import("@/pages/oneoff/OneOffSettlePage"),
   oneOffSaved: () => import("@/pages/oneoff/SavedOneOffPage"),
   welcomeChoice: () => import("@/pages/welcome/WelcomeChoicePage"),
+  welcomeHost: () => import("@/pages/welcome/HostSetupPage"),
 };
 
 const DashboardPage = lazy(() => loaders.dashboard().then((m) => ({ default: m.DashboardPage })));
@@ -67,6 +68,7 @@ const OneOffLivePage = lazy(() => loaders.oneOffLive().then((m) => ({ default: m
 const OneOffSettlePage = lazy(() => loaders.oneOffSettle().then((m) => ({ default: m.OneOffSettlePage })));
 const SavedOneOffPage = lazy(() => loaders.oneOffSaved().then((m) => ({ default: m.SavedOneOffPage })));
 const WelcomeChoicePage = lazy(() => loaders.welcomeChoice().then((m) => ({ default: m.WelcomeChoicePage })));
+const HostSetupPage = lazy(() => loaders.welcomeHost().then((m) => ({ default: m.HostSetupPage })));
 
 /** Warm every signed-in screen's chunk once the shell is idle, so tab switches never wait on the network. */
 function usePrefetchRoutes(enabled: boolean) {
@@ -140,6 +142,7 @@ function AppRoutes() {
       {/* First run: full screen, outside the app shell. */}
       <Route path="/welcome" element={<WelcomeLayout />}>
         <Route index element={<WelcomeChoicePage />} />
+        <Route path="host" element={<HostSetupPage />} />
       </Route>
       <Route element={<AppShell />}>
         <Route path="/" element={<DashboardPage />} />
