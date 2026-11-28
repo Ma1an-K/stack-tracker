@@ -1,12 +1,22 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Camera, Clock, Image, Mail, Map, Music, StickyNote, type LucideIcon } from 'lucide-react';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { GetTheApp } from '@/components/install/GetTheApp';
 import { APP_ICON, InviteCallout } from '@/components/install/InstallGuide';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { savePendingCode } from '@/lib/inviteLink';
 
-const OTHER_APPS = ['Photos', 'Maps', 'Music', 'Notes', 'Mail', 'Camera', 'Clock'];
+// Generic glyphs on neutral tiles: they read as "other apps" without copying any vendor's icon artwork.
+const OTHER_APPS: { name: string; Icon: LucideIcon }[] = [
+  { name: 'Photos', Icon: Image },
+  { name: 'Maps', Icon: Map },
+  { name: 'Music', Icon: Music },
+  { name: 'Notes', Icon: StickyNote },
+  { name: 'Mail', Icon: Mail },
+  { name: 'Camera', Icon: Camera },
+  { name: 'Clock', Icon: Clock },
+];
 
 /** A drawn Home Screen with Stack Tracker in the last slot, so "Add to Home Screen" reads as a picture. */
 function HomeScreen() {
@@ -15,9 +25,11 @@ function HomeScreen() {
       aria-hidden="true"
       className="mb-6 mt-1 grid grid-cols-4 gap-x-2 gap-y-3.5 rounded-[20px] border border-border bg-[radial-gradient(120%_90%_at_50%_0%,hsl(30_30%_18%),hsl(24_12%_8%))] px-3 pb-3.5 pt-[18px]"
     >
-      {OTHER_APPS.map((name) => (
+      {OTHER_APPS.map(({ name, Icon }) => (
         <div key={name} className="grid justify-items-center gap-[5px] text-[0.625rem] text-[hsl(38_20%_80%)]">
-          <i className="block h-[46px] w-[46px] rounded-[11px] bg-[hsl(24_6%_20%)]" />
+          <i className="grid h-[46px] w-[46px] place-items-center rounded-[11px] bg-[hsl(24_6%_20%)]">
+            <Icon className="h-[22px] w-[22px] text-[hsl(38_20%_80%/0.55)]" strokeWidth={1.75} />
+          </i>
           {name}
         </div>
       ))}
