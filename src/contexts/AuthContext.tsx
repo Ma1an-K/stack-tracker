@@ -12,6 +12,10 @@ interface AuthContextType {
   currentHomegame: HomegameWithRole | null;
   isOwner: boolean;
   loading: boolean;
+  /** Signed in, but this user's profile and homegames haven't loaded yet. */
+  userDataPending: boolean;
+  /** The homegames couldn't be loaded; an empty list is unknown, not "none". */
+  membershipsError: boolean;
   isRecovery: boolean;
   signIn: (email: string, password: string) => Promise<{ error: ActionError }>;
   signUp: (email: string, password: string, username: string) => Promise<{ error: ActionError; user?: User }>;

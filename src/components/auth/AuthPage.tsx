@@ -76,6 +76,8 @@ export function AuthPage() {
     user,
     homegames,
     loading: authLoading,
+    userDataPending,
+    membershipsError,
   } = useAuthContext();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -122,16 +124,18 @@ export function AuthPage() {
 
   // Signed in: home for members, else the first-run welcome (or the join step for an invite).
   // Not mid-signup: with email confirmation off, signUp signs in briefly before handleSignup signs out.
+  // Waits for this user's homegames: until they land, an empty list says nothing.
   const signedIn = !!user && step !== 'signup';
   useEffect(() => {
-    if (authLoading || !signedIn) return;
+    if (authLoading || userDataPending || !signedIn) return;
     const target = welcomeTarget({
       homegameCount: homegames.length,
       pendingCode: inviteCode ?? readPendingCode(),
       hasSeenWelcome: hasSeenWelcome(),
+      membershipsFailed: membershipsError,
     });
     navigate(target, { replace: true });
-  }, [signedIn, homegames, authLoading, inviteCode, navigate]);
+  }, [signedIn, homegames, authLoading, userDataPending, membershipsError, inviteCode, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

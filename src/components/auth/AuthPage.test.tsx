@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
-type AuthState = { user: { id: string } | null; homegames: { id: string }[] };
+type AuthState = {
+  user: { id: string } | null;
+  homegames: { id: string }[];
+  userDataPending?: boolean;
+  membershipsError?: boolean;
+};
 let auth: AuthState = { user: null, homegames: [] };
 
 vi.mock('@/contexts/AuthContext', () => ({
@@ -86,5 +91,27 @@ describe('AuthPage after sign-in', () => {
     rerender(tree('/auth?mode=signup'));
     expect(screen.queryByText('choice screen')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Join the table.' })).toBeInTheDocument();
+  });
+
+  // Existing members sign in with no welcome_seen on this device: the user lands
+  // before their homegames do, and that gap must never route to the choice screen.
+  it('waits for the signed-in user\'s homegames, then sends a member home', () => {
+    const { rerender } = render(tree('/auth'));
+    auth = { user: { id: 'user-1' }, homegames: [], userDataPending: true };
+    rerender(tree('/auth'));
+    expect(screen.queryByText('choice screen')).toBeNull();
+    expect(screen.queryByText('home')).toBeNull();
+
+    auth = { user: { id: 'user-1' }, homegames: [{ id: 'hg-1' }], userDataPending: false };
+    rerender(tree('/auth'));
+    expect(screen.getByText('home')).toBeInTheDocument();
+    expect(screen.queryByText('choice screen')).toBeNull();
+  });
+
+  it('sends someone home, not to the choice screen, when their homegames failed to load', () => {
+    auth = { user: { id: 'user-1' }, homegames: [], membershipsError: true };
+    render(tree('/auth'));
+    expect(screen.getByText('home')).toBeInTheDocument();
+    expect(screen.queryByText('choice screen')).toBeNull();
   });
 });

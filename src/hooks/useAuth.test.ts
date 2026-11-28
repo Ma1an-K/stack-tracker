@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getSession: null as unknown as (...args: unknown[]) => unknown,
   rpc: null as unknown as (...args: unknown[]) => unknown,
   signUp: null as unknown as (...args: unknown[]) => unknown,
+  signOut: null as unknown as (...args: unknown[]) => unknown,
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
@@ -23,6 +24,7 @@ vi.mock("@/integrations/supabase/client", () => ({
       },
       getSession: (...args: unknown[]) => mocks.getSession(...args),
       signUp: (...args: unknown[]) => mocks.signUp(...args),
+      signOut: (...args: unknown[]) => mocks.signOut(...args),
     },
   },
 }));
@@ -174,5 +176,86 @@ describe("useAuth signUp", () => {
         options: expect.objectContaining({ emailRedirectTo: `${window.location.origin}/confirmed` }),
       }),
     );
+  });
+});
+
+describe("useAuth user-data readiness", () => {
+  // Resolves the in-flight profile + memberships requests.
+  async function land(memberships: { data: unknown; error: unknown }) {
+    await waitFor(() => expect(mocks.db.pending()).toHaveLength(2));
+    await act(async () => {
+      for (const r of mocks.db.pending()) {
+        r.resolve(r.table === "profiles" ? { data: { id: "u1" }, error: null } : memberships);
+      }
+    });
+  }
+
+  it("flags the data as pending from sign-in until that user's homegames land", async () => {
+    const { result } = renderHook(() => useAuth());
+    act(() => mocks.authCallback!("INITIAL_SESSION", null));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.userDataPending).toBe(false);
+
+    // Signing in on /auth: the user is set at once, the fetch comes after.
+    act(() => mocks.authCallback!("SIGNED_IN", session));
+    expect(result.current.user).toEqual(session.user);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.userDataPending).toBe(true);
+
+    await land({ data: [{ role: "member", homegame: { id: "h1", name: "Friday" } }], error: null });
+    await waitFor(() => expect(result.current.userDataPending).toBe(false));
+    expect(result.current.homegames).toHaveLength(1);
+  });
+
+  it("does not flag a token refresh for the same user as pending", async () => {
+    const { result } = renderHook(() => useAuth());
+    act(() => mocks.authCallback!("INITIAL_SESSION", session));
+    await land({ data: [], error: null });
+    await waitFor(() => expect(result.current.userDataPending).toBe(false));
+
+    act(() => mocks.authCallback!("TOKEN_REFRESHED", session));
+    expect(result.current.userDataPending).toBe(false);
+    // The refresh refetches in the background; settle it so it can't leak into the next test.
+    await land({ data: [], error: null });
+    expect(result.current.userDataPending).toBe(false);
+  });
+
+  it("reports a failed memberships fetch instead of treating it as no homegames", async () => {
+    const { result } = renderHook(() => useAuth());
+    act(() => mocks.authCallback!("INITIAL_SESSION", session));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await land({ data: null, error: { message: "network down" } });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.userDataPending).toBe(false);
+    expect(result.current.membershipsError).toBe(true);
+  });
+
+  it("clears the memberships error once a fetch succeeds", async () => {
+    const { result } = renderHook(() => useAuth());
+    act(() => mocks.authCallback!("INITIAL_SESSION", session));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await land({ data: null, error: { message: "network down" } });
+    await waitFor(() => expect(result.current.membershipsError).toBe(true));
+
+    act(() => { result.current.refetchUserData(); });
+    await land({ data: [], error: null });
+    await waitFor(() => expect(result.current.membershipsError).toBe(false));
+  });
+
+  it("remembers the welcome as seen for anyone already in a homegame", async () => {
+    renderHook(() => useAuth());
+    act(() => mocks.authCallback!("INITIAL_SESSION", session));
+    await land({ data: [{ role: "member", homegame: { id: "h1", name: "Friday" } }], error: null });
+    await waitFor(() => expect(localStorage.getItem("welcome_seen")).toBe("1"));
+  });
+});
+
+describe("useAuth signOut", () => {
+  it("forgets the welcome choice so the next account on this device gets its own first run", async () => {
+    mocks.signOut = vi.fn(() => Promise.resolve({ error: null }));
+    localStorage.setItem("welcome_seen", "1");
+    const { result } = renderHook(() => useAuth());
+    await act(async () => { await result.current.signOut(); });
+    expect(localStorage.getItem("welcome_seen")).toBeNull();
   });
 });

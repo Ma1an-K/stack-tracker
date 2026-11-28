@@ -2,11 +2,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
-type AuthState = { user: { id: string } | null; loading: boolean };
+type AuthState = {
+  user: { id: string } | null;
+  loading: boolean;
+  homegames?: { id: string }[];
+  userDataPending?: boolean;
+};
 let auth: AuthState = { user: { id: 'user-1' }, loading: false };
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuthContext: () => ({
+    homegames: [],
     ...auth,
     profile: auth.user ? { id: 'user-1', display_name: 'Dana', username: 'dana' } : null,
   }),
@@ -40,6 +46,7 @@ function renderWelcome() {
         <Route path="/welcome/join" element={<p>join step</p>} />
         <Route path="/one-off" element={<p>one-off hub</p>} />
         <Route path="/auth" element={<p>sign in</p>} />
+        <Route path="/" element={<p>home</p>} />
       </Routes>
     </MemoryRouter>
   );
@@ -74,5 +81,18 @@ describe('WelcomeChoicePage', () => {
     auth = { user: null, loading: false };
     renderWelcome();
     expect(screen.getByText('sign in')).toBeInTheDocument();
+  });
+
+  it('waits while the signed-in user\'s homegames are still loading', () => {
+    auth = { user: { id: 'user-1' }, loading: false, userDataPending: true };
+    renderWelcome();
+    expect(screen.queryByRole('heading', { name: 'What brings you here?' })).toBeNull();
+    expect(screen.queryByText('home')).toBeNull();
+  });
+
+  it('sends someone already in a homegame home', () => {
+    auth = { user: { id: 'user-1' }, loading: false, homegames: [{ id: 'hg-1' }] };
+    renderWelcome();
+    expect(screen.getByText('home')).toBeInTheDocument();
   });
 });

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 // The shell sends a signed-in user with no homegame to the first-run welcome,
 // whatever route they arrive by (email-confirmation link to "/", reopening the app).
-let auth: { homegames: { id: string }[] } = { homegames: [] };
+let auth: { homegames: { id: string }[]; userDataPending?: boolean; membershipsError?: boolean } = { homegames: [] };
 
 // Modules read localStorage on import (before beforeEach), so stub it from the start.
 const storage = vi.hoisted(() => {
@@ -25,6 +25,8 @@ vi.mock('@/contexts/AuthContext', () => ({
     homegames: auth.homegames,
     homegame: auth.homegames[0] ?? null,
     loading: false,
+    userDataPending: auth.userDataPending ?? false,
+    membershipsError: auth.membershipsError ?? false,
     isRecovery: false,
     updatePassword: vi.fn(),
   }),
@@ -75,6 +77,21 @@ describe('app shell first-run redirect', () => {
 
   it('renders the shell for a homegame member', () => {
     auth = { homegames: [{ id: 'hg-1' }] };
+    render(<App />);
+    expect(screen.getByText('app shell')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+  });
+
+  it('waits on the splash, not the choice screen, while the homegames are loading', () => {
+    auth = { homegames: [], userDataPending: true };
+    render(<App />);
+    expect(window.location.pathname).toBe('/');
+    expect(screen.queryByText('app shell')).toBeNull();
+    expect(screen.queryByText('choice screen')).toBeNull();
+  });
+
+  it('renders the shell, not the choice screen, when the homegames failed to load', () => {
+    auth = { homegames: [], membershipsError: true };
     render(<App />);
     expect(screen.getByText('app shell')).toBeInTheDocument();
     expect(window.location.pathname).toBe('/');

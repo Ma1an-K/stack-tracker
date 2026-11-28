@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Link2, Spade, Zap } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { AuthScreen } from '@/components/auth/AuthScreen';
@@ -32,7 +32,7 @@ function ChoiceLink({ to, featured, children }: { to: string; featured?: boolean
 
 /** "What brings you here?": the first screen after sign-up for anyone without a homegame or invite. */
 export function WelcomeChoicePage() {
-  const { profile } = useAuthContext();
+  const { profile, homegames } = useAuthContext();
   const navigate = useNavigate();
   const name = profile?.display_name || profile?.username;
 
@@ -40,6 +40,9 @@ export function WelcomeChoicePage() {
     markWelcomeSeen();
     navigate('/one-off');
   };
+
+  // Already in a homegame (a member landing here by link or Back): this screen isn't for them.
+  if (homegames.length > 0) return <Navigate to="/" replace />;
 
   return (
     <AuthScreen eyebrow={name ? `Welcome, ${name}` : 'Welcome'} headline="What brings you here?">

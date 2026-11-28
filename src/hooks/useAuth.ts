@@ -5,6 +5,7 @@ import { Profile, Homegame, HomegameWithRole, HomegameRole } from '@/types/datab
 import { logError } from '@/lib/errorLog';
 import { storageKey } from '@/lib/oneOff/localStore';
 import { publicOrigin } from '@/lib/platform';
+import { markWelcomeSeen, clearWelcomeSeen } from '@/lib/onboarding/welcomeTarget';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -14,6 +15,11 @@ export function useAuth() {
   const [currentHomegame, setCurrentHomegame] = useState<HomegameWithRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRecovery, setIsRecovery] = useState(false);
+  // Whose profile and homegames are loaded. A sign-in sets the user at once and
+  // fetches after, so until these match, homegames=[] means "not loaded yet".
+  const [dataUserId, setDataUserId] = useState<string | null>(null);
+  // The memberships query failed: homegames=[] is unknown, not "no homegame".
+  const [membershipsError, setMembershipsError] = useState(false);
 
   // The in-flight user-data fetch started by the auth listener, so that
   // back-to-back auth events for the same user (e.g. INITIAL_SESSION followed
@@ -52,6 +58,8 @@ export function useAuth() {
           setProfile(null);
           setHomegames([]);
           setCurrentHomegame(null);
+          setDataUserId(null);
+          setMembershipsError(false);
           setLoading(false);
         }
       }
@@ -90,6 +98,7 @@ export function useAuth() {
       if (membershipError) {
         console.error('Error fetching memberships:', membershipError);
       }
+      setMembershipsError(!!membershipError || !membershipData);
 
       if (membershipData) {
         const homegamesWithRoles: HomegameWithRole[] = membershipData
@@ -100,7 +109,9 @@ export function useAuth() {
           }));
         
         setHomegames(homegamesWithRoles);
-        
+        // Already in a homegame: never the first-run choice screen on this device.
+        if (homegamesWithRoles.length > 0) markWelcomeSeen();
+
         // Set current homegame from localStorage or first one
         const savedHomegameId = localStorage.getItem('currentHomegameId');
         const savedHomegame = homegamesWithRoles.find(h => h.id === savedHomegameId);
@@ -108,7 +119,9 @@ export function useAuth() {
       }
     } catch (err) {
       console.error('Error in fetchUserData:', err);
+      setMembershipsError(true);
     } finally {
+      setDataUserId(userId);
       setLoading(false);
     }
   };
@@ -236,6 +249,8 @@ export function useAuth() {
 
   const signOut = async () => {
     localStorage.removeItem('currentHomegameId');
+    // The next account on this device gets its own first run.
+    clearWelcomeSeen();
     const { error } = await supabase.auth.signOut();
     return { error };
   };
@@ -248,6 +263,7 @@ export function useAuth() {
       return { error };
     }
     localStorage.removeItem('currentHomegameId');
+    clearWelcomeSeen();
     if (userId) localStorage.removeItem(storageKey(userId));
     // The user no longer exists on the server, so only clear the local session.
     await supabase.auth.signOut({ scope: 'local' });
@@ -332,6 +348,9 @@ export function useAuth() {
   };
 
   const isOwner = currentHomegame?.role === 'owner' || currentHomegame?.role === 'admin';
+  // Signed in, but this user's homegames haven't loaded yet. Routing that
+  // depends on homegames must wait while this is true.
+  const userDataPending = !!user && dataUserId !== user.id;
 
   return {
     user,
@@ -342,6 +361,8 @@ export function useAuth() {
     currentHomegame,
     isOwner,
     loading,
+    userDataPending,
+    membershipsError,
     isRecovery,
     signIn,
     signUp,

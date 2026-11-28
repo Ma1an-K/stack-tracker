@@ -119,13 +119,14 @@ function useInstallFirst(signedIn: boolean) {
  * visitors get the landing page on "/" and are sent to /auth everywhere else.
  */
 function AppShell() {
-  const { user, homegame, homegames, loading } = useAuthContext();
+  const { user, homegame, homegames, loading, userDataPending, membershipsError } = useAuthContext();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const installFirst = useInstallFirst(!!user);
   usePrefetchRoutes(!loading && !!user);
 
-  const route = shellRoute({ loading, user: !!user, homegame: !!homegame, pathname, native: isNativeApp() });
+  // Until this user's homegames land, an empty list says nothing: wait on the splash.
+  const route = shellRoute({ loading: loading || userDataPending, user: !!user, homegame: !!homegame, pathname, native: isNativeApp() });
   if (route === "splash") return <SplashScreen />;
   if (route === "landing") {
     if (!installFirst.show) return <LandingPage />;
@@ -140,7 +141,12 @@ function AppShell() {
   // First run, whatever route they came in by (email-confirmation link, reopening
   // the app): no homegame and no welcome choice yet, or an invite waiting. /welcome
   // is outside this shell, and welcome_seen or a homegame lets the shell render.
-  const welcome = welcomeTarget({ homegameCount: homegames.length, pendingCode: readPendingCode(), hasSeenWelcome: hasSeenWelcome() });
+  const welcome = welcomeTarget({
+    homegameCount: homegames.length,
+    pendingCode: readPendingCode(),
+    hasSeenWelcome: hasSeenWelcome(),
+    membershipsFailed: membershipsError,
+  });
   if (welcome !== "/") return <Navigate to={welcome} replace />;
 
   return (
