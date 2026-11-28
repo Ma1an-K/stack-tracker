@@ -29,3 +29,12 @@ export function markInviteShared(homegameId: string): void {
     /* storage unavailable: the checklist just keeps the invite item open */
   }
 }
+
+/** Whether the host has copied or shared this homegame's invite on this device. */
+export function isInviteShared(homegameId: string): boolean {
+  try {
+    return localStorage.getItem(`invite_shared:${homegameId}`) === '1';
+  } catch {
+    return false;
+  }
+}

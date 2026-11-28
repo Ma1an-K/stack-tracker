@@ -8,10 +8,9 @@ import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
 import { validateNames } from '@/lib/oneOff/localStore';
-import { markInviteShared, pickInviteCode } from '@/lib/onboarding/ensureInviteCode';
-import { publicOrigin } from '@/lib/platform';
+import { pickInviteCode } from '@/lib/onboarding/ensureInviteCode';
+import { copyInviteLink, shareInvite } from '@/lib/onboarding/shareInvite';
 import { cn } from '@/lib/utils';
 import type { HomegameWithRole } from '@/types/database';
 
@@ -223,29 +222,12 @@ export function HostSetupPage() {
     navigate(to);
   };
 
-  const inviteLink = inviteCode ? `${publicOrigin()}/auth?mode=signup&code=${encodeURIComponent(inviteCode)}` : '';
-
-  const copyLink = async () => {
-    if (!inviteCode || !createdId) return;
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      markInviteShared(createdId);
-      toast({ title: 'Link copied', description: 'Paste it into your group chat.' });
-    } catch {
-      toast({ title: 'Failed to copy', variant: 'destructive' });
-    }
+  const copyLink = () => {
+    if (inviteCode && createdId) void copyInviteLink(createdId, inviteCode);
   };
 
-  const shareLink = async () => {
-    if (!inviteCode || !createdId) return;
-    if (!navigator.share) return copyLink();
-    const text = `Join ${createdName || 'our homegame'} on Stack Tracker: ${inviteLink} (invite code ${inviteCode}).`;
-    try {
-      await navigator.share({ title: 'Stack Tracker invite', text });
-      markInviteShared(createdId);
-    } catch (e) {
-      if ((e as DOMException).name !== 'AbortError') await copyLink();
-    }
+  const shareLink = () => {
+    if (inviteCode && createdId) void shareInvite(createdId, createdName, inviteCode);
   };
 
   const top = (

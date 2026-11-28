@@ -28,6 +28,8 @@ import { RefreshingDot } from '@/components/common/RefreshingDot';
 import { cn } from '@/lib/utils';
 import { greeting } from '@/lib/greeting';
 import { NoHomegameHome } from '@/components/home/NoHomegameHome';
+import { GettingStartedCard } from '@/components/home/GettingStartedCard';
+import { useGettingStarted } from '@/hooks/useGettingStarted';
 
 export function DashboardPage() {
   const { homegame } = useAuthContext();
@@ -38,6 +40,7 @@ function HomegameDashboard() {
   const { profile, homegames, homegame, isOwner, selectHomegame } = useAuthContext();
   const stats = usePersonalStats();
   const { liveSession } = useLiveSession();
+  const { checklist, onInviteShared } = useGettingStarted(homegame?.id);
 
   const live = useMemo(
     () => ({ homegameStats: stats.homegameStats, recentSessions: stats.recentSessions, overallStats: stats.overallStats }),
@@ -64,6 +67,15 @@ function HomegameDashboard() {
       </header>
 
       <LiveSessionCard />
+
+      {homegame && checklist.visible && (
+        <GettingStartedCard
+          homegameId={homegame.id}
+          homegameName={homegame.name}
+          checklist={checklist}
+          onInviteShared={onInviteShared}
+        />
+      )}
 
       {/* Lifetime hero */}
       {isFirstLoad ? (
