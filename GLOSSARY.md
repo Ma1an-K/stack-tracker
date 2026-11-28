@@ -55,12 +55,16 @@ The amount a **Player** left the game with.
 _Avoid_: Net, balance
 
 **Payment**:
-Money handed from one **Player** to another during the game, such as an early leaver paying their loss in cash. It reduces what the **Settlement** still asks of them and never affects stats.
+Money handed during a game from one **Player** to another **Player** in that game, such as an early leaver paying their loss in cash. It reduces what the **Settlement** still asks of them and never affects stats.
 _Avoid_: Transfer, settlement
 
 **Settlement**:
-The computed list of who pays whom after a game: the fewest **Transfers** that square every **Player**'s **Profit**, after **Payments**.
+The computed list of who pays whom after a game: the **Transfers** that square every **Player**'s **Profit**, after **Payments**. Only a **Balanced** game has one.
 _Avoid_: Payout, payment
+
+**Balanced**:
+A game whose total **Cash-outs** equal its total **Buy-ins** to the cent.
+_Avoid_: Even, matching
 
 **Transfer**:
 One line of a **Settlement**: an amount one **Player** still owes another.
