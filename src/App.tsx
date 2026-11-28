@@ -11,6 +11,8 @@ import { LandingPage } from "@/pages/LandingPage";
 import { WelcomeLayout } from "@/pages/welcome/WelcomeLayout";
 import { isNativeApp } from "@/lib/platform";
 import { shellRoute } from "@/lib/shellRoute";
+import { welcomeTarget, hasSeenWelcome } from "@/lib/onboarding/welcomeTarget";
+import { readPendingCode } from "@/lib/inviteLink";
 import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
 import { PublicHandCalculatorPage } from "@/pages/PublicHandCalculatorPage";
 import { AboutPage } from "@/pages/AboutPage";
@@ -86,11 +88,12 @@ const queryClient = new QueryClient();
 /**
  * One persistent shell for every signed-in screen (including "/"), so Header,
  * Navigation and LiveSessionProvider are mounted once and never remount on a
- * tab change. Signed-in users get it with or without a homegame. Signed-out
+ * tab change. Signed-in users get it with or without a homegame (first-run
+ * users are sent to /welcome first). Signed-out
  * visitors get the landing page on "/" and are sent to /auth everywhere else.
  */
 function AppShell() {
-  const { user, homegame, loading } = useAuthContext();
+  const { user, homegame, homegames, loading } = useAuthContext();
   const { pathname } = useLocation();
   usePrefetchRoutes(!loading && !!user);
 
@@ -98,6 +101,12 @@ function AppShell() {
   if (route === "splash") return <SplashScreen />;
   if (route === "landing") return <LandingPage />;
   if (route === "auth") return <Navigate to="/auth" replace />;
+
+  // First run, whatever route they came in by (email-confirmation link, reopening
+  // the app): no homegame and no welcome choice yet, or an invite waiting. /welcome
+  // is outside this shell, and welcome_seen or a homegame lets the shell render.
+  const welcome = welcomeTarget({ homegameCount: homegames.length, pendingCode: readPendingCode(), hasSeenWelcome: hasSeenWelcome() });
+  if (welcome !== "/") return <Navigate to={welcome} replace />;
 
   return (
     <MainLayout>
