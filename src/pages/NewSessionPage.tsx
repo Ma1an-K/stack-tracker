@@ -25,6 +25,8 @@ export function NewSessionPage() {
   // Arriving from "End Session & Cash Out": pre-seed the normal form with the
   // live buy-ins and close the draft once the real session is logged.
   const fromLive = searchParams.get('from') === 'live' && !!liveSession;
+  // Arriving from host setup: seat the whole crew so only totals are left.
+  const seatAll = !fromLive && searchParams.get('seat') === 'all';
 
   const addPlayerFresh = async (name: string) => {
     const result = await addPlayer(name);
@@ -118,12 +120,18 @@ export function NewSessionPage() {
         ))}
 
       <SessionForm
-        key={fromLive ? liveSession?.id : 'blank'}
+        key={fromLive ? liveSession?.id : seatAll ? 'seat-all' : 'blank'}
         players={activePlayers}
         currency={currency}
         onSubmit={handleSubmit}
         onAddPlayer={isOwner ? addPlayerFresh : undefined}
-        initialPlayers={fromLive ? liveSession?.players : undefined}
+        initialPlayers={
+          fromLive
+            ? liveSession?.players
+            : seatAll
+              ? activePlayers.map(p => ({ player_id: p.id, buy_in: 0 }))
+              : undefined
+        }
         initialPayments={fromLive ? liveSession?.payments ?? [] : undefined}
         initialNotes={fromLive ? liveSession?.notes ?? undefined : undefined}
       />

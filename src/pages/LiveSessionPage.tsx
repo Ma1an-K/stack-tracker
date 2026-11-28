@@ -1,4 +1,4 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { usePlayers } from '@/hooks/usePlayers';
@@ -60,6 +60,7 @@ function DiscardButton() {
 
 export function LiveSessionPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { homegame } = useAuthContext();
   const { liveSession, loading, start } = useLiveSession();
   const playersApi = usePlayers(homegame?.id);
@@ -102,7 +103,11 @@ export function LiveSessionPage() {
           }
         />
       ) : (
-        <SetupView players={activePlayers} onStart={start} />
+        <SetupView
+          players={activePlayers}
+          onStart={start}
+          initialSelected={searchParams.get('seat') === 'all' ? activePlayers.map(p => p.id) : undefined}
+        />
       )}
     </div>
   );

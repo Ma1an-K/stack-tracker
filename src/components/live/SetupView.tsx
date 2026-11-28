@@ -18,13 +18,16 @@ const BUY_IN_PRESETS = [20, 50, 100, 200];
 export function SetupView({
   players,
   onStart,
+  initialSelected,
 }: {
   players: RosterPlayer[];
   onStart: (p: { player_id: string; buy_in: number }[], defaultBuyIn: number) => Promise<unknown>;
+  /** Player ids seated when the view opens (e.g. everyone, from host setup). */
+  initialSelected?: string[];
 }) {
   const isMobile = useIsMobile();
   const [defaultBuyIn, setDefaultBuyIn] = useState('50');
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(() => initialSelected ?? []);
   const [starting, setStarting] = useState(false);
 
   const toggle = (id: string) =>
