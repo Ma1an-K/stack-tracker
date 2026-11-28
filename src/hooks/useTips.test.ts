@@ -57,6 +57,19 @@ describe('useTips', () => {
   });
 });
 
+describe('useTips before the seen_tips migration is applied', () => {
+  // A frontend deployed ahead of the migration gets profiles without the column.
+  it('shows no tip and never tries to save one', async () => {
+    mocks.profile = { id: 'u1' };
+    const { result } = renderHook(() => useTips());
+    expect(result.current.shouldShow('home-plus')).toBe(false);
+    expect(result.current.shouldShow('mystats-member')).toBe(false);
+
+    await act(async () => { await result.current.markSeen('home-plus'); });
+    expect(mocks.updateProfile).not.toHaveBeenCalled();
+  });
+});
+
 describe('clearLegacyTourKeys', () => {
   it('removes the old tour flags from localStorage', () => {
     const store = new Map([
