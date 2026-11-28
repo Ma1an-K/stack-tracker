@@ -65,12 +65,13 @@ beforeEach(() => {
 });
 
 describe('NewSessionPage seat=all', () => {
-  it('seats every active player with a zero buy-in', () => {
+  // Blank, not 0, so the form's "fill in all values" check still applies.
+  it('seats every active player with a blank buy-in', () => {
     renderAt('/new-session?seat=all');
     expect(lastSeed()).toEqual([
-      { player_id: 'p1', buy_in: 0 },
-      { player_id: 'p2', buy_in: 0 },
-      { player_id: 'p3', buy_in: 0 },
+      { player_id: 'p1', buy_in: null },
+      { player_id: 'p2', buy_in: null },
+      { player_id: 'p3', buy_in: null },
     ]);
   });
 

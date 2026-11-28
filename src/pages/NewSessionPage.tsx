@@ -142,7 +142,7 @@ export function NewSessionPage() {
           fromLive
             ? liveSession?.players
             : seatAll
-              ? activePlayers.map(p => ({ player_id: p.id, buy_in: 0 }))
+              ? activePlayers.map(p => ({ player_id: p.id, buy_in: null }))
               : undefined
         }
         initialPayments={fromLive ? liveSession?.payments ?? [] : undefined}

@@ -35,8 +35,8 @@ interface SessionFormProps {
   ) => Promise<{ error: ActionError }>;
   onCancel?: () => void;
   onAddPlayer?: (name: string) => Promise<{ error: ActionError }>;
-  /** Pre-seed rows (e.g. from a live session). Buy-ins filled, cash-outs left blank unless already cashed out. */
-  initialPlayers?: { player_id: string; buy_in: number; cash_out?: number }[];
+  /** Pre-seed rows (e.g. from a live session). Cash-outs left blank unless already cashed out; a null buy-in is left blank too. */
+  initialPlayers?: { player_id: string; buy_in: number | null; cash_out?: number }[];
   initialPayments?: SessionPaymentInput[];
   initialNotes?: string;
   /** Homegame currency symbol for totals (display only). */
@@ -57,7 +57,7 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
     })) ||
       initialPlayers?.map(p => ({
         player_id: p.player_id,
-        buy_in: p.buy_in.toString(),
+        buy_in: p.buy_in !== null ? p.buy_in.toString() : '',
         cash_out: p.cash_out !== undefined ? p.cash_out.toString() : '',
       })) ||
       []
