@@ -9,7 +9,7 @@ import { AuthPage } from "@/components/auth/AuthPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { PhoneLandingPage } from "@/pages/PhoneLandingPage";
 import { WelcomeLayout } from "@/pages/welcome/WelcomeLayout";
-import { isNativeApp } from "@/lib/platform";
+import { isNativeApp, isStandalone } from "@/lib/platform";
 import { shellRoute } from "@/lib/shellRoute";
 import { welcomeTarget, hasSeenWelcome } from "@/lib/onboarding/welcomeTarget";
 import { parseInviteCode, readPendingCode } from "@/lib/inviteLink";
@@ -126,7 +126,7 @@ function AppShell() {
   usePrefetchRoutes(!loading && !!user);
 
   // Until this user's homegames land, an empty list says nothing: wait on the splash.
-  const route = shellRoute({ loading: loading || userDataPending, user: !!user, homegame: !!homegame, pathname, native: isNativeApp() });
+  const route = shellRoute({ loading: loading || userDataPending, user: !!user, homegame: !!homegame, pathname, native: isNativeApp() || isStandalone() });
   if (route === "splash") return <SplashScreen />;
   if (route === "landing") {
     if (!installFirst.show) return <LandingPage />;

@@ -37,6 +37,13 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }));
 
+// Opened from the Home Screen (an installed web app).
+let standalone = false;
+vi.mock('@/lib/platform', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/platform')>();
+  return { ...actual, isStandalone: () => standalone };
+});
+
 vi.mock('@/pages/LandingPage', () => ({
   LandingPage: () => <p>marketing page</p>,
 }));
@@ -50,6 +57,7 @@ function pendingCode() {
 
 beforeEach(() => {
   context = 'ios-safari';
+  standalone = false;
   storage.store.clear();
   sessionStorage.clear();
   window.history.replaceState(null, '', '/');
@@ -128,5 +136,15 @@ describe('the confirmation email landing', () => {
     render(<App />);
     expect(window.location.pathname).toBe('/');
     expect(screen.queryByText("You're confirmed")).not.toBeInTheDocument();
+  });
+});
+
+describe('the installed web app', () => {
+  it('opens signed-out on sign-in, not the marketing page', () => {
+    context = 'installed';
+    standalone = true;
+    render(<App />);
+    expect(window.location.pathname).toBe('/auth');
+    expect(screen.queryByText('marketing page')).not.toBeInTheDocument();
   });
 });
