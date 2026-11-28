@@ -170,7 +170,6 @@ export function Header() {
               <>
                 {isOwner ? (
                   <button
-                    data-tutorial="tutorial-homegame-icon"
                     onClick={() => setIconPickerOpen(true)}
                     className="pressable shrink-0 rounded-xl p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label="Change homegame icon"
@@ -178,7 +177,7 @@ export function Header() {
                     <img src={getIconSrc(homegame.icon_id)} alt="" className="w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
                   </button>
                 ) : (
-                  <img data-tutorial="tutorial-homegame-icon" src={getIconSrc(homegame.icon_id)} alt="" className="shrink-0 w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
+                  <img src={getIconSrc(homegame.icon_id)} alt="" className="shrink-0 w-10 h-10 rounded-[10px] object-cover ring-1 ring-gold/40 shadow-[0_0_16px_-2px_hsl(var(--gold)/0.45)]" />
                 )}
 
                 <button
@@ -206,7 +205,6 @@ export function Header() {
             )}
             {!isDesktop && (
               <button
-                data-tutorial="tutorial-nav-players"
                 onClick={() => navigate('/players')}
                 className="pressable flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Players"
@@ -215,7 +213,6 @@ export function Header() {
               </button>
             )}
             <button
-              data-tutorial="tutorial-settings"
               onClick={() => setClubOpen(true)}
               className="pressable flex h-11 w-11 items-center justify-center rounded-xl border border-gold/25 bg-gold/10 text-gold hover:bg-gold/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Club menu and settings"

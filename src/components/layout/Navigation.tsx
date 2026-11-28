@@ -9,10 +9,10 @@ import { useAuthContext } from '@/contexts/AuthContext';
 
 const desktopItems = [
   { to: '/', icon: Home, label: 'Home' },
-  { to: '/sessions', icon: CalendarDays, label: 'Sessions', tutorial: 'tutorial-nav-sessions' },
-  { to: '/leaderboard', icon: Trophy, label: 'Standings', tutorial: 'tutorial-nav-standings' },
-  { to: '/players', icon: Users, label: 'Players', tutorial: 'tutorial-nav-players' },
-  { to: '/my-stats', icon: LineChart, label: 'My Stats', tutorial: 'tutorial-nav-stats' },
+  { to: '/sessions', icon: CalendarDays, label: 'Sessions' },
+  { to: '/leaderboard', icon: Trophy, label: 'Standings' },
+  { to: '/players', icon: Users, label: 'Players' },
+  { to: '/my-stats', icon: LineChart, label: 'My Stats' },
   { to: '/calculator', icon: Calculator, label: 'Calculator' },
 ];
 
@@ -20,11 +20,11 @@ const desktopItems = [
 // Players lives in the header, Calculator in the Club sheet and on Home.
 const mobileLeft = [
   { to: '/', icon: Home, label: 'Home' },
-  { to: '/sessions', icon: CalendarDays, label: 'Sessions', tutorial: 'tutorial-nav-sessions' },
+  { to: '/sessions', icon: CalendarDays, label: 'Sessions' },
 ];
 const mobileRight = [
-  { to: '/leaderboard', icon: Trophy, label: 'Standings', tutorial: 'tutorial-nav-standings' },
-  { to: '/my-stats', icon: LineChart, label: 'Stats', tutorial: 'tutorial-nav-stats' },
+  { to: '/leaderboard', icon: Trophy, label: 'Standings' },
+  { to: '/my-stats', icon: LineChart, label: 'Stats' },
 ];
 
 type Item = (typeof desktopItems)[number];
@@ -34,7 +34,6 @@ function TabItem({ item }: { item: Item }) {
     <NavLink
       to={item.to}
       end={item.to === '/'}
-      data-tutorial={item.tutorial}
       className="group flex flex-1 flex-col items-center justify-center focus:outline-none"
     >
       {({ isActive }) => (
@@ -88,7 +87,6 @@ export function Navigation() {
         <div className="flex flex-1 justify-center">
           <NavLink
             to={centreTo}
-            data-tutorial="tutorial-new-session"
             aria-label={isLive ? 'Open live game' : newLabel}
             className="group -mt-6 flex flex-col items-center gap-1 focus:outline-none"
           >
@@ -127,7 +125,6 @@ export function Navigation() {
     >
       <NavLink
         to={centreTo}
-        data-tutorial="tutorial-new-session"
         className="pressable gold-fill mb-3 flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-primary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {isLive ? <Play className="h-4 w-4 fill-current" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
@@ -138,7 +135,6 @@ export function Navigation() {
           key={item.to}
           to={item.to}
           end={item.to === '/'}
-          data-tutorial={item.tutorial}
           className={({ isActive }) =>
             cn(
               'relative flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',

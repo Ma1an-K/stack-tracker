@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { useTutorialContext } from '@/contexts/TutorialContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { clearPendingCode } from '@/lib/inviteLink';
@@ -27,7 +26,6 @@ interface HomegameDialogProps {
 
 export function HomegameDialog({ open, onOpenChange, defaultTab = 'create', initialInviteCode }: HomegameDialogProps) {
   const { createHomegame, joinHomegame } = useAuthContext();
-  const { startTour } = useTutorialContext();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -54,7 +52,6 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create', init
       toast({ title: 'Homegame created' });
       setNewHomegameName('');
       onOpenChange(false);
-      startTour('owner');
     }
   };
 

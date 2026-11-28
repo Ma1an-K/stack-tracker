@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
-import { TutorialProvider } from "@/contexts/TutorialContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { LandingPage } from "@/pages/LandingPage";
@@ -13,6 +12,7 @@ import { isNativeApp } from "@/lib/platform";
 import { shellRoute } from "@/lib/shellRoute";
 import { welcomeTarget, hasSeenWelcome } from "@/lib/onboarding/welcomeTarget";
 import { readPendingCode } from "@/lib/inviteLink";
+import { clearLegacyTourKeys } from "@/hooks/useTips";
 import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
 import { PublicHandCalculatorPage } from "@/pages/PublicHandCalculatorPage";
 import { AboutPage } from "@/pages/AboutPage";
@@ -246,6 +246,9 @@ function PasswordResetDialog() {
 
 function GlobalEffects() {
   useKeyboardInset();
+  useEffect(() => {
+    clearLegacyTourKeys();
+  }, []);
   return null;
 }
 
@@ -256,12 +259,10 @@ const App = () => (
       <GlobalEffects />
       <BrowserRouter>
         <AuthProvider>
-          <TutorialProvider>
-            <PasswordResetDialog />
-            <ErrorBoundary>
-              <AppRoutes />
-            </ErrorBoundary>
-          </TutorialProvider>
+          <PasswordResetDialog />
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

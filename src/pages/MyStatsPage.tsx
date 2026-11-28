@@ -20,9 +20,12 @@ import { formatProfit, formatCurrency } from '@/lib/settlement';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { PlayerBadges } from '@/components/badges/PlayerBadges';
 import { ProfitChart } from '@/components/stats/ProfitChart';
+import { useTips } from '@/hooks/useTips';
+import { Tip } from '@/components/tips/Tip';
 
 export function MyStatsPage() {
-  const { profile, homegames } = useAuthContext();
+  const { profile, homegames, homegame, isOwner } = useAuthContext();
+  const tips = useTips();
   const stats = usePersonalStats();
   const fresh = useMemo(
     () => ({
@@ -45,6 +48,12 @@ export function MyStatsPage() {
   return (
     <div className="space-y-6">
       <PageHeader eyebrow={profile?.username ? `${profile.username}#${profile.discriminator}` : 'You'} title="My stats" action={<RefreshingDot show={isRefreshing} />} />
+
+      {homegame && !isOwner && tips.shouldShow('mystats-member') && (
+        <Tip onDismiss={() => tips.markSeen('mystats-member')}>
+          Your results show here once your host confirms your name.
+        </Tip>
+      )}
 
       {!hasClaimedPlayers ? (
         <EmptyState

@@ -2,10 +2,6 @@ import { ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { Header } from './Header';
 import { Navigation } from './Navigation';
-import { useAuthContext } from '@/contexts/AuthContext';
-import { useTutorialContext } from '@/contexts/TutorialContext';
-import { TutorialOverlay } from '@/components/tutorial/TutorialOverlay';
-import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { LiveSessionProvider } from '@/contexts/LiveSessionContext';
 import { OneOffGameProvider } from '@/contexts/OneOffGameContext';
 import { LiveSessionBar } from '@/components/sessions/LiveSessionBar';
@@ -20,20 +16,10 @@ interface MainLayoutProps {
 const scrollMemory = new Map<string, number>();
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const { homegame, currentHomegame, loading } = useAuthContext();
-  const { activeTour, currentStep, steps, startTour, nextStep, skipTour } = useTutorialContext();
-  const installPrompt = useInstallPrompt();
   const { pathname } = useLocation();
   const navType = useNavigationType();
   const mainRef = useRef<HTMLElement>(null);
   const lastPath = useRef(pathname);
-
-  useEffect(() => {
-    if (loading || !homegame || !currentHomegame) return;
-    if (currentHomegame.role !== 'owner') {
-      startTour('player');
-    }
-  }, [loading, homegame, currentHomegame, startTour]);
 
   useLayoutEffect(() => {
     const el = mainRef.current;
@@ -86,17 +72,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           </main>
         </div>
         <Navigation />
-
-        {/* The tour points at homegame chrome, so it never shows without a homegame. */}
-        {activeTour && homegame && (
-          <TutorialOverlay
-            steps={steps}
-            currentStep={currentStep}
-            onNext={nextStep}
-            onSkip={skipTour}
-            installPrompt={installPrompt}
-          />
-        )}
       </OneOffGameProvider>
     </LiveSessionProvider>
   );

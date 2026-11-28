@@ -30,6 +30,8 @@ import { greeting } from '@/lib/greeting';
 import { NoHomegameHome } from '@/components/home/NoHomegameHome';
 import { GettingStartedCard } from '@/components/home/GettingStartedCard';
 import { useGettingStarted } from '@/hooks/useGettingStarted';
+import { useTips } from '@/hooks/useTips';
+import { Tip } from '@/components/tips/Tip';
 
 export function DashboardPage() {
   const { homegame } = useAuthContext();
@@ -40,7 +42,10 @@ function HomegameDashboard() {
   const { profile, homegames, homegame, isOwner, selectHomegame } = useAuthContext();
   const stats = usePersonalStats();
   const { liveSession } = useLiveSession();
-  const { checklist, onInviteShared } = useGettingStarted(homegame?.id);
+  const { checklist, sessionCount, onInviteShared } = useGettingStarted(homegame?.id);
+  const tips = useTips();
+  // sessionCount is only a number for owners.
+  const showPlusTip = !liveSession && (sessionCount ?? 0) >= 1 && tips.shouldShow('home-plus');
 
   const live = useMemo(
     () => ({ homegameStats: stats.homegameStats, recentSessions: stats.recentSessions, overallStats: stats.overallStats }),
@@ -57,7 +62,7 @@ function HomegameDashboard() {
   const pending = currentStats?.pendingSettlements.length ?? 0;
 
   return (
-    <div data-tutorial="tutorial-dashboard" className="space-y-6">
+    <div className="space-y-6">
       <header className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="section-header mb-1">{greeting()}</p>
@@ -169,6 +174,12 @@ function HomegameDashboard() {
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-gold" aria-hidden="true" />
         </Link>
+      )}
+
+      {showPlusTip && (
+        <Tip anchor="new-button" title="Next game starts here" onDismiss={() => tips.markSeen('home-plus')}>
+          Tap + to log another game. Your crew stays seated.
+        </Tip>
       )}
 
       {/* Homegames */}
