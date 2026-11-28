@@ -2,16 +2,19 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { LandingPage } from "@/pages/LandingPage";
+import { PhoneLandingPage } from "@/pages/PhoneLandingPage";
 import { WelcomeLayout } from "@/pages/welcome/WelcomeLayout";
 import { isNativeApp } from "@/lib/platform";
 import { shellRoute } from "@/lib/shellRoute";
 import { welcomeTarget, hasSeenWelcome } from "@/lib/onboarding/welcomeTarget";
-import { readPendingCode } from "@/lib/inviteLink";
+import { parseInviteCode, readPendingCode } from "@/lib/inviteLink";
+import { showInstallFirst, hasContinuedInBrowser, markContinuedInBrowser } from "@/lib/installFirst";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { clearLegacyTourKeys } from "@/hooks/useTips";
 import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
 import { PublicHandCalculatorPage } from "@/pages/PublicHandCalculatorPage";
@@ -92,6 +95,22 @@ function usePrefetchRoutes(enabled: boolean) {
 const queryClient = new QueryClient();
 
 /**
+ * Whether a signed-out phone visitor gets the install-first landing, and the
+ * "Continue in browser" handler that turns it off for the rest of this visit.
+ */
+function useInstallFirst(signedIn: boolean) {
+  const { context } = useInstallPrompt();
+  const [searchParams] = useSearchParams();
+  const [continued, setContinued] = useState(hasContinuedInBrowser);
+  const show = showInstallFirst({ context, signedIn, continued, learn: searchParams.get("learn") === "1" });
+  const continueInBrowser = () => {
+    markContinuedInBrowser();
+    setContinued(true);
+  };
+  return { show, continueInBrowser };
+}
+
+/**
  * One persistent shell for every signed-in screen (including "/"), so Header,
  * Navigation and LiveSessionProvider are mounted once and never remount on a
  * tab change. Signed-in users get it with or without a homegame (first-run
@@ -101,11 +120,20 @@ const queryClient = new QueryClient();
 function AppShell() {
   const { user, homegame, homegames, loading } = useAuthContext();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const installFirst = useInstallFirst(!!user);
   usePrefetchRoutes(!loading && !!user);
 
   const route = shellRoute({ loading, user: !!user, homegame: !!homegame, pathname, native: isNativeApp() });
   if (route === "splash") return <SplashScreen />;
-  if (route === "landing") return <LandingPage />;
+  if (route === "landing") {
+    if (!installFirst.show) return <LandingPage />;
+    const continueToSignup = () => {
+      installFirst.continueInBrowser();
+      navigate("/auth?mode=signup");
+    };
+    return <PhoneLandingPage onContinue={continueToSignup} />;
+  }
   if (route === "auth") return <Navigate to="/auth" replace />;
 
   // First run, whatever route they came in by (email-confirmation link, reopening
@@ -126,8 +154,15 @@ function AppShell() {
 }
 
 function AuthRoute() {
-  const { loading } = useAuthContext();
+  const { user, loading } = useAuthContext();
+  const [searchParams] = useSearchParams();
+  const installFirst = useInstallFirst(!!user);
   if (loading) return <SplashScreen />;
+  // Invite links land here; on a phone, offer installing before sign-up. Continuing
+  // renders AuthPage with the same query, so it still reads the code and mode.
+  if (installFirst.show) {
+    return <PhoneLandingPage inviteCode={parseInviteCode(searchParams.get("code"))} onContinue={installFirst.continueInBrowser} />;
+  }
   // Redirect is handled in AuthPage via useEffect
   return <AuthPage />;
 }

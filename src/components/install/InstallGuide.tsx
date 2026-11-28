@@ -46,7 +46,7 @@ function Heading({ children }: { children: ReactNode }) {
   return <h2 className="font-display text-[1.75rem] font-semibold leading-tight text-foreground">{children}</h2>;
 }
 
-function InviteCallout({ code }: { code: string }) {
+export function InviteCallout({ code }: { code: string }) {
   return (
     <p className="rounded-xl bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
       <b className="text-foreground">Joining a game?</b> Keep your code handy: <b className="text-foreground">{code}</b>. The app asks for it once you open it.
