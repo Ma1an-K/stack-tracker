@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 
 const createHomegame = vi.fn();
@@ -177,6 +177,22 @@ describe('HostSetupPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
     await waitFor(() => expect(store.get('invite_shared:hg-1')).toBe('1'));
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/auth?mode=signup&code=K7Q44MXP'));
+  });
+
+  it('step 3 shows an error with Retry when the invite code cannot be made, and does not keep retrying', async () => {
+    createInviteCode.mockResolvedValueOnce({ error: new Error('network down') });
+    await toInviteStep();
+    expect(await screen.findByText("Couldn't make your invite code.")).toBeInTheDocument();
+    expect(screen.queryByLabelText('Making your invite code')).not.toBeInTheDocument();
+
+    // Re-renders (typing elsewhere, state changes) don't fire another attempt.
+    await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
+    expect(createInviteCode).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('K7Q44MXP')).toBeInTheDocument();
+    expect(createInviteCode).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText("Couldn't make your invite code.")).not.toBeInTheDocument();
   });
 
   async function toFirstGameStep() {

@@ -114,6 +114,7 @@ export function HostSetupPage() {
   // Step 3
   const { activeInviteCodes, loading: codesLoading, createInviteCode } = useInviteCodes(createdId ?? undefined);
   const [newCode, setNewCode] = useState<string | null>(null);
+  const [codeFailed, setCodeFailed] = useState(false);
   const creatingCode = useRef(false);
   const inviteCode = pickInviteCode(activeInviteCodes)?.code ?? newCode;
 
@@ -143,15 +144,17 @@ export function HostSetupPage() {
   }, [createdId, homegame?.id, homegames, selectHomegame]);
 
   // Step 3 shows the newest working code, or makes one with the usual defaults.
+  // One attempt; after a failure only Retry tries again.
   useEffect(() => {
-    if (step !== 3 || !createdId || codesLoading || inviteCode || creatingCode.current) return;
+    if (step !== 3 || !createdId || codesLoading || inviteCode || codeFailed || creatingCode.current) return;
     creatingCode.current = true;
     createInviteCode({ quiet: true }).then((res) => {
       const created = (res as { code?: { code: string } }).code;
+      creatingCode.current = false;
       if (created) setNewCode(created.code);
-      else creatingCode.current = false;
+      else setCodeFailed(true);
     });
-  }, [step, createdId, codesLoading, inviteCode, createInviteCode]);
+  }, [step, createdId, codesLoading, inviteCode, codeFailed, createInviteCode]);
 
   const back = () => (step === 1 ? navigate('/welcome') : setStep((s) => (s - 1) as Step));
 
@@ -364,6 +367,13 @@ export function HostSetupPage() {
             <p className="text-sm text-muted-foreground">Invite code</p>
             {inviteCode ? (
               <code className="mt-1 block font-display text-[2rem] font-semibold leading-tight tracking-[0.18em] text-gold">{inviteCode}</code>
+            ) : codeFailed ? (
+              <div role="alert" className="mt-1 flex min-h-11 items-center justify-between gap-3">
+                <p className="text-sm text-destructive">Couldn't make your invite code.</p>
+                <Button variant="outline" size="sm" className="min-h-11" onClick={() => setCodeFailed(false)}>
+                  Retry
+                </Button>
+              </div>
             ) : (
               <Loader2 className="my-3 h-6 w-6 animate-spin text-muted-foreground" aria-label="Making your invite code" />
             )}
