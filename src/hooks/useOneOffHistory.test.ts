@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { createSupabaseMock } from "@/test/supabaseMock";
 import type { OneOffGame } from "@/lib/oneOff/types";
-import { settleOneOff } from "@/lib/oneOff/settle";
 
 const mocks = vi.hoisted(() => ({
   db: null as unknown as ReturnType<typeof import("@/test/supabaseMock").createSupabaseMock>,
@@ -101,10 +100,6 @@ describe("useOneOffHistory", () => {
     const insert = insertRequests()[0];
     const row = insert.calls.find((c) => c[0] === "insert")![1] as Record<string, unknown>;
 
-    const expected = settleOneOff(
-      game.players.map((p) => ({ id: p.id, buy_in: p.buy_in, cash_out: p.cash_out as number })),
-      game.payments,
-    );
     expect(row).toEqual({
       played_on: "2026-11-26",
       label: "Friday at Sam's",
@@ -116,9 +111,12 @@ describe("useOneOffHistory", () => {
         { id: "c", name: "Cy", buy_in: 50, cash_out: 30 },
       ],
       payments: game.payments,
-      transfers: expected.transfers,
+      // Ana +70, Ben -50, Cy -20; Ben already paid Ana 20.
+      transfers: [
+        { from_id: "b", to_id: "a", amount: 30 },
+        { from_id: "c", to_id: "a", amount: 20 },
+      ],
     });
-    expect(expected.transfers.length).toBeGreaterThan(0);
     expect(row).not.toHaveProperty("user_id");
     expect(row).not.toHaveProperty("homegame_id");
 

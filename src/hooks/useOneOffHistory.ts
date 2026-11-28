@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { logError } from '@/lib/errorLog';
-import { settleOneOff } from '@/lib/oneOff/settle';
+import { settleOneOffGame } from '@/lib/oneOff/settle';
+import { describeRefusal } from '@/lib/settlement/settle';
 import { clearGame } from '@/lib/oneOff/localStore';
 import type { OneOffGame, SavedOneOffGame } from '@/lib/oneOff/types';
 import type { Json } from '@/integrations/supabase/types';
@@ -103,9 +104,10 @@ export function useOneOffHistory({ loadList = true }: UseOneOffHistoryOptions = 
         buy_in: p.buy_in,
         cash_out: p.cash_out as number,
       }));
-      const settlement = settleOneOff(players, game.payments);
-      if (!settlement.balanced) {
-        return { id: null, error: "Totals don't balance yet" };
+      const settlement = settleOneOffGame(players, game.payments);
+      if (settlement.status === 'refused') {
+        const { reason } = settlement;
+        return { id: null, error: reason.rule === 'unbalanced' ? "Totals don't balance yet" : describeRefusal(reason) };
       }
 
       let id: string;

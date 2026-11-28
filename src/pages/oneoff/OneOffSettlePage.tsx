@@ -6,8 +6,9 @@ import { useOneOffGame } from '@/contexts/OneOffGameContext';
 import { useOneOffHistory } from '@/hooks/useOneOffHistory';
 import { useInstallNudge } from '@/contexts/InstallNudgeContext';
 import { toast } from '@/hooks/use-toast';
-import { settleOneOff } from '@/lib/oneOff/settle';
+import { settleOneOffGame } from '@/lib/oneOff/settle';
 import { formatCurrency } from '@/lib/settlement';
+import { describeRefusal } from '@/lib/settlement/settle';
 import type { OneOffAction } from '@/lib/oneOff/reducer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -87,11 +88,12 @@ export function OneOffSettlePage() {
   const { currency } = game;
   const missing = game.players.filter(p => p.cash_out === null);
   // A missing cash-out counts as 0 until it is entered.
-  const settlement = settleOneOff(
+  const settlement = settleOneOffGame(
     game.players.map(p => ({ id: p.id, buy_in: p.buy_in, cash_out: p.cash_out ?? 0 })),
     game.payments
   );
-  const ready = settlement.balanced && missing.length === 0;
+  const transfers = settlement.status === 'settled' ? settlement.transfers : [];
+  const ready = settlement.status === 'settled' && missing.length === 0;
   const nameOf = (id: string) => game.players.find(p => p.id === id)?.name ?? 'Unknown';
 
   const handleShare = () =>
@@ -102,7 +104,7 @@ export function OneOffSettlePage() {
         currency,
         players: game.players,
         payments: game.payments,
-        transfers: settlement.transfers,
+        transfers,
       })
     );
 
@@ -184,14 +186,14 @@ export function OneOffSettlePage() {
       <section className="surface space-y-2 p-3 sm:p-4" aria-live="polite">
         <h2 className="section-header px-1 pb-1">Who pays whom</h2>
         {/* Until every cash-out is in, the gap and the transfers would treat the gaps as 0: say what is missing instead. */}
-        {missing.length > 0 ? null : !settlement.balanced ? (
+        {missing.length > 0 ? null : settlement.status === 'refused' ? (
           <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm font-medium text-destructive">
-            {`Cash-outs are ${formatCurrency(settlement.difference, currency)} ${settlement.difference < 0 ? 'short' : 'over'}`}
+            {describeRefusal(settlement.reason, currency)}
           </p>
-        ) : settlement.transfers.length === 0 ? (
+        ) : transfers.length === 0 ? (
           <p className="px-1 text-sm text-muted-foreground">Nobody owes anything.</p>
         ) : (
-          settlement.transfers.map((t, i) => (
+          transfers.map((t, i) => (
             <div key={i} className="flex min-h-[48px] items-center gap-2 rounded-xl bg-muted/40 px-3 text-sm">
               <ArrowRight className="h-3.5 w-3.5 shrink-0 text-gold" aria-hidden="true" />
               <span>{`${nameOf(t.from_id)} pays ${nameOf(t.to_id)} ${formatCurrency(t.amount, currency)}`}</span>
