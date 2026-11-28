@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import type { InstallContext } from '@/lib/installContext';
 
 let context: InstallContext = 'ios-safari';
@@ -106,13 +107,40 @@ describe('GetTheApp', () => {
     await waitFor(() => expect(window.getSelection()?.toString()).toBe(link.textContent));
   });
 
-  it.each<InstallContext>(['installed', 'native', 'desktop'])('renders nothing in the %s context', c => {
+  it.each<InstallContext>(['installed', 'native'])('renders nothing in the %s context', c => {
     context = c;
     for (const variant of ['landing', 'sheet', 'banner', 'hero'] as const) {
       const { container, unmount } = render(<GetTheApp variant={variant} />);
       expect(container).toBeEmptyDOMElement();
       unmount();
     }
+  });
+
+  it('renders only the hero on a laptop', () => {
+    context = 'desktop';
+    for (const variant of ['landing', 'sheet', 'banner'] as const) {
+      const { container, unmount } = render(<GetTheApp variant={variant} />);
+      expect(container).toBeEmptyDOMElement();
+      unmount();
+    }
+  });
+
+  it('hero offers a QR code for the phone and a way to stay on the laptop', async () => {
+    context = 'desktop';
+    const { container } = render(
+      <MemoryRouter>
+        <GetTheApp variant="hero" />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Scan with your phone camera')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Or use it here' })).toHaveAttribute('href', '/auth?mode=signup');
+    await waitFor(() => expect(container.querySelector('svg')).toBeInTheDocument());
+  });
+
+  it.each<InstallContext>(['ios-safari', 'android-prompt', 'in-app'])('hero renders nothing on a phone (%s)', c => {
+    context = c;
+    const { container } = render(<GetTheApp variant="hero" />);
+    expect(container).toBeEmptyDOMElement();
   });
 
   it('shows the invite code in the iPhone guide', () => {

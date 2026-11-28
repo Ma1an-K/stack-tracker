@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { GetTheApp } from '@/components/install/GetTheApp';
 import {
   Calendar,
   Calculator,
@@ -287,6 +288,11 @@ function Hero() {
             <p className="opacity-0 animate-[fade-in_0.7s_ease-out_0.85s_forwards] text-foreground/60 text-sm">
               No credit card. No ads. Install on iPhone or Android.
             </p>
+
+            {/* Laptops only: a QR code to open it on a phone. Renders nothing elsewhere. */}
+            <div className="hidden lg:block lg:empty:hidden mt-8 opacity-0 animate-[fade-in_0.7s_ease-out_1s_forwards]">
+              <GetTheApp variant="hero" />
+            </div>
           </div>
 
           {/* RIGHT — phone mockup */}
