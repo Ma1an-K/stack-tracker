@@ -6,7 +6,7 @@ import { ChevronDown, Edit, Trash2, CheckCircle2, ArrowRight, Share2, Check, Loa
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { formatCurrency, formatProfit } from '@/lib/settlement/format';
-import { describeRefusal } from '@/lib/settlement/settle';
+import { describeRefusal, summaryOf, transfersOf } from '@/lib/settlement/settle';
 import { settleSession } from '@/lib/sessions/settle';
 import {
   AlertDialog,
@@ -57,17 +57,12 @@ export function SessionCard({
 
   const payments = session.session_payments ?? [];
   const settlement = settleSession(session.session_players, payments);
-  const settlements = settlement.status === 'settled' ? settlement.transfers : [];
+  const transfers = transfersOf(settlement);
   const refusal = settlement.status === 'refused' ? describeRefusal(settlement.reason, currency) : null;
-  // A refused Session has no Profit from the module, but its results still show.
-  const profitOf = (sp: SessionWithPlayers['session_players'][number]) =>
-    settlement.status === 'settled'
-      ? settlement.profits.get(sp.player_id) ?? 0
-      : Number(sp.cash_out) - Number(sp.buy_in);
-  const totalPot = session.session_players.reduce(
-    (sum, sp) => sum + Number(sp.buy_in),
-    0
-  );
+  // An unbalanced Session still has its totals and Profits; only an invalid Player leaves none.
+  const summary = summaryOf(settlement);
+  const profitOf = (sp: SessionWithPlayers['session_players'][number]) => summary?.profits.get(sp.player_id) ?? 0;
+  const totalPot = summary?.totalBuyIn ?? 0;
 
   const buildShareText = () => {
     const dateStr = format(parseISO(session.date), 'EEEE, MMM d, yyyy');
@@ -83,10 +78,10 @@ export function SessionCard({
 
     if (refusal) {
       lines.push('', `⚠️ ${refusal}`);
-    } else if (settlements.length > 0) {
+    } else if (transfers.length > 0) {
       lines.push('', payments.length > 0 ? '💸 Remaining settlements:' : '💸 Settlements:');
-      settlements.forEach(s => {
-        lines.push(`  ${s.from.name} → ${s.to.name}: ${currency}${s.amount.toFixed(2)}`);
+      transfers.forEach(t => {
+        lines.push(`  ${t.from.name} → ${t.to.name}: ${currency}${t.amount.toFixed(2)}`);
       });
     } else if (payments.length > 0) {
       lines.push('', '💸 All settled during the game');
@@ -224,34 +219,40 @@ export function SessionCard({
           )}
 
           {/* Remaining settlements */}
-          {(settlements.length > 0 || payments.length > 0 || refusal) && (
+          {(summary || refusal) && (
             <div className="space-y-3">
               <span className="section-header">
                 {payments.length > 0 ? 'Remaining settlements' : 'Settlements'}
               </span>
+              {summary && (
+                <p className="px-1 text-xs text-muted-foreground tabular-nums">
+                  Buy-ins {formatCurrency(summary.totalBuyIn, currency)} · Cash-outs{' '}
+                  {formatCurrency(summary.totalCashOut, currency)}
+                </p>
+              )}
               {refusal ? (
                 <p className="text-sm text-muted-foreground px-3 py-2.5 rounded-xl bg-muted/40">
                   {refusal}
                 </p>
-              ) : settlements.length > 0 ? (
+              ) : transfers.length > 0 ? (
                 <div className="space-y-2">
-                  {settlements.map((settlement, i) => (
+                  {transfers.map((transfer, i) => (
                     <div
                       key={i}
                       className="flex min-h-[44px] items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/40 text-sm"
                     >
-                      <span className="font-medium">{settlement.from.name}</span>
+                      <span className="font-medium">{transfer.from.name}</span>
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium">{settlement.to.name}</span>
+                      <span className="font-medium">{transfer.to.name}</span>
                       <span className="ml-auto font-semibold text-gold tabular-nums">
-                        {formatCurrency(settlement.amount, currency)}
+                        {formatCurrency(transfer.amount, currency)}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground px-3 py-2.5 rounded-xl bg-muted/40">
-                  All settled during the game
+                  {payments.length > 0 ? 'All settled during the game' : 'Nobody owes anything'}
                 </p>
               )}
             </div>

@@ -34,11 +34,11 @@ describe('settleCalculatorRows', () => {
   });
 
   it('refuses unbalanced rows with the signed difference, and settles once they balance', () => {
-    expect(settleCalculatorRows([row('1', 'Ann', 100, 0), row('2', 'Ben', 100, 150)])).toEqual({
+    expect(settleCalculatorRows([row('1', 'Ann', 100, 0), row('2', 'Ben', 100, 150)])).toMatchObject({
       status: 'refused',
       reason: { rule: 'unbalanced', difference: -50 },
     });
-    expect(settleCalculatorRows([row('1', 'Ann', 100, 0.01), row('2', 'Ben', 100, 200)])).toEqual({
+    expect(settleCalculatorRows([row('1', 'Ann', 100, 0.01), row('2', 'Ben', 100, 200)])).toMatchObject({
       status: 'refused',
       reason: { rule: 'unbalanced', difference: 0.01 },
     });

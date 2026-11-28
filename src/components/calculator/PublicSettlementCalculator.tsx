@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Plus, Trash2, ArrowRight, Calculator as CalculatorIcon } from 'lucide-react';
 import { settleCalculatorRows, type CalculatorRow } from '@/lib/calculator/settle';
-import { describeRefusal } from '@/lib/settlement/settle';
+import { describeRefusal, summaryOf } from '@/lib/settlement/settle';
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$' },
@@ -40,6 +40,8 @@ export function PublicSettlementCalculator() {
   const symbol = CURRENCIES.find(c => c.code === currencyCode)?.symbol ?? '$';
 
   const result = useMemo(() => settleCalculatorRows(players), [players]);
+  // Unbalanced rows still have their totals and Profits; only invalid rows have none.
+  const summary = summaryOf(result);
   const showResults = submitted;
 
   const updatePlayer = (id: string, patch: Partial<CalculatorRow>) => {
@@ -172,13 +174,13 @@ export function PublicSettlementCalculator() {
         </div>
       </div>
 
-      {showResults && result.status === 'refused' && (
+      {showResults && !summary && result.status === 'refused' && (
         <div className="rounded-lg border border-gold/30 bg-gold/5 px-4 py-3 text-sm text-gold">
           {describeRefusal(result.reason, symbol)}
         </div>
       )}
 
-      {showResults && result.status === 'settled' && (
+      {showResults && summary && (
         <div className="space-y-4">
 
           <div className="rounded-2xl border border-[hsl(var(--gold)/0.18)] bg-card/40 p-5 sm:p-6">
@@ -216,31 +218,39 @@ export function PublicSettlementCalculator() {
           <div className="rounded-2xl border border-[hsl(var(--gold)/0.18)] bg-card/40 p-5 sm:p-6">
             <h2 className="text-lg font-semibold mb-1">Settlements</h2>
             <p className="text-sm text-muted-foreground mb-1">
-              Buy-ins {formatMoney(result.totalBuyIn, symbol)} · Cash-outs{' '}
-              {formatMoney(result.totalCashOut, symbol)}
+              Buy-ins {formatMoney(summary.totalBuyIn, symbol)} · Cash-outs{' '}
+              {formatMoney(summary.totalCashOut, symbol)}
             </p>
-            <p className="text-sm text-muted-foreground mb-4">
-              {result.transfers.length === 0
-                ? 'Nothing to settle — everyone broke even.'
-                : `${result.transfers.length} payment${
-                    result.transfers.length === 1 ? '' : 's'
-                  } settles the night.`}
-            </p>
-            <ul className="space-y-2">
-              {result.transfers.map((t, i) => (
-                <li
-                  key={i}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-background/60 border border-[hsl(var(--gold)/0.12)] text-sm"
-                >
-                  <span className="font-medium">{t.fromName}</span>
-                  <ArrowRight className="h-4 w-4 text-gold flex-shrink-0" />
-                  <span className="font-medium">{t.toName}</span>
-                  <span className="ml-auto font-mono text-gold font-semibold">
-                    {formatMoney(t.amount, symbol)}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {result.status === 'refused' ? (
+              <div className="mt-3 rounded-lg border border-gold/30 bg-gold/5 px-4 py-3 text-sm text-gold">
+                {describeRefusal(result.reason, symbol)}
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {result.transfers.length === 0
+                    ? 'Nothing to settle — everyone broke even.'
+                    : `${result.transfers.length} payment${
+                        result.transfers.length === 1 ? '' : 's'
+                      } settles the night.`}
+                </p>
+                <ul className="space-y-2">
+                  {result.transfers.map((t, i) => (
+                    <li
+                      key={i}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-background/60 border border-[hsl(var(--gold)/0.12)] text-sm"
+                    >
+                      <span className="font-medium">{t.fromName}</span>
+                      <ArrowRight className="h-4 w-4 text-gold flex-shrink-0" />
+                      <span className="font-medium">{t.toName}</span>
+                      <span className="ml-auto font-mono text-gold font-semibold">
+                        {formatMoney(t.amount, symbol)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         </div>
       )}

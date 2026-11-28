@@ -8,7 +8,7 @@ import { useInstallNudge } from '@/contexts/InstallNudgeContext';
 import { toast } from '@/hooks/use-toast';
 import { settleOneOffGame } from '@/lib/oneOff/settle';
 import { formatCurrency } from '@/lib/settlement/format';
-import { describeRefusal } from '@/lib/settlement/settle';
+import { describeRefusal, summaryOf, transfersOf } from '@/lib/settlement/settle';
 import type { OneOffAction } from '@/lib/oneOff/reducer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,7 +92,7 @@ export function OneOffSettlePage() {
     game.players.map(p => ({ id: p.id, buy_in: p.buy_in, cash_out: p.cash_out ?? 0 })),
     game.payments
   );
-  const transfers = settlement.status === 'settled' ? settlement.transfers : [];
+  const transfers = transfersOf(settlement);
   const ready = settlement.status === 'settled' && missing.length === 0;
   const nameOf = (id: string) => game.players.find(p => p.id === id)?.name ?? 'Unknown';
 
@@ -180,7 +180,7 @@ export function OneOffSettlePage() {
         </div>
       </section>
 
-      <SettlePlayers game={game} run={run} disabled={saving} />
+      <SettlePlayers game={game} summary={summaryOf(settlement)} run={run} disabled={saving} />
       <SettlePayments game={game} run={run} disabled={saving} />
 
       <section className="surface space-y-2 p-3 sm:p-4" aria-live="polite">

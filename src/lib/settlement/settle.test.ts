@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { describeRefusal, settle, type Game, type Settled } from './settle';
+import { describeRefusal, settle, summaryOf, type Game, type Settled } from './settle';
 
 const p = (id: string, buyIn: number, cashOut: number) => ({ id, buyIn, cashOut });
 const pay = (fromId: string, toId: string, amount: number) => ({ fromId, toId, amount });
@@ -107,32 +107,32 @@ describe('settle', () => {
 
   describe('refuses', () => {
     it('a game whose Cash-outs are short, with the signed difference', () => {
-      expect(settle({ players: [p('a', 100, 0), p('b', 100, 195)] })).toEqual({
+      expect(settle({ players: [p('a', 100, 0), p('b', 100, 195)] })).toMatchObject({
         status: 'refused',
         reason: { rule: 'unbalanced', difference: -5 },
       });
     });
 
     it('a game whose Cash-outs are over by a cent', () => {
-      expect(settle({ players: [p('a', 33.33, 0), p('b', 33.33, 66.67)] })).toEqual({
+      expect(settle({ players: [p('a', 33.33, 0), p('b', 33.33, 66.67)] })).toMatchObject({
         status: 'refused',
         reason: { rule: 'unbalanced', difference: 0.01 },
       });
     });
 
     it('a Payment naming a Player not in the game', () => {
-      expect(settle({ players, payments: [pay('a', 'b', 10), pay('a', 'ghost', 50)] })).toEqual({
+      expect(settle({ players, payments: [pay('a', 'b', 10), pay('a', 'ghost', 50)] })).toMatchObject({
         status: 'refused',
         reason: { rule: 'unknown-player', paymentIndex: 1, playerId: 'ghost' },
       });
-      expect(settle({ players, payments: [pay('ghost', 'b', 50)] })).toEqual({
+      expect(settle({ players, payments: [pay('ghost', 'b', 50)] })).toMatchObject({
         status: 'refused',
         reason: { rule: 'unknown-player', paymentIndex: 0, playerId: 'ghost' },
       });
     });
 
     it('a Payment from a Player to themselves', () => {
-      expect(settle({ players, payments: [pay('a', 'a', 10)] })).toEqual({
+      expect(settle({ players, payments: [pay('a', 'a', 10)] })).toMatchObject({
         status: 'refused',
         reason: { rule: 'self-payment', paymentIndex: 0, playerId: 'a' },
       });
@@ -140,14 +140,14 @@ describe('settle', () => {
 
     it('a Payment of zero or less', () => {
       for (const amount of [0, -5, 0.004]) {
-        expect(settle({ players, payments: [pay('a', 'b', amount)] })).toEqual({
+        expect(settle({ players, payments: [pay('a', 'b', amount)] })).toMatchObject({
           status: 'refused',
           reason: { rule: 'non-positive-payment', paymentIndex: 0 },
         });
       }
     });
 
-    it('a negative Buy-in or Cash-out', () => {
+    it('a negative Buy-in or Cash-out, with no totals or Profits', () => {
       expect(settle({ players: [p('a', -10, 0), p('b', 0, -10)] })).toEqual({
         status: 'refused',
         reason: { rule: 'negative-amount', playerId: 'a' },
@@ -158,11 +158,47 @@ describe('settle', () => {
       });
     });
 
-    it('a Player id that appears twice', () => {
+    it('a Player id that appears twice, with no totals or Profits', () => {
       expect(settle({ players: [p('a', 10, 0), p('b', 0, 20), p('a', 10, 0)] })).toEqual({
         status: 'refused',
         reason: { rule: 'duplicate-player', playerId: 'a' },
       });
+    });
+  });
+
+  describe('a refused game whose Players are valid still has', () => {
+    it('its totals and each Player\'s Profit when unbalanced', () => {
+      const result = settle({ players: [p('a', 100, 0), p('b', 100, 195)] });
+      expect(result).toEqual({
+        status: 'refused',
+        reason: { rule: 'unbalanced', difference: -5 },
+        totalBuyIn: 200,
+        totalCashOut: 195,
+        profits: new Map([['a', -100], ['b', 95]]),
+      });
+      expect(summaryOf(result)).toBe(result);
+    });
+
+    it('its totals and Profits when a Payment is invalid', () => {
+      for (const payment of [pay('a', 'ghost', 5), pay('a', 'a', 5), pay('a', 'b', 0)]) {
+        const result = settle({ players, payments: [payment] });
+        expect(result.status).toBe('refused');
+        expect(summaryOf(result)).toMatchObject({
+          totalBuyIn: 300,
+          totalCashOut: 300,
+          profits: new Map([['a', -50], ['b', 30], ['c', 20]]),
+        });
+      }
+    });
+
+    it('no summary when a Player is invalid', () => {
+      expect(summaryOf(settle({ players: [p('a', -10, 0)] }))).toBeNull();
+      expect(summaryOf(settle({ players: [p('a', 10, 0), p('a', 0, 10)] }))).toBeNull();
+    });
+
+    it('the same summary as a settled game', () => {
+      const result = settled({ players });
+      expect(summaryOf(result)).toBe(result);
     });
   });
 });

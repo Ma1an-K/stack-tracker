@@ -146,7 +146,8 @@ export interface PlayerStats {
   avgProfit: number;
 }
 
-export interface Settlement {
+/** One line of a Settlement: who pays whom, with the Players' records. */
+export interface SessionTransfer {
   from: Player;
   to: Player;
   amount: number;

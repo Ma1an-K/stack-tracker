@@ -5,6 +5,8 @@ import { ArrowLeft, ArrowRight, SearchX, Share2, Trash2, WifiOff } from 'lucide-
 import { useOneOffHistory } from '@/hooks/useOneOffHistory';
 import { toast } from '@/hooks/use-toast';
 import { formatCurrency, formatProfit } from '@/lib/settlement/format';
+import { settleOneOffGame } from '@/lib/oneOff/settle';
+import { summaryOf } from '@/lib/settlement/settle';
 import { cn } from '@/lib/utils';
 import type { SavedOneOffGame } from '@/lib/oneOff/types';
 import { Button } from '@/components/ui/button';
@@ -109,7 +111,8 @@ export function SavedOneOffPage() {
 
   const { currency } = saved;
   const nameOf = (pid: string) => saved.players.find(p => p.id === pid)?.name ?? 'Unknown';
-  // The transfers are shown exactly as stored at save time, never recomputed.
+  // Profits come from the Settlement module; the transfers are shown exactly as stored at save time, never recomputed.
+  const profits = summaryOf(settleOneOffGame(saved.players, saved.payments))?.profits;
   const handleShare = () =>
     shareText(
       buildOneOffShareText({
@@ -144,7 +147,7 @@ export function SavedOneOffPage() {
           <span className="text-right sm:w-24">Profit</span>
         </div>
         {saved.players.map(p => {
-          const profit = p.cash_out - p.buy_in;
+          const profit = profits?.get(p.id) ?? 0;
           return (
             <div
               key={p.id}

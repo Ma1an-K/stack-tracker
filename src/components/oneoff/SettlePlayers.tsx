@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatProfit } from '@/lib/settlement/format';
 import { cn } from '@/lib/utils';
+import type { GameSummary } from '@/lib/settlement/settle';
 import type { OneOffGame } from '@/lib/oneOff/types';
 import type { OneOffAction } from '@/lib/oneOff/reducer';
 import { MoneyField } from './MoneyField';
@@ -11,17 +12,19 @@ import { NameField } from './NameField';
 
 interface SettlePlayersProps {
   game: OneOffGame;
+  /** The game's totals and Profits from its Settlement, or null when it has none. */
+  summary: GameSummary | null;
   run: (action: OneOffAction) => { error: string | null };
   /** Locks every control, e.g. while the game is being saved. */
   disabled?: boolean;
 }
 
 /** Every player's buy-in and cash-out on the settle screen, with add, rename and remove. */
-export function SettlePlayers({ game, run, disabled = false }: SettlePlayersProps) {
+export function SettlePlayers({ game, summary, run, disabled = false }: SettlePlayersProps) {
   const [newName, setNewName] = useState('');
   const { currency } = game;
-  const totalBuyIn = game.players.reduce((s, p) => s + p.buy_in, 0);
-  const totalCashOut = game.players.reduce((s, p) => s + (p.cash_out ?? 0), 0);
+  const totalBuyIn = summary?.totalBuyIn ?? 0;
+  const totalCashOut = summary?.totalCashOut ?? 0;
 
   const addPlayer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +44,7 @@ export function SettlePlayers({ game, run, disabled = false }: SettlePlayersProp
       </div>
 
       {game.players.map(p => {
-        const profit = p.cash_out === null ? null : p.cash_out - p.buy_in;
+        const profit = p.cash_out === null ? null : summary?.profits.get(p.id) ?? null;
         return (
           <div key={p.id} className="rounded-xl border border-border/60 bg-muted/40 p-2">
             <div className="grid grid-cols-[1fr_1fr_2.75rem] sm:grid-cols-[1fr_6.5rem_6.5rem_2.75rem] items-center gap-1.5">

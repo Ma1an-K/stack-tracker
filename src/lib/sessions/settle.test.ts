@@ -53,7 +53,7 @@ describe('settleSession', () => {
   });
 
   it('refuses an unbalanced Session with the signed difference', () => {
-    expect(settleSession([sp('a', 100, 50), sp('b', 100, 140)])).toEqual({
+    expect(settleSession([sp('a', 100, 50), sp('b', 100, 140)])).toMatchObject({
       status: 'refused',
       reason: { rule: 'unbalanced', difference: -10 },
     });

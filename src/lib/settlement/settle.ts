@@ -23,32 +23,60 @@ export interface Transfer {
   amount: number;
 }
 
-export type RefusalReason =
+/** A refusal where the Players themselves are fine, so their totals and Profits still stand. */
+export type GameRefusalReason =
   /** `difference` is total Cash-outs minus total Buy-ins: negative means short, positive over. */
   | { rule: 'unbalanced'; difference: number }
-  | { rule: 'duplicate-player'; playerId: string }
-  /** A Buy-in or Cash-out below zero (or not a number). */
-  | { rule: 'negative-amount'; playerId: string }
   | { rule: 'unknown-player'; paymentIndex: number; playerId: string }
   | { rule: 'self-payment'; paymentIndex: number; playerId: string }
   /** The amount is zero or less once rounded to the cent. */
   | { rule: 'non-positive-payment'; paymentIndex: number };
 
-export interface Settled {
-  status: 'settled';
-  transfers: Transfer[];
+/** A refusal where a Player is invalid, so there are no totals or Profits to give. */
+export type PlayerRefusalReason =
+  | { rule: 'duplicate-player'; playerId: string }
+  /** A Buy-in or Cash-out below zero (or not a number). */
+  | { rule: 'negative-amount'; playerId: string };
+
+export type RefusalReason = GameRefusalReason | PlayerRefusalReason;
+
+/** A game's totals and each Player's Profit, whether or not it settles. */
+export interface GameSummary {
   totalBuyIn: number;
   totalCashOut: number;
   /** Each Player's Profit (Cash-out minus Buy-in) by id, in input order. Payments don't change it. */
   profits: Map<string, number>;
 }
 
-export interface Refused {
-  status: 'refused';
-  reason: RefusalReason;
+export interface Settled extends GameSummary {
+  status: 'settled';
+  transfers: Transfer[];
 }
 
+export type Refused =
+  | ({ status: 'refused'; reason: GameRefusalReason } & GameSummary)
+  | { status: 'refused'; reason: PlayerRefusalReason };
+
 export type SettlementResult = Settled | Refused;
+
+/** The result's totals and Profits, or null when a Player is invalid. */
+export function summaryOf(result: SettlementResultOf<unknown>): GameSummary | null {
+  return 'profits' in result ? result : null;
+}
+
+/** The Transfers to show: none unless the game settled. */
+export function transfersOf<T>(result: { status: 'settled'; transfers: T[] } | { status: 'refused' }): T[] {
+  return result.status === 'settled' ? result.transfers : [];
+}
+
+/** A result with each Transfer in a caller's own shape. */
+export type SettlementResultOf<T> = Refused | (Omit<Settled, 'transfers'> & { transfers: T[] });
+
+/** Puts each Transfer in a caller's own shape; a refusal passes through unchanged. */
+export function mapTransfers<T>(result: SettlementResult, toShape: (transfer: Transfer) => T): SettlementResultOf<T> {
+  if (result.status === 'refused') return result;
+  return { ...result, transfers: result.transfers.map(toShape) };
+}
 
 const toCents = (dollars: number) => Math.round(dollars * 100);
 const toDollars = (cents: number) => cents / 100;
@@ -68,11 +96,23 @@ export function settle(game: Game): SettlementResult {
   const totalBuyIn = players.reduce((s, pl) => s + pl.buyIn, 0);
   const totalCashOut = players.reduce((s, pl) => s + pl.cashOut, 0);
 
-  const refusal = findInvalidPlayer(players) ?? findInvalidPayment(players, payments);
-  if (refusal) return { status: 'refused', reason: refusal };
+  const invalidPlayer = findInvalidPlayer(players);
+  if (invalidPlayer) return { status: 'refused', reason: invalidPlayer };
+
+  const summary: GameSummary = {
+    totalBuyIn: toDollars(totalBuyIn),
+    totalCashOut: toDollars(totalCashOut),
+    profits: new Map(players.map(pl => [pl.id, toDollars(pl.cashOut - pl.buyIn)])),
+  };
+  const invalidPayment = findInvalidPayment(players, payments);
+  if (invalidPayment) return { status: 'refused', reason: invalidPayment, ...summary };
 
   if (totalCashOut !== totalBuyIn) {
-    return { status: 'refused', reason: { rule: 'unbalanced', difference: toDollars(totalCashOut - totalBuyIn) } };
+    return {
+      status: 'refused',
+      reason: { rule: 'unbalanced', difference: toDollars(totalCashOut - totalBuyIn) },
+      ...summary,
+    };
   }
 
   const owed = players.map(pl => ({ id: pl.id, remaining: pl.buyIn - pl.cashOut }));
@@ -98,16 +138,10 @@ export function settle(game: Game): SettlementResult {
     if (debtors[i].remaining === 0) i++;
     if (creditors[j].remaining === 0) j++;
   }
-  return {
-    status: 'settled',
-    transfers,
-    totalBuyIn: toDollars(totalBuyIn),
-    totalCashOut: toDollars(totalCashOut),
-    profits: new Map(players.map(pl => [pl.id, toDollars(pl.cashOut - pl.buyIn)])),
-  };
+  return { status: 'settled', transfers, ...summary };
 }
 
-function findInvalidPlayer(players: { id: string; buyIn: number; cashOut: number }[]): RefusalReason | null {
+function findInvalidPlayer(players: { id: string; buyIn: number; cashOut: number }[]): PlayerRefusalReason | null {
   const seen = new Set<string>();
   for (const pl of players) {
     if (seen.has(pl.id)) return { rule: 'duplicate-player', playerId: pl.id };
@@ -117,7 +151,7 @@ function findInvalidPlayer(players: { id: string; buyIn: number; cashOut: number
   return null;
 }
 
-function findInvalidPayment(players: { id: string }[], payments: GamePayment[]): RefusalReason | null {
+function findInvalidPayment(players: { id: string }[], payments: GamePayment[]): GameRefusalReason | null {
   const ids = new Set(players.map(pl => pl.id));
   for (const [paymentIndex, pay] of payments.entries()) {
     const unknown = [pay.fromId, pay.toId].find(id => !ids.has(id));

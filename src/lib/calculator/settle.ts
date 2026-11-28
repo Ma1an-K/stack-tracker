@@ -1,4 +1,4 @@
-import { settle, type Refused, type Settled } from '@/lib/settlement/settle';
+import { mapTransfers, settle, summaryOf, type SettlementResultOf } from '@/lib/settlement/settle';
 
 /** One row of the public calculator. */
 export interface CalculatorRow {
@@ -20,19 +20,17 @@ export interface CalculatorPlayer {
   profit: number;
 }
 
-export type CalculatorSettlement =
-  | Refused
-  | (Omit<Settled, 'transfers'> & { transfers: CalculatorTransfer[]; players: CalculatorPlayer[] });
+/** Every row's Profit comes too whenever the module gives Profits, even on a refusal; otherwise none. */
+export type CalculatorSettlement = SettlementResultOf<CalculatorTransfer> & { players: CalculatorPlayer[] };
 
 /** The Settlement module, in the calculator's shape: rows in, row names out. */
 export function settleCalculatorRows(rows: CalculatorRow[]): CalculatorSettlement {
   const result = settle({ players: rows.map(r => ({ id: r.id, buyIn: r.buyIn, cashOut: r.cashOut })) });
-  if (result.status === 'refused') return result;
   const names = new Map(rows.map(r => [r.id, rowName(r)]));
+  const profits = summaryOf(result)?.profits;
   return {
-    ...result,
-    players: rows.map(r => ({ id: r.id, name: names.get(r.id)!, profit: result.profits.get(r.id)! })),
-    transfers: result.transfers.map(t => ({ fromName: names.get(t.fromId)!, toName: names.get(t.toId)!, amount: t.amount })),
+    ...mapTransfers(result, t => ({ fromName: names.get(t.fromId)!, toName: names.get(t.toId)!, amount: t.amount })),
+    players: profits ? rows.map(r => ({ id: r.id, name: names.get(r.id)!, profit: profits.get(r.id)! })) : [],
   };
 }
 

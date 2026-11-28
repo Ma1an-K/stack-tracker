@@ -22,7 +22,7 @@ import {
 import { formatProfit } from '@/lib/settlement/format';
 import { parseISO, formatDistanceToNow } from 'date-fns';
 import { getIconSrc } from '@/lib/homegameIcons';
-import { HomegameWithRole, Settlement } from '@/types/database';
+import { HomegameWithRole, SessionTransfer } from '@/types/database';
 import { LiveSessionCard } from '@/components/sessions/LiveSessionCard';
 import { RefreshingDot } from '@/components/common/RefreshingDot';
 import { cn } from '@/lib/utils';
@@ -275,7 +275,7 @@ interface HomegameCardProps {
       sessionsPlayed: number;
       avgProfit: number;
     };
-    pendingSettlements: Settlement[];
+    pendingSettlements: SessionTransfer[];
     leaderboardPosition: number | null;
     totalPlayers: number;
   };
