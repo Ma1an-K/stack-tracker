@@ -144,7 +144,7 @@
   - `HostSetupPage.test.tsx`:
     - Continue on the crew step is disabled for `['Sam','']`, `['Sam','sam']` and `['Sam']`, and shows `validateNames`' message or "Add at least 2 players" (Review Focus 4).
     - Enabled for `['Sam','Dan']`.
-    - "Enter final totals" navigates to `/new-session?seat=all`; "Play live" goes to `/live-session`; "I'll do this later" goes to `/`.
+    - "Enter final totals" navigates to `/new-session?seat=all`; "Play live" goes to `/live-session?seat=all`; "I'll do this later" goes to `/`.
 - [ ] **Step 2: Run** `npm run test:db && npx vitest run src/lib/onboarding src/pages/welcome`. Expected: FAIL.
 - [ ] **Step 3: Implement `HostSetupPage`** as one component with `step: 1|2|3|4` and a progress bar.
   - Step 1 calls `createHomegame` on Continue. Show the 5-homegame-limit error inline.
@@ -155,18 +155,21 @@
 - [ ] **Step 4: Run** all suites plus build. Expected: PASS.
 - [ ] **Step 5: Commit** `feat(onboarding): guided host setup with crew, invite and first game`
 
-### Task 6: Seat the whole crew from setup (`?seat=all`)
+### Task 6: Seat the whole crew from setup (`?seat=all`), for totals and live
 
 **Files:**
-- Modify: `src/pages/NewSessionPage.tsx`
-- Test: `src/pages/NewSessionPage.test.tsx` (create)
+- Modify: `src/pages/NewSessionPage.tsx`, `src/pages/LiveSessionPage.tsx`, `src/components/live/SetupView.tsx`
+- Test: `src/pages/NewSessionPage.test.tsx` (create), `src/components/live/SetupView.test.tsx` (create)
 
 **Interfaces:**
 - Consumes: `SessionForm`'s existing `initialPlayers?: { player_id: string; buy_in: number; cash_out?: number }[]`.
+- Produces: `SetupView` prop `initialSelected?: string[]`, which seeds its `selected` state (it starts empty today).
 
-- [ ] **Step 1: Write a failing test.** With `?seat=all` and 3 active players, `SessionForm` receives `initialPlayers` with all 3 ids and `buy_in: 0`. Without the param it receives none. `?from=live` still wins when a live session exists.
-- [ ] **Step 2: Run** it. Expected: FAIL.
-- [ ] **Step 3: Implement** in `NewSessionPage`.
+- [ ] **Step 1: Write failing tests.**
+  - With `?seat=all` and 3 active players, `SessionForm` receives `initialPlayers` with all 3 ids and `buy_in: 0`. Without the param it receives none. `?from=live` still wins when a live session exists.
+  - `SetupView` with `initialSelected` of 3 ids renders all 3 as selected, and Start is enabled once a buy-in is set (default `'50'`). `LiveSessionPage` passes all active ids when `?seat=all` is present.
+- [ ] **Step 2: Run** them. Expected: FAIL.
+- [ ] **Step 3: Implement** in `NewSessionPage`, `LiveSessionPage` and `SetupView`.
 - [ ] **Step 4: Run** `npm test`. Expected: PASS.
 - [ ] **Step 5: Commit** `feat(sessions): seat all active players when arriving from setup`
 
