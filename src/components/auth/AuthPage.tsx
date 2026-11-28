@@ -1,18 +1,17 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { useTutorialContext } from '@/contexts/TutorialContext';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Plus, Link2, MailCheck, ArrowLeft } from 'lucide-react';
+import { Loader2, MailCheck, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { PokerChipSpade } from '@/components/icons/PokerChipSpade';
 import { SplashScreen } from '@/components/common/SplashScreen';
 import { PasswordInput } from '@/components/common/PasswordInput';
-import { cn } from '@/lib/utils';
-import { parseInviteCode, savePendingCode, readPendingCode, clearPendingCode } from '@/lib/inviteLink';
+import { parseInviteCode, savePendingCode, readPendingCode } from '@/lib/inviteLink';
+import { welcomeTarget, hasSeenWelcome } from '@/lib/onboarding/welcomeTarget';
+import { AuthScreen } from './AuthScreen';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -28,30 +27,7 @@ const signupSchema = z.object({
     .max(20, 'Username must be 20 characters or less'),
 });
 
-type Step = 'auth' | 'signup' | 'setup' | 'forgot';
-
-// ─── Shared screen chrome (same tokens as the rest of the app) ───────────────
-
-function AuthScreen({ eyebrow, headline, children }: { eyebrow?: string; headline: ReactNode; children: ReactNode }) {
-  return (
-    <div className="fixed inset-0 overflow-y-auto bg-background">
-      <div aria-hidden="true" className="pointer-events-none fixed -left-28 -top-28 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.12)_0%,transparent_65%)]" />
-      <div aria-hidden="true" className="pointer-events-none fixed -right-24 bottom-0 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,hsl(var(--gold)/0.06)_0%,transparent_65%)]" />
-      <main className="relative mx-auto flex min-h-full w-full max-w-sm flex-col px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+2.5rem)] page-enter">
-        <Link to="/" className="mb-10 flex items-center gap-2.5 self-start rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Stack Tracker home">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/40 bg-card shadow-[0_0_24px_-6px_hsl(var(--gold)/0.6)]">
-            <PokerChipSpade className="h-5 w-5 text-gold" />
-          </span>
-          <span className="text-[0.75rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Stack Tracker</span>
-        </Link>
-        {eyebrow && <p className="section-header mb-2">{eyebrow}</p>}
-        <h1 className="font-display text-[2.6rem] font-semibold leading-[1.02] text-foreground">{headline}</h1>
-        <div aria-hidden="true" className="gold-hairline mb-8 mt-6 h-px w-24 bg-left" />
-        <div className="flex flex-1 flex-col">{children}</div>
-      </main>
-    </div>
-  );
-}
+type Step = 'auth' | 'signup' | 'forgot';
 
 function Field({ id, label, error, children }: { id: string; label: string; error?: string | null; children: ReactNode }) {
   return (
@@ -77,9 +53,6 @@ function FormError({ message }: { message: string | null }) {
   );
 }
 
-// Invite codes: ignore spaces and hyphens people paste in, compare in capitals.
-const normaliseCode = (v: string) => v.replace(/[\s-]/g, '').toUpperCase().slice(0, 8);
-
 function TextLink({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
     <button
@@ -99,14 +72,11 @@ export function AuthPage() {
     signIn,
     signUp,
     signOut,
-    createHomegame,
-    joinHomegame,
     resetPasswordForEmail,
     user,
     homegames,
     loading: authLoading,
   } = useAuthContext();
-  const { startTour } = useTutorialContext();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // Read once on mount: from the link if present, else from this device (after email confirmation).
@@ -119,8 +89,6 @@ export function AuthPage() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [signupForm, setSignupForm] = useState({ email: '', password: '', username: '' });
-  const [setupForm, setSetupForm] = useState({ homegameName: '', inviteCode: inviteCode ?? '' });
-  const [setupMode, setSetupMode] = useState<'create' | 'join'>(inviteCode ? 'join' : 'create');
 
   // Keep the link's code on this device, then drop it from the address bar so it
   // doesn't linger in history or get shared on with a copied URL.
@@ -152,16 +120,18 @@ export function AuthPage() {
     setStep(next);
   };
 
+  // Signed in: home for members, else the first-run welcome (or the join step for an invite).
+  // Not mid-signup: with email confirmation off, signUp signs in briefly before handleSignup signs out.
+  const signedIn = !!user && step !== 'signup';
   useEffect(() => {
-    if (authLoading) return;
-    if (user && homegames.length > 0) {
-      navigate('/', { replace: true });
-      return;
-    }
-    if (user && homegames.length === 0 && step === 'auth') {
-      setStep('setup');
-    }
-  }, [user, homegames, authLoading, step, navigate]);
+    if (authLoading || !signedIn) return;
+    const target = welcomeTarget({
+      homegameCount: homegames.length,
+      pendingCode: inviteCode ?? readPendingCode(),
+      hasSeenWelcome: hasSeenWelcome(),
+    });
+    navigate(target, { replace: true });
+  }, [signedIn, homegames, authLoading, inviteCode, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,48 +186,6 @@ export function AuthPage() {
     }
   };
 
-  const handleCreateHomegame = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearErrors();
-    if (!setupForm.homegameName.trim()) {
-      flagField('setup-name', 'Enter a name for your game.');
-      return;
-    }
-    setLoading(true);
-    const { error } = await createHomegame(setupForm.homegameName);
-    setLoading(false);
-    if (error) {
-      setFormError('Couldn’t create the game. Check your connection and try again.');
-      toast({ title: 'Error', description: 'Failed to create homegame', variant: 'destructive' });
-    } else {
-      startTour('owner');
-    }
-  };
-
-  const handleJoinHomegame = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearErrors();
-    if (!setupForm.inviteCode.trim()) {
-      flagField('setup-code', 'Enter the invite code your host shared.');
-      return;
-    }
-    setLoading(true);
-    const { error } = await joinHomegame(setupForm.inviteCode);
-    setLoading(false);
-    if (error) {
-      setFormError(`${error.message || 'Failed to join homegame'}. Check the code with your host and try again.`);
-      toast({ title: 'Error', description: error.message || 'Failed to join homegame', variant: 'destructive' });
-    } else {
-      clearPendingCode();
-      toast({ title: 'Success', description: 'You have joined the homegame' });
-    }
-  };
-
-  const handleBackToLogin = async () => {
-    await signOut();
-    goTo('auth');
-  };
-
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
@@ -280,7 +208,8 @@ export function AuthPage() {
 
   // ─── Loading ──────────────────────────────────────────────────────────────────
 
-  if (authLoading) return <SplashScreen />;
+  // Signed in: the effect above is redirecting, so don't flash the sign-in form.
+  if (authLoading || signedIn) return <SplashScreen />;
 
   // ─── Sign In ──────────────────────────────────────────────────────────────────
 
@@ -395,117 +324,35 @@ export function AuthPage() {
     );
   }
 
-  // ─── Forgot Password ──────────────────────────────────────────────────────────
-
-  if (step === 'forgot') {
-    return (
-      <AuthScreen eyebrow="Account" headline="Reset your password.">
-        <form onSubmit={handleForgotPassword} className="space-y-4">
-          <Field id="forgot-email" label="Email" error={errorFor('forgot-email')}>
-            <Input
-              id="forgot-email"
-              type="email"
-              inputMode="email"
-              value={forgotEmail}
-              onChange={(e) => { clearErrors('forgot-email'); setForgotEmail(e.target.value); }}
-              required
-              autoComplete="email"
-              autoFocus
-              aria-describedby={fieldError?.id === 'forgot-email' ? 'forgot-email-error forgot-email-hint' : 'forgot-email-hint'}
-              aria-invalid={fieldError?.id === 'forgot-email' || undefined}
-            />
-            <p id="forgot-email-hint" className="text-xs text-muted-foreground">We'll send a reset link straight to your inbox.</p>
-          </Field>
-          <FormError message={formError} />
-          <Button type="submit" size="lg" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="animate-spin" />}
-            Send reset link
-          </Button>
-        </form>
-        <Button type="button" variant="ghost" size="lg" className="mt-3 w-full" onClick={() => goTo('auth')}>
-          <ArrowLeft /> Back to sign in
-        </Button>
-      </AuthScreen>
-    );
-  }
-
-  // ─── Setup (step === 'setup') ─────────────────────────────────────────────────
+  // ─── Forgot Password (step === 'forgot') ──────────────────────────────────────
 
   return (
-    <AuthScreen eyebrow="One last step" headline={<>Welcome to<br />the table.</>}>
-      <div role="tablist" aria-label="Create or join" className="mb-6 grid grid-cols-2 gap-1 rounded-xl border border-border/60 bg-muted p-1">
-        {([
-          { mode: 'create' as const, icon: Plus, label: 'Create game' },
-          { mode: 'join' as const, icon: Link2, label: 'Join with code' },
-        ]).map(({ mode, icon: Icon, label }) => (
-          <button
-            key={mode}
-            type="button"
-            role="tab"
-            aria-selected={setupMode === mode}
-            onClick={() => { clearErrors(); setSetupMode(mode); }}
-            className={cn(
-              'pressable flex min-h-[48px] items-center justify-center gap-2 rounded-lg text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              setupMode === mode
-                ? 'bg-secondary text-gold shadow-[inset_0_1px_0_hsl(40_70%_75%/0.08),0_2px_8px_-4px_hsl(0_0%_0%/0.8)]'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Icon className="h-4 w-4" aria-hidden="true" />
-            {label}
-          </button>
-        ))}
-      </div>
-      {setupMode === 'create' ? (
-        <form onSubmit={handleCreateHomegame} className="space-y-4">
-          <Field id="setup-name" label="Game name" error={errorFor('setup-name')}>
-            <Input
-              id="setup-name"
-              type="text"
-              placeholder="Friday Night Game"
-              value={setupForm.homegameName}
-              onChange={(e) => { clearErrors('setup-name'); setSetupForm({ ...setupForm, homegameName: e.target.value }); }}
-              required
-              autoFocus
-              autoComplete="off"
-              {...invalidProps('setup-name')}
-            />
-          </Field>
-          <FormError message={formError} />
-          <Button type="submit" size="lg" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="animate-spin" />}
-            Create game
-          </Button>
-        </form>
-      ) : (
-        <form onSubmit={handleJoinHomegame} className="space-y-4">
-          <Field id="setup-code" label="Invite code" error={errorFor('setup-code')}>
-            <Input
-              id="setup-code"
-              type="text"
-              placeholder="ABCD1234"
-              value={setupForm.inviteCode}
-              onChange={(e) => { clearErrors('setup-code'); setSetupForm({ ...setupForm, inviteCode: normaliseCode(e.target.value) }); }}
-              {...invalidProps('setup-code')}
-              className="text-center font-mono text-lg tracking-[0.2em]"
-              autoCapitalize="characters"
-              autoComplete="off"
-              required
-            />
-          </Field>
-          {inviteCode && setupForm.inviteCode === inviteCode && (
-            <p className="-mt-2 text-sm text-muted-foreground">Filled in from your invite link.</p>
-          )}
-          <FormError message={formError} />
-          <Button type="submit" size="lg" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="animate-spin" />}
-            Join game
-          </Button>
-        </form>
-      )}
-      <p className="mt-4 text-center text-sm text-muted-foreground">
-        Wrong account? <TextLink onClick={handleBackToLogin}>Back to sign in</TextLink>
-      </p>
+    <AuthScreen eyebrow="Account" headline="Reset your password.">
+      <form onSubmit={handleForgotPassword} className="space-y-4">
+        <Field id="forgot-email" label="Email" error={errorFor('forgot-email')}>
+          <Input
+            id="forgot-email"
+            type="email"
+            inputMode="email"
+            value={forgotEmail}
+            onChange={(e) => { clearErrors('forgot-email'); setForgotEmail(e.target.value); }}
+            required
+            autoComplete="email"
+            autoFocus
+            aria-describedby={fieldError?.id === 'forgot-email' ? 'forgot-email-error forgot-email-hint' : 'forgot-email-hint'}
+            aria-invalid={fieldError?.id === 'forgot-email' || undefined}
+          />
+          <p id="forgot-email-hint" className="text-xs text-muted-foreground">We'll send a reset link straight to your inbox.</p>
+        </Field>
+        <FormError message={formError} />
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+          {loading && <Loader2 className="animate-spin" />}
+          Send reset link
+        </Button>
+      </form>
+      <Button type="button" variant="ghost" size="lg" className="mt-3 w-full" onClick={() => goTo('auth')}>
+        <ArrowLeft /> Back to sign in
+      </Button>
     </AuthScreen>
   );
 }

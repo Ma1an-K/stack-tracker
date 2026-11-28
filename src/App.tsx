@@ -8,6 +8,7 @@ import { TutorialProvider } from "@/contexts/TutorialContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { LandingPage } from "@/pages/LandingPage";
+import { WelcomeLayout } from "@/pages/welcome/WelcomeLayout";
 import { isNativeApp } from "@/lib/platform";
 import { shellRoute } from "@/lib/shellRoute";
 import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
@@ -45,6 +46,7 @@ const loaders = {
   oneOffLive: () => import("@/pages/oneoff/OneOffLivePage"),
   oneOffSettle: () => import("@/pages/oneoff/OneOffSettlePage"),
   oneOffSaved: () => import("@/pages/oneoff/SavedOneOffPage"),
+  welcomeChoice: () => import("@/pages/welcome/WelcomeChoicePage"),
 };
 
 const DashboardPage = lazy(() => loaders.dashboard().then((m) => ({ default: m.DashboardPage })));
@@ -62,6 +64,7 @@ const OneOffHubPage = lazy(() => loaders.oneOffHub().then((m) => ({ default: m.O
 const OneOffLivePage = lazy(() => loaders.oneOffLive().then((m) => ({ default: m.OneOffLivePage })));
 const OneOffSettlePage = lazy(() => loaders.oneOffSettle().then((m) => ({ default: m.OneOffSettlePage })));
 const SavedOneOffPage = lazy(() => loaders.oneOffSaved().then((m) => ({ default: m.SavedOneOffPage })));
+const WelcomeChoicePage = lazy(() => loaders.welcomeChoice().then((m) => ({ default: m.WelcomeChoicePage })));
 
 /** Warm every signed-in screen's chunk once the shell is idle, so tab switches never wait on the network. */
 function usePrefetchRoutes(enabled: boolean) {
@@ -125,6 +128,10 @@ function AppRoutes() {
       <Route path="/poker-hand-calculator" element={<PublicHandCalculatorPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      {/* First run: full screen, outside the app shell. */}
+      <Route path="/welcome" element={<WelcomeLayout />}>
+        <Route index element={<WelcomeChoicePage />} />
+      </Route>
       <Route element={<AppShell />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/sessions" element={<SessionsPage />} />
