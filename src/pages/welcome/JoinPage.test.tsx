@@ -75,4 +75,46 @@ describe('JoinPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Back/ }));
     expect(screen.getByTestId('where')).toHaveTextContent('/welcome');
   });
+
+  // A dead saved code would otherwise send this user back to the join step on
+  // every sign-in for up to 7 days.
+  it.each([
+    'Invalid or inactive invite code',
+    'This invite code has expired',
+    'This invite code has reached its maximum uses',
+  ])('forgets the saved code when joining says "%s"', async (message) => {
+    store.set('pendingInviteCode', JSON.stringify({ code: 'ABCD1234', savedAt: Date.now() }));
+    joinHomegame.mockResolvedValue({ error: new Error(message) });
+    renderJoin();
+    fireEvent.click(screen.getByRole('button', { name: 'Join homegame' }));
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(store.has('pendingInviteCode')).toBe(false);
+  });
+
+  it('keeps the saved code when joining fails for another reason', async () => {
+    store.set('pendingInviteCode', JSON.stringify({ code: 'ABCD1234', savedAt: Date.now() }));
+    joinHomegame.mockResolvedValue({ error: new Error('Failed to join homegame') });
+    renderJoin();
+    fireEvent.click(screen.getByRole('button', { name: 'Join homegame' }));
+    expect(await screen.findByText('Failed to join homegame')).toBeInTheDocument();
+    expect(store.has('pendingInviteCode')).toBe(true);
+  });
+
+  it('Back forgets the saved code so sign-in stops returning here', () => {
+    store.set('pendingInviteCode', JSON.stringify({ code: 'ABCD1234', savedAt: Date.now() }));
+    renderJoin();
+    fireEvent.click(screen.getByRole('button', { name: /Back/ }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/welcome');
+    expect(store.has('pendingInviteCode')).toBe(false);
+  });
+
+  it('keeps the saved code when a different, typed code is rejected', async () => {
+    store.set('pendingInviteCode', JSON.stringify({ code: 'ABCD1234', savedAt: Date.now() }));
+    joinHomegame.mockResolvedValue({ error: new Error('Invalid or inactive invite code') });
+    renderJoin();
+    fireEvent.change(screen.getByLabelText('Invite code'), { target: { value: 'ZZZZ9999' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Join homegame' }));
+    expect(await screen.findByText('Invalid or inactive invite code')).toBeInTheDocument();
+    expect(store.has('pendingInviteCode')).toBe(true);
+  });
 });

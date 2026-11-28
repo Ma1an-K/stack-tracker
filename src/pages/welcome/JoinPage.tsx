@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label';
 import { clearPendingCode, parseInviteCode, readPendingCode } from '@/lib/inviteLink';
 import { markWelcomeSeen } from '@/lib/onboarding/welcomeTarget';
 
+// join_with_invite_code's messages for a code that can never work.
+const DEAD_CODE = /invalid|inactive|expired|maximum uses/i;
+
 /** Join a homegame with an invite code. An invite link fills the code in, so this is one tap. */
 export function JoinPage() {
   const { joinHomegame } = useAuthContext();
@@ -30,6 +33,10 @@ export function JoinPage() {
     const { error: joinError } = await joinHomegame(code);
     setJoining(false);
     if (joinError) {
+      // The saved code is dead: it would bring this user back here on every sign-in.
+      if (joinError instanceof Error && DEAD_CODE.test(joinError.message) && code === readPendingCode()) {
+        clearPendingCode();
+      }
       setError(joinError instanceof Error ? joinError.message : 'Could not join. Check the code and try again.');
       return;
     }
@@ -39,10 +46,16 @@ export function JoinPage() {
     navigate('/welcome/who', { replace: true });
   };
 
+  // Leaving by Back means not now: stop sending this user to the join step.
+  const back = () => {
+    clearPendingCode();
+    navigate('/welcome');
+  };
+
   const top = (
     <button
       type="button"
-      onClick={() => navigate('/welcome')}
+      onClick={back}
       className="-ml-2 mb-8 flex min-h-11 items-center gap-1 self-start rounded-lg px-2 text-sm text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <ChevronLeft className="h-4 w-4" aria-hidden="true" />
