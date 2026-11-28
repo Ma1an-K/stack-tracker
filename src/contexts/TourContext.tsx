@@ -169,3 +169,12 @@ export function useTourHoldsInstall(): boolean {
   const value = useContext(TourContext);
   return !!value && (value.open || value.closing || value.autoOpenPending);
 }
+
+/**
+ * Whether the tour sheet is open. One-time tips stay hidden while it is, since
+ * they would sit on top of it. False outside a TourProvider.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useTourOpen(): boolean {
+  return !!useContext(TourContext)?.open;
+}

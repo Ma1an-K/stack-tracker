@@ -19,6 +19,9 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }));
 
+let tourOpen = false;
+vi.mock('@/contexts/TourContext', () => ({ useTourOpen: () => tourOpen }));
+
 vi.mock('@/hooks/useTips', () => ({
   useTips: () => ({ shouldShow: () => true, markSeen: vi.fn() }),
 }));
@@ -78,6 +81,7 @@ beforeEach(() => {
   homegameStats = [];
   myRequests = [];
   claimsLoading = false;
+  tourOpen = false;
 });
 
 describe('MyStatsPage member tip', () => {
@@ -125,5 +129,12 @@ describe('MyStatsPage member tip', () => {
     renderPage();
     expect(screen.queryByText(TIP)).not.toBeInTheDocument();
     expect(screen.queryByText(CLAIM_TIP)).not.toBeInTheDocument();
+  });
+
+  it('shows no tip while the feature tour is open', () => {
+    myRequests = [{ id: 'r1', player_id: 'p2', user_id: 'u1', status: 'pending' }];
+    tourOpen = true;
+    renderPage();
+    expect(screen.queryByText(TIP)).not.toBeInTheDocument();
   });
 });

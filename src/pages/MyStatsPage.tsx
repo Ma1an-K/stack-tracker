@@ -21,6 +21,7 @@ import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { PlayerBadges } from '@/components/badges/PlayerBadges';
 import { ProfitChart } from '@/components/stats/ProfitChart';
 import { useTips } from '@/hooks/useTips';
+import { useTourOpen } from '@/contexts/TourContext';
 import { usePlayerClaims } from '@/hooks/usePlayerClaims';
 import { usePlayers } from '@/hooks/usePlayers';
 import { Tip } from '@/components/tips/Tip';
@@ -28,6 +29,8 @@ import { Tip } from '@/components/tips/Tip';
 export function MyStatsPage() {
   const { profile, homegames, homegame, isOwner } = useAuthContext();
   const tips = useTips();
+  // One-time tips never show over the feature tour sheet.
+  const tourOpen = useTourOpen();
   const stats = usePersonalStats();
   // myRequests covers every homegame; the current homegame's players scope it.
   const { myRequests, loading: claimsLoading } = usePlayerClaims(homegame?.id);
@@ -59,7 +62,7 @@ export function MyStatsPage() {
     <div className="space-y-6">
       <PageHeader eyebrow={profile?.username ? `${profile.username}#${profile.discriminator}` : 'You'} title="My stats" action={<RefreshingDot show={isRefreshing} />} />
 
-      {homegame && !isOwner && !hasClaimedPlayers && claimsReady && tips.shouldShow('mystats-member') && (
+      {homegame && !isOwner && !hasClaimedPlayers && claimsReady && !tourOpen && tips.shouldShow('mystats-member') && (
         <Tip onDismiss={() => tips.markSeen('mystats-member')}>
           {pendingRequest
             ? 'Your results show here once your host confirms your name.'

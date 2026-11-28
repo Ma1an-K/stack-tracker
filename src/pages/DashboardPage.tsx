@@ -33,7 +33,7 @@ import { useGettingStarted } from '@/hooks/useGettingStarted';
 import { useTips } from '@/hooks/useTips';
 import { Tip } from '@/components/tips/Tip';
 import { InstallBanner } from '@/components/install/InstallBanner';
-import { useTour } from '@/contexts/TourContext';
+import { useTour, useTourOpen } from '@/contexts/TourContext';
 
 export function DashboardPage() {
   const { homegame } = useAuthContext();
@@ -52,8 +52,9 @@ function HomegameDashboard() {
   const { liveSession } = useLiveSession();
   const { checklist, sessionCount, onInviteShared } = useGettingStarted(homegame?.id);
   const tips = useTips();
-  // sessionCount is only a number for owners.
-  const showPlusTip = !liveSession && (sessionCount ?? 0) >= 1 && tips.shouldShow('home-plus');
+  const tourOpen = useTourOpen();
+  // sessionCount is only a number for owners. No one-time tip over the tour sheet.
+  const showPlusTip = !tourOpen && !liveSession && (sessionCount ?? 0) >= 1 && tips.shouldShow('home-plus');
 
   const live = useMemo(
     () => ({ homegameStats: stats.homegameStats, recentSessions: stats.recentSessions, overallStats: stats.overallStats }),

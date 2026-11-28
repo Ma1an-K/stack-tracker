@@ -24,7 +24,7 @@ vi.mock('@/hooks/useTips', () => ({
   useTips: () => ({ markSeen: state.markSeen, shouldShow: (id: string) => !state.dismissed.includes(id) }),
 }));
 
-import { TourProvider, useTour, useTourHoldsInstall, HOME_REQUEST_WINDOW_MS, TOUR_EXIT_MS } from './TourContext';
+import { TourProvider, useTour, useTourHoldsInstall, useTourOpen, HOME_REQUEST_WINDOW_MS, TOUR_EXIT_MS } from './TourContext';
 
 const NEW: Profile = { created_at: '2026-11-29T10:00:00Z', seen_tips: [] };
 const OLD: Profile = { created_at: '2026-10-01T10:00:00Z', seen_tips: [] };
@@ -392,6 +392,22 @@ describe('TourProvider', () => {
   it('useTour throws outside the provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => renderHook(() => useTour())).toThrow(/TourProvider/);
+  });
+
+  it('useTourOpen follows the sheet, and is false outside the provider', () => {
+    const { result } = renderHook(() => ({ tour: useTour(), open: useTourOpen() }), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <MemoryRouter initialEntries={['/sessions']}>
+          <TourProvider>{children}</TourProvider>
+        </MemoryRouter>
+      ),
+    });
+    expect(result.current.open).toBe(false);
+    act(() => result.current.tour.openTour());
+    expect(result.current.open).toBe(true);
+    act(() => result.current.tour.closeTour());
+    expect(result.current.open).toBe(false);
+    expect(renderHook(() => useTourOpen()).result.current).toBe(false);
   });
 
   it('useTourHoldsInstall is false outside the provider', () => {
