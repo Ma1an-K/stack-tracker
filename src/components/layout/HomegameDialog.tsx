@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +29,7 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create', init
   const { createHomegame, joinHomegame } = useAuthContext();
   const { startTour } = useTutorialContext();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [newHomegameName, setNewHomegameName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
@@ -73,6 +75,7 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create', init
       toast({ title: 'Joined homegame successfully' });
       setInviteCode('');
       onOpenChange(false);
+      navigate('/welcome/who');
     }
   };
 
