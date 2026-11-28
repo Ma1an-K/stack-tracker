@@ -25,9 +25,10 @@ vi.mock('@/hooks/useTips', () => ({
 }));
 
 import { TourProvider, useTour, useTourHoldsInstall, useTourOpen, HOME_REQUEST_WINDOW_MS, TOUR_EXIT_MS } from './TourContext';
+import { TOUR_RELEASE } from '@/lib/onboarding/tour';
 
-const NEW: Profile = { created_at: '2026-11-29T10:00:00Z', seen_tips: [] };
-const OLD: Profile = { created_at: '2026-10-01T10:00:00Z', seen_tips: [] };
+const NEW: Profile = { created_at: new Date(Date.parse(TOUR_RELEASE) + 60_000).toISOString(), seen_tips: [] };
+const OLD: Profile = { created_at: new Date(Date.parse(TOUR_RELEASE) - 60_000).toISOString(), seen_tips: [] };
 
 const mount = (path = '/') =>
   renderHook(() => ({ tour: useTour(), holds: useTourHoldsInstall() }), {

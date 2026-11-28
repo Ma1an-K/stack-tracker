@@ -26,6 +26,7 @@ vi.mock('@/components/tour/FeatureTour', () => ({ FeatureTour: () => null }));
 import { InstallNudgeProvider, useInstallNudge } from './InstallNudgeContext';
 import { TourProvider, useTour, TOUR_EXIT_MS, HOME_REQUEST_WINDOW_MS } from './TourContext';
 import { InstallBanner } from '@/components/install/InstallBanner';
+import { TOUR_RELEASE } from '@/lib/onboarding/tour';
 
 function memoryStorage(): Storage {
   const m = new Map<string, string>();
@@ -44,8 +45,8 @@ function memoryStorage(): Storage {
 const SHEET = 'Keep it one tap away';
 const BANNER = 'Put Stack Tracker on your Home Screen';
 const NOW = 1_800_000_000_000;
-const NEW = { created_at: '2026-11-29T10:00:00Z', seen_tips: [] as string[] };
-const OLD = { created_at: '2026-10-01T10:00:00Z', seen_tips: [] as string[] };
+const NEW = { created_at: new Date(Date.parse(TOUR_RELEASE) + 60_000).toISOString(), seen_tips: [] as string[] };
+const OLD = { created_at: new Date(Date.parse(TOUR_RELEASE) - 60_000).toISOString(), seen_tips: [] as string[] };
 
 function Controls() {
   const { open, openTour, closeTour, maybeAutoOpen } = useTour();

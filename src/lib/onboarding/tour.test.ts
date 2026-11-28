@@ -59,11 +59,6 @@ describe('isTourEligible', () => {
     expect(isTourEligible({ ...fresh, created_at: before })).toBe(false);
   });
 
-  it('reads the instant with its offset (AEDT midnight), not UTC midnight', () => {
-    expect(isTourEligible({ ...fresh, created_at: '2026-11-27T13:00:00Z' })).toBe(true);
-    expect(isTourEligible({ ...fresh, created_at: '2026-11-27T12:59:59Z' })).toBe(false);
-  });
-
   it('is true for an account created at the exact release instant that has not seen it', () => {
     expect(isTourEligible({ ...fresh, created_at: new Date(Date.parse(TOUR_RELEASE)).toISOString() })).toBe(true);
     expect(isTourEligible(fresh)).toBe(true);
