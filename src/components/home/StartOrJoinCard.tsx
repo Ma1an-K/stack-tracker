@@ -20,14 +20,14 @@ export function StartOrJoinCard({ className }: { className?: string }) {
       <p className="mt-1 text-sm text-muted-foreground">
         A homegame keeps running standings, badges and history for everyone.
       </p>
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Button asChild className="h-11 gap-1.5 px-3">
+      <div className="mt-4 grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
+        <Button asChild className="h-11">
           <Link to="/welcome/host">
             <Plus />
             Start a homegame
           </Link>
         </Button>
-        <Button asChild variant="secondary" className="h-11 gap-1.5 px-3">
+        <Button asChild variant="secondary" className="h-11">
           <Link to="/welcome/join">
             <KeyRound />
             Join with code
