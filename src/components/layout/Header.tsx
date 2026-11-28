@@ -38,6 +38,9 @@ export function Header() {
   const [clubOpen, setClubOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const { isSubscribed, isSupported, subscribe, unsubscribe } = usePushNotifications();
+  // Notifications are about a homegame's sessions: nothing to enable without one
+  // (a leftover subscription can still be turned off).
+  const showNotificationsRow = isSupported && (!!homegame || isSubscribed);
   const { game: oneOff } = useOneOffGame();
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
@@ -300,21 +303,23 @@ export function Header() {
             )}
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-border/60 bg-secondary/40 divide-y divide-border/50">
-            {isOwner && (
-              <>
-                <ClubRow icon={Link} label="Invites" onClick={fromClub(() => navigate('/invites'))} />
-                <ClubRow icon={Award} label="Badges" onClick={fromClub(() => setBadgesDialogOpen(true))} />
-              </>
-            )}
-            {isSupported && (
-              <ClubRow
-                icon={isSubscribed ? BellOff : Bell}
-                label={isSubscribed ? 'Disable notifications' : 'Enable notifications'}
-                onClick={fromClub(handleToggleNotifications)}
-              />
-            )}
-          </div>
+          {(isOwner || showNotificationsRow) && (
+            <div className="overflow-hidden rounded-xl border border-border/60 bg-secondary/40 divide-y divide-border/50">
+              {isOwner && (
+                <>
+                  <ClubRow icon={Link} label="Invites" onClick={fromClub(() => navigate('/invites'))} />
+                  <ClubRow icon={Award} label="Badges" onClick={fromClub(() => setBadgesDialogOpen(true))} />
+                </>
+              )}
+              {showNotificationsRow && (
+                <ClubRow
+                  icon={isSubscribed ? BellOff : Bell}
+                  label={isSubscribed ? 'Disable notifications' : 'Enable notifications'}
+                  onClick={fromClub(handleToggleNotifications)}
+                />
+              )}
+            </div>
+          )}
 
           {/* Account exits kept apart from everyday settings */}
           <div className="mt-2 overflow-hidden rounded-xl border border-border/60 bg-secondary/40 divide-y divide-border/50">

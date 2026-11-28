@@ -6,6 +6,7 @@ import type { OneOffGame } from '@/lib/oneOff/types';
 let game: OneOffGame | null = null;
 const FRIDAY = { id: 'hg-1', name: 'Friday game', icon_id: null, disabled_badges: [] };
 let homegame: typeof FRIDAY | null = FRIDAY;
+let pushSupported = false;
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuthContext: () => ({
@@ -26,7 +27,7 @@ vi.mock('@/contexts/OneOffGameContext', () => ({
 }));
 
 vi.mock('@/hooks/usePushNotifications', () => ({
-  usePushNotifications: () => ({ isSubscribed: false, isSupported: false, subscribe: vi.fn(), unsubscribe: vi.fn() }),
+  usePushNotifications: () => ({ isSubscribed: false, isSupported: pushSupported, subscribe: vi.fn(), unsubscribe: vi.fn() }),
 }));
 
 vi.mock('@/hooks/useMediaQuery', () => ({
@@ -106,6 +107,15 @@ describe('Header with no homegame', () => {
   beforeEach(() => {
     game = null;
     homegame = null;
+    pushSupported = false;
+  });
+
+  // Notifications are about a homegame's sessions; with none there is nothing to notify.
+  it('offers no "Enable notifications" row', () => {
+    pushSupported = true;
+    renderHeader();
+    openClub();
+    expect(screen.queryByRole('button', { name: 'Enable notifications' })).not.toBeInTheDocument();
   });
 
   it('shows the app name and "No homegame yet" with no switcher', () => {
@@ -128,6 +138,14 @@ describe('Header with a homegame', () => {
   beforeEach(() => {
     game = null;
     homegame = FRIDAY;
+    pushSupported = false;
+  });
+
+  it('offers "Enable notifications" where push is supported', () => {
+    pushSupported = true;
+    renderHeader();
+    openClub();
+    expect(screen.getByRole('button', { name: 'Enable notifications' })).toBeInTheDocument();
   });
 
   it('shows the homegame name in the switcher', () => {
