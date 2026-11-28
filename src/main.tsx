@@ -1,3 +1,5 @@
+// First, so the one-time install prompt is caught even if it fires before React mounts.
+import "./lib/installPromptStore";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
