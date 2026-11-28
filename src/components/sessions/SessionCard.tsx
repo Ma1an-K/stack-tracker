@@ -59,9 +59,11 @@ export function SessionCard({
   const settlement = settleSession(session.session_players, payments);
   const transfers = transfersOf(settlement);
   const refusal = settlement.status === 'refused' ? describeRefusal(settlement.reason, currency) : null;
-  // An unbalanced Session still has its totals and Profits; only an invalid Player leaves none.
+  // An unbalanced Session still has its totals and Profits; only an invalid Player leaves none,
+  // and then the card shows the raw Cash-out minus Buy-in rather than $0 for everyone.
   const summary = summaryOf(settlement);
-  const profitOf = (sp: SessionWithPlayers['session_players'][number]) => summary?.profits.get(sp.player_id) ?? 0;
+  const profitOf = (sp: SessionWithPlayers['session_players'][number]) =>
+    summary ? (summary.profits.get(sp.player_id) ?? 0) : Number(sp.cash_out) - Number(sp.buy_in);
   const totalPot = summary?.totalBuyIn ?? 0;
 
   const buildShareText = () => {

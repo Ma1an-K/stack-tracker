@@ -81,6 +81,11 @@ export function mapTransfers<T>(result: SettlementResult, toShape: (transfer: Tr
 const toCents = (dollars: number) => Math.round(dollars * 100);
 const toDollars = (cents: number) => cents / 100;
 
+/** Balanced: total Cash-outs equal total Buy-ins to the cent. */
+export function isBalanced(totalBuyIn: number, totalCashOut: number): boolean {
+  return toCents(totalBuyIn) === toCents(totalCashOut);
+}
+
 /**
  * The one Settlement for a game: who pays whom after Payments.
  *

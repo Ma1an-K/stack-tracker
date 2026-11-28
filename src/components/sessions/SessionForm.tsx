@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { isBalanced } from '@/lib/settlement/settle';
 
 interface PlayerEntry {
   player_id: string;
@@ -168,7 +169,7 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
     (sum, p) => sum + (parseFloat(p.cash_out) || 0),
     0
   );
-  const isBalanced = Math.abs(totalBuyIn - totalCashOut) < 0.01;
+  const balanced = isBalanced(totalBuyIn, totalCashOut);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,7 +195,7 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
       return;
     }
 
-    if (!isBalanced) {
+    if (!balanced) {
       toast({
         title: 'Error',
         description: 'Total buy-ins must equal total cash-outs',
@@ -249,7 +250,7 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
       ? { tone: 'muted', text: `Add ${2 - selectedPlayers.length} more player${selectedPlayers.length === 1 ? '' : 's'}` }
       : hasEmpty
         ? { tone: 'muted', text: 'Fill in every buy-in and cash-out' }
-        : !isBalanced
+        : !balanced
           ? { tone: 'bad', text: `Off by ${money(diff)}: cash-outs ${diff > 0 ? 'short' : 'over'}` }
           : { tone: 'good', text: `Balanced · ${money(totalBuyIn)} in play` };
   const fieldH = isMobile ? 'h-12' : 'h-11';
@@ -554,7 +555,7 @@ export function SessionForm({ players, existingSession, onSubmit, onCancel, onAd
             type="submit"
             size="lg"
             className="flex-[2]"
-            disabled={submitting || selectedPlayers.length < 2 || !isBalanced}
+            disabled={submitting || selectedPlayers.length < 2 || !balanced}
           >
             {submitting && <Loader2 className="animate-spin" />}
             {existingSession ? 'Save changes' : 'Log session'}

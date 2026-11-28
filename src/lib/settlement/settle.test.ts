@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { describeRefusal, settle, summaryOf, type Game, type Settled } from './settle';
+import { describeRefusal, isBalanced, settle, summaryOf, type Game, type Settled } from './settle';
 
 const p = (id: string, buyIn: number, cashOut: number) => ({ id, buyIn, cashOut });
 const pay = (fromId: string, toId: string, amount: number) => ({ fromId, toId, amount });
@@ -221,5 +221,16 @@ describe('describeRefusal', () => {
     expect(describeRefusal({ rule: 'non-positive-payment', paymentIndex: 0 })).toBe(
       'A payment must be more than zero',
     );
+  });
+});
+
+describe('isBalanced', () => {
+  it('is equal to the cent, so a 1-cent gap that float maths hides is not Balanced', () => {
+    expect(isBalanced(66 + 219.36, 65.99 + 219.36)).toBe(false);
+    expect(settle({ players: [p('a', 66, 65.99), p('b', 219.36, 219.36)] }).status).toBe('refused');
+  });
+
+  it('ignores float drift below a cent', () => {
+    expect(isBalanced(10.1 + 20.2, 30.3)).toBe(true);
   });
 });
