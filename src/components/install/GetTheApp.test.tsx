@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import type { InstallContext } from '@/lib/installContext';
 
 let context: InstallContext = 'ios-safari';
@@ -9,6 +9,19 @@ vi.mock('@/hooks/useInstallPrompt', () => ({
 }));
 
 import { GetTheApp } from './GetTheApp';
+
+const IOS_INSTAGRAM = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Instagram 300.0';
+const ANDROID_INSTAGRAM = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36 Instagram 300.0';
+
+function stubBrowser(userAgent: string, writeText = vi.fn().mockResolvedValue(undefined)) {
+  vi.stubGlobal('navigator', { userAgent, maxTouchPoints: 5, clipboard: { writeText } });
+  return writeText;
+}
+
+function stubStores() {
+  vi.stubEnv('VITE_APP_STORE_URL', 'https://apps.apple.com/app/id1');
+  vi.stubEnv('VITE_PLAY_STORE_URL', 'https://play.google.com/store/apps/details?id=x');
+}
 
 beforeEach(() => {
   context = 'ios-safari';
@@ -23,8 +36,7 @@ afterEach(() => {
 
 describe('GetTheApp', () => {
   it('makes the store badges the primary action when both store links are set', () => {
-    vi.stubEnv('VITE_APP_STORE_URL', 'https://apps.apple.com/app/id1');
-    vi.stubEnv('VITE_PLAY_STORE_URL', 'https://play.google.com/store/apps/details?id=x');
+    stubStores();
     render(<GetTheApp variant="landing" />);
 
     const appStore = screen.getByRole('link', { name: /App Store/ });
@@ -71,8 +83,7 @@ describe('GetTheApp', () => {
 
   it('asks to open the page in Safari first inside an in-app browser, with a Copy button', async () => {
     context = 'in-app';
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    const writeText = stubBrowser(IOS_INSTAGRAM);
     const onContinue = vi.fn();
     render(<GetTheApp variant="landing" onContinue={onContinue} />);
 
@@ -87,7 +98,7 @@ describe('GetTheApp', () => {
 
   it('selects the link when copying is not allowed', async () => {
     context = 'in-app';
-    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: vi.fn().mockRejectedValue(new Error('no')) } });
+    stubBrowser(IOS_INSTAGRAM, vi.fn().mockRejectedValue(new Error('no')));
     render(<GetTheApp variant="landing" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
@@ -127,5 +138,57 @@ describe('GetTheApp', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'How' }));
     expect(screen.getByText('Add it in three taps')).toBeInTheDocument();
+  });
+
+  it('uses Safari wording for an in-app browser on iPhone', () => {
+    context = 'in-app';
+    stubBrowser(IOS_INSTAGRAM);
+    render(<GetTheApp variant="landing" />);
+    expect(screen.getByRole('heading', { name: 'Open this in Safari first' })).toBeInTheDocument();
+    expect(screen.getByText(/Open in Safari/)).toBeInTheDocument();
+    expect(screen.getByText('Or copy the link and paste it into Safari.')).toBeInTheDocument();
+    expect(screen.queryByText(/Chrome/)).not.toBeInTheDocument();
+  });
+
+  it('uses browser and Chrome wording for an in-app browser on Android', () => {
+    context = 'in-app';
+    stubBrowser(ANDROID_INSTAGRAM);
+    render(<GetTheApp variant="landing" />);
+    expect(screen.getByRole('heading', { name: 'Open this in your browser first' })).toBeInTheDocument();
+    expect(screen.getByText(/Open in Chrome/)).toBeInTheDocument();
+    expect(screen.getByText('Or copy the link and paste it into Chrome.')).toBeInTheDocument();
+    expect(screen.queryByText(/Safari/)).not.toBeInTheDocument();
+  });
+
+  it('sends Chrome or Firefox on iPhone to Safari, with a Copy row', () => {
+    context = 'ios-other';
+    stubBrowser('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 CriOS/120.0 Mobile/15E148');
+    render(<GetTheApp variant="sheet" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Show me how' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Open this in Safari first');
+    expect(within(dialog).getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+  });
+
+  it('opens the open-in-browser block in the dialog from the sheet variant', () => {
+    context = 'in-app';
+    stubBrowser(IOS_INSTAGRAM);
+    render(<GetTheApp variant="sheet" />);
+    expect(screen.queryByText('Open this in Safari first')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Show me how' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Open this in Safari first');
+    expect(within(dialog).getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+  });
+
+  it.each(['landing', 'sheet'] as const)('shows no store badges inside an in-app browser (%s)', variant => {
+    context = 'in-app';
+    stubBrowser(IOS_INSTAGRAM);
+    stubStores();
+    render(<GetTheApp variant={variant} />);
+    expect(screen.queryByRole('link', { name: /App Store/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Google Play/ })).not.toBeInTheDocument();
+    if (variant === 'sheet') fireEvent.click(screen.getByRole('button', { name: 'Show me how' }));
+    expect(screen.getByText('Open this in Safari first')).toBeInTheDocument();
   });
 });

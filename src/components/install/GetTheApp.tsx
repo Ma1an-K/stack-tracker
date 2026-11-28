@@ -54,7 +54,8 @@ export function GetTheApp({ variant, inviteCode, onContinue, onDismiss }: GetThe
   // Laptops get the QR hero in a later task; nothing else here applies to them.
   if (!isPhoneContext(context)) return null;
 
-  const stores = storeLinks();
+  // Installing from inside a webview fails either way, so it always gets the open-in-browser help.
+  const stores = context === 'in-app' ? null : storeLinks();
   const install = () => (trigger ? trigger() : setGuideOpen(true));
 
   const guide = (

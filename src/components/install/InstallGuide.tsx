@@ -141,23 +141,27 @@ function AndroidSteps({ inviteCode }: { inviteCode?: string }) {
   );
 }
 
-/** For browsers that can't add to the Home Screen: in-app webviews, and Chrome or Firefox on iPhone. */
+/** For browsers that can't add to the Home Screen: in-app webviews (iOS or Android), and Chrome or Firefox on iPhone. */
 export function OpenInSafari({ context, inviteCode }: { context: 'in-app' | 'ios-other'; inviteCode?: string }) {
+  // In-app webviews are matched by user agent alone, so they can be on Android too.
+  const android = context === 'in-app' && /Android/.test(navigator.userAgent ?? '');
+  const browser = android ? 'Chrome' : 'Safari';
+  const b = (text: string) => <b className="text-foreground">{text}</b>;
   return (
     <div className="space-y-4">
       <div className="space-y-1">
         <Eyebrow>One quick step</Eyebrow>
-        <Heading>Open this in Safari first</Heading>
+        <Heading>{android ? 'Open this in your browser first' : 'Open this in Safari first'}</Heading>
       </div>
       <p className="text-sm text-muted-foreground">
         {context === 'in-app' ? (
-          <>This app's built-in browser can't add apps to your Home Screen. Tap <b className="text-foreground">⋯</b> or <b className="text-foreground">⋮</b>, then <b className="text-foreground">Open in Safari</b> or <b className="text-foreground">Open in Chrome</b>.</>
+          <>This app's built-in browser can't add apps to your Home Screen. Tap {android ? b('⋮') : b('⋯')}, then {b(`Open in ${browser}`)}.</>
         ) : (
           <>Only Safari can add Stack Tracker to your iPhone's Home Screen.</>
         )}
       </p>
       <CopyLink />
-      <p className="text-[0.8125rem] text-muted-foreground">Or copy the link and paste it into Safari.</p>
+      <p className="text-[0.8125rem] text-muted-foreground">Or copy the link and paste it into {browser}.</p>
       {inviteCode && <InviteCallout code={inviteCode} />}
     </div>
   );
