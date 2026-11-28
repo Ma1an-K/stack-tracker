@@ -13,9 +13,41 @@ import { validateNames } from '@/lib/oneOff/localStore';
 import { markInviteShared, pickInviteCode } from '@/lib/onboarding/ensureInviteCode';
 import { publicOrigin } from '@/lib/platform';
 import { cn } from '@/lib/utils';
+import type { HomegameWithRole } from '@/types/database';
 
 type Step = 1 | 2 | 3 | 4;
 type CrewRow = { key: string; name: string; you: boolean };
+
+// Progress survives a reload, so a reload after step 1 never creates a second homegame.
+const PROGRESS_KEY = 'host_setup';
+type Progress = { homegameId: string; step: Step };
+
+function readProgress(homegames: HomegameWithRole[]): (Progress & { name: string }) | null {
+  try {
+    const raw = sessionStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Partial<Progress>;
+    const game = homegames.find((h) => h.id === saved.homegameId && h.role === 'owner');
+    if (!game) {
+      sessionStorage.removeItem(PROGRESS_KEY);
+      return null;
+    }
+    // The homegame exists, so never resume at naming it.
+    const step = Math.min(4, Math.max(2, Number(saved.step) || 2)) as Step;
+    return { homegameId: game.id, step, name: game.name };
+  } catch {
+    return null;
+  }
+}
+
+function writeProgress(progress: Progress | null) {
+  try {
+    if (progress) sessionStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    else sessionStorage.removeItem(PROGRESS_KEY);
+  } catch {
+    /* storage unavailable: a reload just starts over */
+  }
+}
 
 const STEPS = 4;
 const TITLES: Record<Step, string> = { 1: 'Name your game', 2: 'Who plays?', 3: 'Bring them in', 4: 'Log your first game' };
@@ -32,7 +64,7 @@ function listNames(names: string[]): string {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
-function Progress({ step }: { step: Step }) {
+function ProgressBar({ step }: { step: Step }) {
   return (
     <div
       role="progressbar"
@@ -53,30 +85,56 @@ function Progress({ step }: { step: Step }) {
 export function HostSetupPage() {
   const navigate = useNavigate();
   const { user, profile, homegame, homegames, createHomegame, selectHomegame, updateHomegame } = useAuthContext();
-  const [step, setStep] = useState<Step>(1);
+  const [resumed] = useState(() => readProgress(homegames));
+  const [step, setStep] = useState<Step>(resumed?.step ?? 1);
 
   // Step 1
-  const [gameName, setGameName] = useState('');
-  const [createdId, setCreatedId] = useState<string | null>(null);
-  const [createdName, setCreatedName] = useState('');
+  const [gameName, setGameName] = useState(resumed?.name ?? '');
+  const [createdId, setCreatedId] = useState<string | null>(resumed?.homegameId ?? null);
+  const [createdName, setCreatedName] = useState(resumed?.name ?? '');
   const [nameError, setNameError] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
 
   // Step 2
-  const [crew, setCrew] = useState<CrewRow[]>(() => [
-    { key: 'you', name: profile?.display_name || profile?.username || '', you: true },
-  ]);
+  const youRow = (): CrewRow => ({ key: 'you', name: profile?.display_name || profile?.username || '', you: true });
+  // Rows not saved yet. A resumed flow waits for the saved players before offering "You".
+  const [crew, setCrew] = useState<CrewRow[]>(() => (resumed ? [] : [youRow()]));
   const [draft, setDraft] = useState('');
   const [savingCrew, setSavingCrew] = useState(false);
-  const savedNames = useRef(new Set<string>());
+  const [savedOrder, setSavedOrder] = useState<string[]>([]);
   const nextKey = useRef(1);
+  const offeredYou = useRef(!resumed);
+  const { players, loading: playersLoading, addPlayer } = usePlayers(createdId ?? undefined);
+  // Saved players, in the order they were added here (the hook sorts by name).
+  const rank = (name: string) => {
+    const i = savedOrder.indexOf(name);
+    return i === -1 ? savedOrder.length : i;
+  };
+  const saved = [...players].sort((a, b) => rank(a.name) - rank(b.name));
 
   // Step 3
-  const { addPlayer } = usePlayers(createdId ?? undefined);
   const { activeInviteCodes, loading: codesLoading, createInviteCode } = useInviteCodes(createdId ?? undefined);
   const [newCode, setNewCode] = useState<string | null>(null);
   const creatingCode = useRef(false);
   const inviteCode = pickInviteCode(activeInviteCodes)?.code ?? newCode;
+
+  useEffect(() => {
+    if (resumed) selectHomegame(resumed.homegameId);
+    // Once, on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (createdId) writeProgress({ homegameId: createdId, step });
+  }, [createdId, step]);
+
+  useEffect(() => {
+    if (offeredYou.current || playersLoading) return;
+    offeredYou.current = true;
+    if (players.length === 0) setCrew((rows) => (rows.length ? rows : [youRow()]));
+    // youRow only reads the profile.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playersLoading, players.length]);
 
   // createHomegame refetches the user's homegames; make sure the new one is the current one.
   useEffect(() => {
@@ -89,7 +147,7 @@ export function HostSetupPage() {
   useEffect(() => {
     if (step !== 3 || !createdId || codesLoading || inviteCode || creatingCode.current) return;
     creatingCode.current = true;
-    createInviteCode().then((res) => {
+    createInviteCode({ quiet: true }).then((res) => {
       const created = (res as { code?: { code: string } }).code;
       if (created) setNewCode(created.code);
       else creatingCode.current = false;
@@ -128,7 +186,7 @@ export function HostSetupPage() {
     setStep(2);
   };
 
-  const names = [...crew.map((r) => r.name), ...(draft.trim() ? [draft] : [])];
+  const names = [...saved.map((p) => p.name), ...crew.map((r) => r.name), ...(draft.trim() ? [draft] : [])];
   const problem = crewProblem(names);
 
   const addDraft = (e?: FormEvent) => {
@@ -144,20 +202,25 @@ export function HostSetupPage() {
     setCrew(rows);
     setDraft('');
     setSavingCrew(true);
-    for (const row of rows) {
+    for (const [i, row] of rows.entries()) {
       const name = row.name.trim();
-      const id = name.toLowerCase();
-      if (savedNames.current.has(id)) continue;
       const { error } = await addPlayer(name, { quiet: true, ...(row.you && user ? { linkUserId: user.id } : {}) });
       if (error) {
-        // addPlayer has already shown a toast.
+        // addPlayer has already shown a toast; keep the rows that didn't save.
+        setCrew(rows.slice(i));
         setSavingCrew(false);
         return;
       }
-      savedNames.current.add(id);
+      setSavedOrder((order) => [...order, name]);
     }
+    setCrew([]);
     setSavingCrew(false);
     setStep(3);
+  };
+
+  const finish = (to: string) => {
+    writeProgress(null);
+    navigate(to);
   };
 
   const inviteLink = inviteCode ? `${publicOrigin()}/auth?mode=signup&code=${encodeURIComponent(inviteCode)}` : '';
@@ -195,7 +258,7 @@ export function HostSetupPage() {
         <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         Back
       </button>
-      <Progress step={step} />
+      <ProgressBar step={step} />
     </div>
   );
 
@@ -236,6 +299,17 @@ export function HostSetupPage() {
         <div className="flex flex-1 flex-col">
           <p className="mb-6 text-sm text-muted-foreground">Add the regulars. They can link their own accounts later.</p>
           <ul className="grid gap-2">
+            {saved.map((p) => (
+              <li key={p.id} className="flex min-h-12 items-center gap-2.5 rounded-xl border border-border bg-card py-1 pl-2.5 pr-3">
+                <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold/15 text-sm font-semibold text-gold">
+                  {p.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1 truncate py-2 text-base text-foreground">{p.name}</span>
+                {p.user_id && p.user_id === user?.id && (
+                  <span className="rounded-md border border-gold/40 px-1.5 text-[0.6875rem] text-gold">You</span>
+                )}
+              </li>
+            ))}
             {crew.map((row, i) => (
               <li key={row.key} className="flex min-h-12 items-center gap-2.5 rounded-xl border border-border bg-card py-1 pl-2.5 pr-1">
                 <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold/15 text-sm font-semibold text-gold">
@@ -244,7 +318,7 @@ export function HostSetupPage() {
                 <input
                   value={row.name}
                   onChange={(e) => setCrew((rows) => rows.map((r) => (r.key === row.key ? { ...r, name: e.target.value } : r)))}
-                  aria-label={`Player ${i + 1}`}
+                  aria-label={`Player ${saved.length + i + 1}`}
                   maxLength={50}
                   autoComplete="off"
                   className="min-w-0 flex-1 bg-transparent py-2 text-base text-foreground outline-none"
@@ -255,7 +329,7 @@ export function HostSetupPage() {
                 <button
                   type="button"
                   onClick={() => setCrew((rows) => rows.filter((r) => r.key !== row.key))}
-                  aria-label={`Remove ${row.name.trim() || `player ${i + 1}`}`}
+                  aria-label={`Remove ${row.name.trim() || `player ${saved.length + i + 1}`}`}
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <X className="h-4 w-4" />
@@ -288,6 +362,7 @@ export function HostSetupPage() {
               </form>
             </li>
           </ul>
+          {saved.length > 0 && <p className="mt-3 text-sm text-muted-foreground">Edit names later in Players</p>}
           <p aria-live="polite" className={cn('mt-3 text-sm', problem ? 'text-muted-foreground' : 'text-gold')}>
             {problem ?? `${names.length} players · ready for a first game`}
           </p>
@@ -335,12 +410,12 @@ export function HostSetupPage() {
       {step === 4 && (
         <div className="flex flex-1 flex-col">
           <p className="mb-6 text-sm text-muted-foreground">
-            {listNames(crew.map((r) => r.name.trim()))} {crew.length === 1 ? 'is' : 'are'} seated. Playing now, or catching up on one you already played?
+            {listNames(saved.map((p) => p.name))} {saved.length === 1 ? 'is' : 'are'} seated. Playing now, or catching up on one you already played?
           </p>
           <div className="grid gap-3">
             <button
               type="button"
-              onClick={() => navigate('/live-session?seat=all')}
+              onClick={() => finish('/live-session?seat=all')}
               className="pressable gold-fill rounded-2xl p-[18px] text-left text-primary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="block text-[1.0625rem] font-semibold">Play live</span>
@@ -348,7 +423,7 @@ export function HostSetupPage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/new-session?seat=all')}
+              onClick={() => finish('/new-session?seat=all')}
               className="pressable rounded-2xl border border-border bg-card p-[18px] text-left hover:bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="block text-[1.0625rem] font-semibold text-foreground">Enter final totals</span>
@@ -356,7 +431,7 @@ export function HostSetupPage() {
             </button>
           </div>
           <div className="mt-auto pt-8">
-            <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => navigate('/')}>
+            <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => finish('/')}>
               I'll do this later
             </Button>
           </div>

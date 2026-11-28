@@ -34,7 +34,8 @@ export function useInviteCodes(homegameId: string | undefined) {
     }
   };
 
-  const createInviteCode = async (options?: { maxUses?: number; expiresInDays?: number }) => {
+  /** quiet skips the success toast (host setup shows the code itself). */
+  const createInviteCode = async (options?: { maxUses?: number; expiresInDays?: number; quiet?: boolean }) => {
     if (!homegameId) return { error: new Error('No homegame') };
 
     try {
@@ -64,10 +65,12 @@ export function useInviteCodes(homegameId: string | undefined) {
       if (error) throw error;
       
       setInviteCodes(prev => [data as InviteCode, ...prev]);
-      toast({
-        title: 'Success',
-        description: 'Invite code created',
-      });
+      if (!options?.quiet) {
+        toast({
+          title: 'Success',
+          description: 'Invite code created',
+        });
+      }
       return { error: null, code: data };
     } catch (err) {
       console.error('Error creating invite code:', err);

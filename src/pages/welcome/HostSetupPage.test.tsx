@@ -8,21 +8,26 @@ const updateHomegame = vi.fn();
 const addPlayer = vi.fn();
 const createInviteCode = vi.fn();
 
+type Hg = { id: string; name: string; role: string };
+let homegames: Hg[] = [];
+let players: { id: string; name: string; user_id: string | null }[] = [];
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuthContext: () => ({
     user: { id: 'user-1' },
     loading: false,
     profile: { id: 'user-1', display_name: 'Sam', username: 'sam' },
-    homegame: { id: 'hg-1', name: 'Friday Night Game', role: 'owner' },
-    homegames: [{ id: 'hg-1', name: 'Friday Night Game', role: 'owner' }],
+    homegame: homegames[0] ?? null,
+    homegames,
     createHomegame,
     selectHomegame,
     updateHomegame,
   }),
 }));
 
+// Like the real hook: players added through addPlayer show up in `players`.
 vi.mock('@/hooks/usePlayers', () => ({
-  usePlayers: () => ({ players: [], activePlayers: [], loading: false, addPlayer }),
+  usePlayers: (id: string | undefined) => ({ players: id ? players : [], activePlayers: [], loading: false, addPlayer }),
 }));
 
 vi.mock('@/hooks/useInviteCodes', () => ({
@@ -31,16 +36,33 @@ vi.mock('@/hooks/useInviteCodes', () => ({
 
 import { HostSetupPage } from './HostSetupPage';
 
+function memoryStorage(map: Map<string, string>) {
+  return {
+    getItem: vi.fn((k: string) => map.get(k) ?? null),
+    setItem: vi.fn((k: string, v: string) => void map.set(k, v)),
+    removeItem: vi.fn((k: string) => void map.delete(k)),
+  };
+}
+
 let store: Map<string, string>;
+let session: Map<string, string>;
 beforeEach(() => {
   store = new Map();
-  vi.stubGlobal('localStorage', {
-    getItem: vi.fn((k: string) => store.get(k) ?? null),
-    setItem: vi.fn((k: string, v: string) => void store.set(k, v)),
-    removeItem: vi.fn((k: string) => void store.delete(k)),
+  session = new Map();
+  vi.stubGlobal('localStorage', memoryStorage(store));
+  vi.stubGlobal('sessionStorage', memoryStorage(session));
+  homegames = [];
+  players = [];
+  selectHomegame.mockReset();
+  createHomegame.mockReset().mockImplementation(async (name: string) => {
+    homegames = [{ id: 'hg-1', name, role: 'owner' }];
+    return { error: null, homegame: { id: 'hg-1', name } };
   });
-  createHomegame.mockReset().mockResolvedValue({ error: null, homegame: { id: 'hg-1', name: 'Friday Night Game' } });
-  addPlayer.mockReset().mockImplementation(async (name: string) => ({ error: null, player: { id: `p-${name}`, name } }));
+  addPlayer.mockReset().mockImplementation(async (name: string, opts?: { linkUserId?: string }) => {
+    const player = { id: `p-${name}`, name, user_id: opts?.linkUserId ?? null };
+    players = [...players, player];
+    return { error: null, player };
+  });
   createInviteCode.mockReset().mockResolvedValue({ error: null, code: { id: 'c1', code: 'K7Q44MXP' } });
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -150,6 +172,8 @@ describe('HostSetupPage', () => {
     await toInviteStep();
     expect(await screen.findByText('K7Q44MXP')).toBeInTheDocument();
     expect(createInviteCode).toHaveBeenCalledTimes(1);
+    // Setup shows the code itself, so the hook's "Invite code created" toast is suppressed.
+    expect(createInviteCode).toHaveBeenCalledWith(expect.objectContaining({ quiet: true }));
     fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
     await waitFor(() => expect(store.get('invite_shared:hg-1')).toBe('1'));
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/auth?mode=signup&code=K7Q44MXP'));
@@ -183,5 +207,67 @@ describe('HostSetupPage', () => {
     await toFirstGameStep();
     fireEvent.click(screen.getByRole('button', { name: "I'll do this later" }));
     expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/);
+  });
+
+  it('after the crew is saved, going back shows it read-only and only adds new names', async () => {
+    await toInviteStep();
+    expect(addPlayer).toHaveBeenCalledTimes(3);
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    await screen.findByRole('heading', { name: 'Who plays?' });
+
+    // The only text box left is the one for new names.
+    expect(screen.getAllByRole('textbox')).toEqual([screen.getByLabelText('Add a name')]);
+    for (const name of ['Sam', 'Dan', 'Maya']) expect(screen.getByText(name)).toBeInTheDocument();
+    expect(screen.getByText('Edit names later in Players')).toBeInTheDocument();
+
+    addName('Ana');
+    fireEvent.click(continueButton());
+    await screen.findByRole('heading', { name: 'Bring them in' });
+    expect(addPlayer).toHaveBeenCalledTimes(4);
+    expect(addPlayer).toHaveBeenLastCalledWith('Ana', expect.anything());
+  });
+
+  it('remembers progress in sessionStorage and clears it when the flow ends', async () => {
+    await toInviteStep();
+    expect(JSON.parse(session.get('host_setup') ?? '{}')).toEqual({ homegameId: 'hg-1', step: 3 });
+    await screen.findByText('K7Q44MXP');
+    fireEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
+    await screen.findByRole('heading', { name: 'Log your first game' });
+    fireEvent.click(screen.getByRole('button', { name: /Play live/ }));
+    expect(session.has('host_setup')).toBe(false);
+  });
+
+  it('a reload resumes at the saved step without creating another homegame', async () => {
+    homegames = [{ id: 'hg-1', name: 'Friday Night Game', role: 'owner' }];
+    players = [
+      { id: 'p1', name: 'Sam', user_id: 'user-1' },
+      { id: 'p2', name: 'Dan', user_id: null },
+    ];
+    session.set('host_setup', JSON.stringify({ homegameId: 'hg-1', step: 3 }));
+    renderHost();
+    expect(await screen.findByRole('heading', { name: 'Bring them in' })).toBeInTheDocument();
+    expect(selectHomegame).toHaveBeenCalledWith('hg-1');
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(await screen.findByRole('heading', { name: 'Who plays?' })).toBeInTheDocument();
+    // Back from the crew step never returns to naming (that would create a game).
+    expect(screen.getAllByRole('textbox')).toEqual([screen.getByLabelText('Add a name')]);
+    expect(createHomegame).not.toHaveBeenCalled();
+  });
+
+  it('a saved step 1 resumes at the crew step', async () => {
+    homegames = [{ id: 'hg-1', name: 'Friday Night Game', role: 'owner' }];
+    session.set('host_setup', JSON.stringify({ homegameId: 'hg-1', step: 1 }));
+    renderHost();
+    expect(await screen.findByRole('heading', { name: 'Who plays?' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Player 1')).toHaveValue('Sam');
+    expect(createHomegame).not.toHaveBeenCalled();
+  });
+
+  it('ignores a saved flow for a homegame the user no longer owns', async () => {
+    homegames = [{ id: 'hg-other', name: 'Other', role: 'member' }];
+    session.set('host_setup', JSON.stringify({ homegameId: 'hg-gone', step: 3 }));
+    renderHost();
+    expect(screen.getByRole('heading', { name: 'Name your game' })).toBeInTheDocument();
+    expect(session.has('host_setup')).toBe(false);
   });
 });
