@@ -34,7 +34,7 @@ vi.mock('@/hooks/usePlayerClaims', () => ({
 }));
 
 vi.mock('@/contexts/InstallNudgeContext', () => ({
-  useInstallNudge: () => ({ firstSuccess, sheetOpen: false }),
+  useInstallNudge: () => ({ firstSuccess, bannerVisible: false, dismissBanner: vi.fn() }),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({ toast: (...args: unknown[]) => toast(...args) }));

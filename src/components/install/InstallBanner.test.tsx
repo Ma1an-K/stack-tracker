@@ -8,6 +8,7 @@ vi.mock('@/hooks/useInstallPrompt', () => ({
 }));
 
 import { InstallBanner } from './InstallBanner';
+import { InstallNudgeProvider, useInstallNudge } from '@/contexts/InstallNudgeContext';
 
 function memoryStorage(): Storage {
   const m = new Map<string, string>();
@@ -27,9 +28,9 @@ function memoryStorage(): Storage {
 const TEXT = 'Put Stack Tracker on your Home Screen';
 const renderBanner = () =>
   render(
-    <>
+    <InstallNudgeProvider>
       <InstallBanner />
-    </>,
+    </InstallNudgeProvider>,
   );
 
 beforeEach(() => {
@@ -67,6 +68,33 @@ describe('InstallBanner', () => {
   it('shows nothing once installed', () => {
     context = 'installed';
     renderBanner();
+    expect(screen.queryByText(TEXT)).not.toBeInTheDocument();
+  });
+
+  it('stays hidden after the sheet over it is closed with "Not now"', () => {
+    function Win() {
+      const { firstSuccess } = useInstallNudge();
+      return <button onClick={() => firstSuccess('claim', true)}>claim</button>;
+    }
+    render(
+      <InstallNudgeProvider>
+        <Win />
+        <InstallBanner />
+      </InstallNudgeProvider>,
+    );
+    expect(screen.getByText(TEXT)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'claim' }));
+    expect(screen.getByText('Keep it one tap away')).toBeInTheDocument();
+    expect(screen.queryByText(TEXT)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
+    expect(screen.queryByText('Keep it one tap away')).not.toBeInTheDocument();
+    expect(screen.queryByText(TEXT)).not.toBeInTheDocument();
+  });
+
+  it('shows nothing without the provider', () => {
+    render(<InstallBanner />);
     expect(screen.queryByText(TEXT)).not.toBeInTheDocument();
   });
 });

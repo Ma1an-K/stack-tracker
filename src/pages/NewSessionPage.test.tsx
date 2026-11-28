@@ -35,7 +35,7 @@ vi.mock('@/hooks/useSessions', () => ({
   countSessionsIn: (ids: string[]) => countSessionsIn(ids),
 }));
 vi.mock('@/contexts/InstallNudgeContext', () => ({
-  useInstallNudge: () => ({ firstSuccess, sheetOpen: false }),
+  useInstallNudge: () => ({ firstSuccess, bannerVisible: false, dismissBanner: vi.fn() }),
 }));
 vi.mock('@/components/sessions/LiveSessionCard', () => ({ LiveSessionCard: () => null }));
 vi.mock('@/components/sessions/SessionForm', () => ({

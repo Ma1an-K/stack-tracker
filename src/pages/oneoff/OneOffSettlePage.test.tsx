@@ -36,7 +36,7 @@ vi.mock('@/hooks/useOneOffHistory', () => ({
 }));
 
 vi.mock('@/contexts/InstallNudgeContext', () => ({
-  useInstallNudge: () => ({ firstSuccess, sheetOpen: false }),
+  useInstallNudge: () => ({ firstSuccess, bannerVisible: false, dismissBanner: vi.fn() }),
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({

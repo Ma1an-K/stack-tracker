@@ -108,4 +108,30 @@ describe('InstallSheet (second ask)', () => {
     expect(screen.getByText('Keep it one tap away')).toBeInTheDocument();
     expect(stored().pendingSheet).toBe(false);
   });
+
+  it('neither opens nor queues on a laptop', () => {
+    context = 'desktop';
+    renderWin();
+    expect(screen.queryByText('Keep it one tap away')).not.toBeInTheDocument();
+
+    function Outside() {
+      const { firstSuccess } = useInstallNudge();
+      return <button onClick={() => firstSuccess('claim', true)}>claim</button>;
+    }
+    render(<Outside />);
+    fireEvent.click(screen.getByRole('button', { name: 'claim' }));
+    expect(stored().pendingSheet).toBeUndefined();
+  });
+
+  it('does not open a queued sheet once installed', () => {
+    localStorage.setItem('install_nudge', JSON.stringify({ pendingSheet: true }));
+    context = 'installed';
+    render(
+      <InstallNudgeProvider>
+        <p>home</p>
+      </InstallNudgeProvider>,
+    );
+    expect(screen.queryByText('Keep it one tap away')).not.toBeInTheDocument();
+    expect(stored().pendingSheet).toBe(false);
+  });
 });
