@@ -63,9 +63,12 @@ export function InstallNudgeProvider({ children }: { children: ReactNode }) {
   }
   const sheetOpen = open && !tourHolds;
 
+  // A queued arrival sheet stays queued until it actually shows, so a reload while
+  // it is held behind the tour doesn't lose it. If it won't show (not a phone,
+  // snoozed, or dropped by the snooze rules when the hold lifts) it is dequeued.
   useEffect(() => {
-    if (readNudge().pendingSheet) setStore(writeNudge({ pendingSheet: false }));
-  }, []);
+    if ((sheetOpen || !open) && readNudge().pendingSheet) setStore(writeNudge({ pendingSheet: false }));
+  }, [sheetOpen, open]);
 
   const firstSuccess = useCallback(
     (_kind: FirstSuccessKind, isAccountFirst: boolean) => {
