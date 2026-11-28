@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from './format';
 
 export interface GamePlayer {
   id: string;

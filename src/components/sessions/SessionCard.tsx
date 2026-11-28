@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns';
 import { ChevronDown, Edit, Trash2, CheckCircle2, ArrowRight, Share2, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
-import { formatCurrency, formatProfit } from '@/lib/settlement';
+import { formatCurrency, formatProfit } from '@/lib/settlement/format';
 import { describeRefusal } from '@/lib/settlement/settle';
 import { settleSession } from '@/lib/sessions/settle';
 import {

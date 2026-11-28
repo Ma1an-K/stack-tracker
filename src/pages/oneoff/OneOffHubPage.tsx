@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ClipboardList, Play, Radio, Trash2, TriangleAlert } from 'lucide-react';
 import { useOneOffGame } from '@/contexts/OneOffGameContext';
 import { useSavedOneOffGames } from '@/hooks/useSavedOneOffGames';
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from '@/lib/settlement/format';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,

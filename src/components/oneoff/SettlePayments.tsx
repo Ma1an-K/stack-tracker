@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NameChip } from '@/components/live/NameChip';
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from '@/lib/settlement/format';
 import type { OneOffGame } from '@/lib/oneOff/types';
 import type { OneOffAction } from '@/lib/oneOff/reducer';
 

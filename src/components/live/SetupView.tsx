@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from '@/lib/settlement/format';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

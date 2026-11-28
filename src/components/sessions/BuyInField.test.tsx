@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BuyInField } from './BuyInField';
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from '@/lib/settlement/format';
 
 const LABEL = 'Buy-in total for Sam';
 

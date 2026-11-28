@@ -2,7 +2,7 @@ import { useId, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { SessionDataPoint } from '@/hooks/usePersonalStats';
-import { formatProfit } from '@/lib/settlement';
+import { formatProfit } from '@/lib/settlement/format';
 import { usePrefersReducedMotion } from '@/hooks/useMediaQuery';
 
 interface ProfitChartProps {

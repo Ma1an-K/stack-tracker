@@ -16,7 +16,7 @@ import {
   Users, Flame, Target, Wallet, Award, CheckCircle2, Circle,
   Activity, BarChart2, Zap, ShieldOff,
 } from 'lucide-react';
-import { formatProfit, formatCurrency } from '@/lib/settlement';
+import { formatProfit, formatCurrency } from '@/lib/settlement/format';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { PlayerBadges } from '@/components/badges/PlayerBadges';
 import { ProfitChart } from '@/components/stats/ProfitChart';

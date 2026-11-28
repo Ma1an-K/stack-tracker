@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { formatProfit } from '@/lib/settlement';
+import { formatProfit } from '@/lib/settlement/format';
 import { usePrefersReducedMotion } from '@/hooks/useMediaQuery';
 
 interface H2HChartProps {

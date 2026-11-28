@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent } from '@/components/ui/card';
 import { Swords, CalendarDays } from 'lucide-react';
 import { H2HChart } from './H2HChart';
-import { formatCurrency, formatProfit } from '@/lib/settlement';
+import { formatCurrency, formatProfit } from '@/lib/settlement/format';
 import { parseISO, format } from 'date-fns';
 
 interface HeadToHeadProps {

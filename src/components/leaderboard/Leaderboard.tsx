@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/common/EmptyState';
 import { cn } from '@/lib/utils';
 import { TimeFrame, filterSessionsByTimeFrame, calculateLeaderboard } from '@/lib/leaderboard';
-import { formatCurrency, formatProfit } from '@/lib/settlement';
+import { formatCurrency, formatProfit } from '@/lib/settlement/format';
 import { computeHomegameBadges } from '@/lib/badges';
 import { PlayerBadges } from '@/components/badges/PlayerBadges';
 import { HeadToHead } from './HeadToHead';

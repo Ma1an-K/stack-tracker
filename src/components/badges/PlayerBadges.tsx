@@ -1,5 +1,5 @@
 import { PlayerBadge, sortBadges } from '@/lib/badges';
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from '@/lib/settlement/format';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getHeaterImage } from '@/assets/badges/heater';
 import { getColdImage } from '@/assets/badges/cold';

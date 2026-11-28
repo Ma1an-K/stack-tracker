@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { ArrowLeft, ArrowRight, SearchX, Share2, Trash2, WifiOff } from 'lucide-react';
 import { useOneOffHistory } from '@/hooks/useOneOffHistory';
 import { toast } from '@/hooks/use-toast';
-import { formatCurrency, formatProfit } from '@/lib/settlement';
+import { formatCurrency, formatProfit } from '@/lib/settlement/format';
 import { cn } from '@/lib/utils';
 import type { SavedOneOffGame } from '@/lib/oneOff/types';
 import { Button } from '@/components/ui/button';

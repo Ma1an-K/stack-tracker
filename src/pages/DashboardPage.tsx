@@ -19,7 +19,7 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react';
-import { formatProfit } from '@/lib/settlement';
+import { formatProfit } from '@/lib/settlement/format';
 import { parseISO, formatDistanceToNow } from 'date-fns';
 import { getIconSrc } from '@/lib/homegameIcons';
 import { HomegameWithRole, Settlement } from '@/types/database';

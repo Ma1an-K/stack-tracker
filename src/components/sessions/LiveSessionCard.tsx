@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from '@/lib/settlement/format';
 import { LivePulse } from './LivePulse';
 
 /** Resume card for the dashboard and sessions list. Renders nothing when no game is live. */

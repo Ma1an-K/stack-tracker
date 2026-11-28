@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AddPlayerDialog } from './AddPlayerDialog';
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from '@/lib/settlement/format';
 import type { Player } from '@/types/database';
 
 const sam = { id: 'p-sam', name: 'Sam' } as Player;

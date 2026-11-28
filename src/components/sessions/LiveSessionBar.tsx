@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from '@/lib/settlement/format';
 import { LivePulse } from './LivePulse';
 
 /** Resume strip pinned to the top of every page while a game is running. */

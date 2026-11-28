@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Trash2, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatCurrency, formatProfit } from '@/lib/settlement';
+import { formatCurrency, formatProfit } from '@/lib/settlement/format';
 import { cn } from '@/lib/utils';
 import type { OneOffGame } from '@/lib/oneOff/types';
 import type { OneOffAction } from '@/lib/oneOff/reducer';

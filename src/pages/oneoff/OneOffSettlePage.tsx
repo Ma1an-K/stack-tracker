@@ -7,7 +7,7 @@ import { useOneOffHistory } from '@/hooks/useOneOffHistory';
 import { useInstallNudge } from '@/contexts/InstallNudgeContext';
 import { toast } from '@/hooks/use-toast';
 import { settleOneOffGame } from '@/lib/oneOff/settle';
-import { formatCurrency } from '@/lib/settlement';
+import { formatCurrency } from '@/lib/settlement/format';
 import { describeRefusal } from '@/lib/settlement/settle';
 import type { OneOffAction } from '@/lib/oneOff/reducer';
 import { Button } from '@/components/ui/button';
