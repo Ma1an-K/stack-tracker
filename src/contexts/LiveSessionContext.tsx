@@ -10,6 +10,12 @@ import { logError } from '@/lib/errorLog';
 interface LiveSessionContextType {
   liveSession: LiveSession | null;
   loading: boolean;
+  /**
+   * How many live-session fetches have come back (for the current homegame)
+   * since the shell mounted. Lets a caller wait for an answer newer than a
+   * moment it noted, e.g. the re-check made when Home opens.
+   */
+  fetchCount: number;
   /** Chips still in play: buy-ins minus what departed players took off the table. */
   totalPot: number;
   /** Money bought in by everyone, including players who have already left. */
@@ -48,6 +54,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
   const homegameId = homegame?.id;
   const [liveSession, setLiveSession] = useState<LiveSession | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchCount, setFetchCount] = useState(0);
   // The homegame the latest fetch belongs to, so a slow response for the
   // previous homegame can't land after a switch.
   const currentHomegameId = useRef(homegameId);
@@ -57,6 +64,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
     if (!homegameId) {
       setLiveSession(null);
       setLoading(false);
+      setFetchCount((n) => n + 1);
       return;
     }
     try {
@@ -71,7 +79,10 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('Error fetching live session:', err);
     } finally {
-      if (currentHomegameId.current === homegameId) setLoading(false);
+      if (currentHomegameId.current === homegameId) {
+        setLoading(false);
+        setFetchCount((n) => n + 1);
+      }
     }
   }, [homegameId]);
 
@@ -238,6 +249,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
       value={{
         liveSession,
         loading,
+        fetchCount,
         totalPot,
         totalBuyIn,
         seatedCount,
