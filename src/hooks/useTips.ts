@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 
-export type TipId = 'home-plus' | 'mystats-member';
+export type TipId = 'home-plus' | 'mystats-member' | 'tour';
 
 /**
  * One-time tips, remembered on the account (profiles.seen_tips) so a tip seen
