@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import QRCode from 'qrcode';
 
 export interface PhoneQrProps {
   /** Where the phone's camera should take the user. */
@@ -16,19 +15,24 @@ export function PhoneQr({ url }: PhoneQrProps) {
 
   useEffect(() => {
     let cancelled = false;
-    QRCode.toString(url, {
-      type: 'svg',
-      margin: 1,
-      // Dark modules in the app's near-black; transparent light modules let the tile show.
-      color: { dark: '#100e0dff', light: '#00000000' },
-    }).then(
-      (markup) => {
-        if (!cancelled) setSvg(markup);
-      },
-      () => {
-        // A url too long to encode leaves the tile blank; the "use it here" route still works.
-      },
-    );
+    // Loaded on demand so the encoder stays out of the landing page's eager bundle.
+    import('qrcode')
+      .then(({ default: QRCode }) =>
+        QRCode.toString(url, {
+          type: 'svg',
+          margin: 1,
+          // Dark modules in the app's near-black; transparent light modules let the tile show.
+          color: { dark: '#100e0dff', light: '#00000000' },
+        }),
+      )
+      .then(
+        (markup) => {
+          if (!cancelled) setSvg(markup);
+        },
+        () => {
+          // A url too long to encode (or a failed chunk load) leaves the tile blank; the "use it here" route still works.
+        },
+      );
     return () => {
       cancelled = true;
     };
