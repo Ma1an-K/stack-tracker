@@ -43,7 +43,7 @@ export function Header() {
   // (a leftover subscription can still be turned off).
   const showNotificationsRow = isSupported && (!!homegame || isSubscribed);
   const { game: oneOff } = useOneOffGame();
-  const { openTour } = useTour();
+  const { openTour, returnFocusRef } = useTour();
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
 
@@ -218,6 +218,10 @@ export function Header() {
               </button>
             )}
             <button
+              // Closing the tour returns focus here.
+              ref={(el) => {
+                if (returnFocusRef) returnFocusRef.current = el;
+              }}
               onClick={() => setClubOpen(true)}
               className="pressable flex h-11 w-11 items-center justify-center rounded-xl border border-gold/25 bg-gold/10 text-gold hover:bg-gold/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Club menu and settings"

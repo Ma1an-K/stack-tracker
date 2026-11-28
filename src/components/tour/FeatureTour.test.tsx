@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FeatureTour } from './FeatureTour';
 import type { TourRole } from '@/lib/onboarding/tour';
@@ -114,5 +114,63 @@ describe('FeatureTour', () => {
   it('renders nothing while closed', () => {
     render(<FeatureTour open={false} role="host" onClose={vi.fn()} />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('returns focus to the registered menu trigger when it closes', async () => {
+    const ref = { current: null as HTMLElement | null };
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <>
+        <button ref={(el) => (ref.current = el)}>Club menu</button>
+        <FeatureTour open={false} role="host" onClose={onClose} returnFocusRef={ref} />
+      </>,
+    );
+    rerender(
+      <>
+        <button ref={(el) => (ref.current = el)}>Club menu</button>
+        <FeatureTour open role="host" onClose={onClose} returnFocusRef={ref} />
+      </>,
+    );
+    expect(document.activeElement).not.toBe(ref.current);
+    rerender(
+      <>
+        <button ref={(el) => (ref.current = el)}>Club menu</button>
+        <FeatureTour open={false} role="host" onClose={onClose} returnFocusRef={ref} />
+      </>,
+    );
+    // Radix restores focus a tick after the content unmounts.
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Club menu' })));
+  });
+
+  it('falls back to the default focus return with no trigger registered', () => {
+    const ref = { current: null as HTMLElement | null };
+    const { rerender } = render(<FeatureTour open role="host" onClose={vi.fn()} returnFocusRef={ref} />);
+    expect(() => rerender(<FeatureTour open={false} role="host" onClose={vi.fn()} returnFocusRef={ref} />)).not.toThrow();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('hides off-screen cards from assistive tech and keeps the current one readable', () => {
+    const { track } = setup('host');
+    const cards = () => Array.from(track.children) as HTMLElement[];
+    expect(cards()[0]).not.toHaveAttribute('aria-hidden');
+    expect(cards()[0]).not.toHaveAttribute('inert');
+    for (const card of cards().slice(1)) {
+      expect(card).toHaveAttribute('aria-hidden', 'true');
+      expect(card).toHaveAttribute('inert');
+    }
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Log every game' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(cards()[0]).toHaveAttribute('aria-hidden', 'true');
+    expect(cards()[1]).not.toHaveAttribute('aria-hidden');
+    expect(screen.getByRole('heading', { name: 'Settle up in seconds' })).toBeInTheDocument();
+  });
+
+  it('can scroll on a short or landscape screen, and leaves reduced motion to the global rule', () => {
+    setup('host');
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveClass('max-h-[100dvh]', 'overflow-y-auto');
+    expect(dialog).not.toHaveClass('motion-reduce:animate-none');
   });
 });

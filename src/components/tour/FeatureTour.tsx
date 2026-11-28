@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -10,14 +10,19 @@ interface FeatureTourProps {
   role: TourRole;
   /** Skip, finishing, the scrim or Escape. */
   onClose: () => void;
+  /** Where focus goes when the sheet closes (the header menu trigger), if registered. */
+  returnFocusRef?: MutableRefObject<HTMLElement | null>;
 }
 
 function prefersReducedMotion(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+// React 18 has no typed `inert` prop; an empty string renders the boolean attribute.
+const OFFSCREEN = { 'aria-hidden': true, inert: '' } as Record<string, unknown>;
+
 /** A swipe-through bottom sheet of what the app does, one card per feature. */
-export function FeatureTour({ open, role, onClose }: FeatureTourProps) {
+export function FeatureTour({ open, role, onClose, returnFocusRef }: FeatureTourProps) {
   const cards = TOUR_CARDS[role];
   const [index, setIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -55,11 +60,20 @@ export function FeatureTour({ open, role, onClose }: FeatureTourProps) {
       <SheetContent
         side="bottom"
         aria-describedby={undefined}
+        onCloseAutoFocus={(event) => {
+          // A replay starts from the header menu, which has closed by then, so the
+          // default would leave focus on <body>. Send it back to the menu trigger.
+          const trigger = returnFocusRef?.current;
+          if (!trigger || !trigger.isConnected) return;
+          event.preventDefault();
+          trigger.focus();
+        }}
         className={cn(
+          // Short or landscape screens scroll rather than clip the sheet.
+          'max-h-[100dvh] overflow-y-auto',
           'rounded-t-[22px] bg-card px-0 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]',
           // Skip is the close control here, so drop the primitive's corner X.
           '[&>button:last-child]:hidden',
-          'motion-reduce:animate-none',
         )}
       >
         <div className="mx-auto max-w-md">
@@ -88,8 +102,13 @@ export function FeatureTour({ open, role, onClose }: FeatureTourProps) {
             onScroll={onScroll}
             className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {cards.map((card) => (
-              <div key={card.id} className="grid w-full shrink-0 snap-center gap-3 px-5 pb-1 pt-1.5">
+            {cards.map((card, i) => (
+              <div
+                key={card.id}
+                // Off-screen cards are out of reach for screen readers and focus.
+                {...(i === index ? {} : OFFSCREEN)}
+                className="grid w-full shrink-0 snap-center gap-3 px-5 pb-1 pt-1.5"
+              >
                 <TourIllustration kind={card.illustration} />
                 <h3 className="mt-1 font-display text-[1.625rem] font-semibold leading-tight">{card.title}</h3>
                 <p className="min-h-[63px] text-sm text-muted-foreground">{card.body}</p>

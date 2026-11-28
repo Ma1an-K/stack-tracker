@@ -8,9 +8,10 @@ const FRIDAY = { id: 'hg-1', name: 'Friday game', icon_id: null, disabled_badges
 let homegame: typeof FRIDAY | null = FRIDAY;
 let pushSupported = false;
 const openTour = vi.fn();
+const returnFocusRef = { current: null as HTMLElement | null };
 
 vi.mock('@/contexts/TourContext', () => ({
-  useTour: () => ({ open: false, role: 'host', openTour, closeTour: vi.fn(), maybeAutoOpen: vi.fn() }),
+  useTour: () => ({ open: false, role: 'host', openTour, closeTour: vi.fn(), maybeAutoOpen: vi.fn(), returnFocusRef }),
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
@@ -180,5 +181,11 @@ describe('Header "Take the tour" row', () => {
     openClub();
     fireEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
     expect(openTour).toHaveBeenCalledTimes(1);
+  });
+
+  it('registers the club menu trigger as where focus returns after the tour', () => {
+    homegame = FRIDAY;
+    renderHeader();
+    expect(returnFocusRef.current).toBe(screen.getByRole('button', { name: 'Club menu and settings' }));
   });
 });

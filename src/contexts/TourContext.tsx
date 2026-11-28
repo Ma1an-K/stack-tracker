@@ -4,7 +4,9 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  type MutableRefObject,
   type ReactNode,
 } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -41,6 +43,11 @@ interface TourValue {
    */
   maybeAutoOpen: () => void;
   /**
+   * The header menu trigger, registered by Header. Closing the tour returns
+   * focus there; with nothing registered the sheet's default focus return applies.
+   */
+  returnFocusRef: MutableRefObject<HTMLElement | null>;
+  /**
    * On Home, for an eligible account whose auto-open has not been decided yet:
    * once Home has asked, or within HOME_REQUEST_WINDOW_MS of the visit starting.
    */
@@ -61,6 +68,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<TourRole>(() => tourRole(homegame));
   const [autoRequested, setAutoRequested] = useState(false);
   const [autoDecided, setAutoDecided] = useState(false);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   const authReady = !loading && !userDataPending;
   // shouldShow also covers a tour closed this session whose save failed, so a
@@ -132,14 +140,14 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const autoOpenPending = onHome && !autoDecided && eligible && (autoRequested || requestWindowOpen);
 
   const value = useMemo(
-    () => ({ open, role, openTour, closeTour, maybeAutoOpen, autoOpenPending, closing }),
+    () => ({ open, role, openTour, closeTour, maybeAutoOpen, returnFocusRef, autoOpenPending, closing }),
     [open, role, openTour, closeTour, maybeAutoOpen, autoOpenPending, closing],
   );
 
   return (
     <TourContext.Provider value={value}>
       {children}
-      <FeatureTour open={open} role={role} onClose={closeTour} />
+      <FeatureTour open={open} role={role} onClose={closeTour} returnFocusRef={returnFocusRef} />
     </TourContext.Provider>
   );
 }
