@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Work only in the worktree `/Users/Matankimchi/Desktop/Dev/poker_app/.claude/worktrees/feature-tour` (branch `feat/feature-tour`). Never push, never `git stash`, never `supabase db reset`.
+- Work only in the feature worktree (branch `feat/feature-tour`). Never push, never `git stash`, never `supabase db reset`.
 - `npm test`, `npm run build` must pass; `npx eslint src` must stay at **16 warnings, 0 errors**.
 - `TOUR_RELEASE = '2026-11-28'` (owner resets it to the deploy date). Tip id is the literal `'tour'`; no migration.
 - Card copy is verbatim from the `CARDS` object in `docs/tour-prototype.html`.

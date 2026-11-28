@@ -1,7 +1,7 @@
 # Feature tour after first sign-in — design
 
 Status: signed off by the owner 2026-11-28 from the clickable draft `docs/tour-prototype.html`
-(published at https://claude.ai/artifact/5DomjzCCjvgVDyYG3gBiA5). The draft is the visual and copy
+(kept in the repo). The draft is the visual and copy
 reference; this document is the authority where they differ.
 
 ## Goal

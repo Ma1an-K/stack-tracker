@@ -5,7 +5,7 @@ import type { HomegameRole } from '@/types/database';
  * Set it to the exact deploy instant with offset: a bare date parses as UTC
  * midnight (11:00 AEDT) and would admit accounts made before the deploy.
  */
-export const TOUR_RELEASE = '2026-11-28T00:00:00+11:00';
+export const TOUR_RELEASE = '2026-11-28T19:50:00+11:00';
 
 export type TourRole = 'host' | 'member' | 'solo';
 
