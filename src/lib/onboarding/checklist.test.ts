@@ -58,11 +58,11 @@ describe('getChecklist', () => {
   });
 
   it('never shows for a homegame created before the cutoff', () => {
-    expect(getChecklist({ ...fresh, createdAt: '2026-11-30T23:59:59.000Z' }).visible).toBe(false);
+    expect(getChecklist({ ...fresh, createdAt: '2026-11-27T23:59:59.000Z' }).visible).toBe(false);
     expect(getChecklist({ ...fresh, createdAt: '2024-01-01T00:00:00.000Z' }).visible).toBe(false);
   });
 
-  it('uses 2026-12-01 as the cutoff until release', () => {
-    expect(ONBOARDING_CUTOFF).toBe('2026-12-01');
+  it('uses 2026-11-28 (the release date) as the cutoff', () => {
+    expect(ONBOARDING_CUTOFF).toBe('2026-11-28');
   });
 });

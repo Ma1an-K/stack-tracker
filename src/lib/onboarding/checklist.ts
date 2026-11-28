@@ -2,7 +2,7 @@
  * Homegames created on or after this date get the Getting started checklist;
  * older ones never do. Set to the release date when this ships.
  */
-export const ONBOARDING_CUTOFF = '2026-12-01';
+export const ONBOARDING_CUTOFF = '2026-11-28';
 
 export type ChecklistItemId = 'create' | 'players' | 'invite' | 'game';
 
