@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useLocation } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
+import { FeatureTour } from '@/components/tour/FeatureTour';
 import { useTips } from '@/hooks/useTips';
 import { isTourEligible, tourRole, type TourRole } from '@/lib/onboarding/tour';
 
@@ -66,8 +67,12 @@ export function TourProvider({ children }: { children: ReactNode }) {
     [open, role, openTour, closeTour, maybeAutoOpen, autoOpenPending],
   );
 
-  // Task 3 renders <FeatureTour open={open} role={role} onClose={closeTour} /> here.
-  return <TourContext.Provider value={value}>{children}</TourContext.Provider>;
+  return (
+    <TourContext.Provider value={value}>
+      {children}
+      <FeatureTour open={open} role={role} onClose={closeTour} />
+    </TourContext.Provider>
+  );
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

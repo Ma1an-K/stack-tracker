@@ -20,6 +20,8 @@ const state = vi.hoisted(() => ({
 vi.mock('@/contexts/AuthContext', () => ({ useAuthContext: () => state.auth }));
 vi.mock('@/contexts/LiveSessionContext', () => ({ useLiveSession: () => state.live }));
 vi.mock('@/hooks/useTips', () => ({ useTips: () => ({ markSeen: vi.fn(), shouldShow: () => false }) }));
+// The tour sheet is modal and would hide these controls; this file tests the ordering, not the sheet.
+vi.mock('@/components/tour/FeatureTour', () => ({ FeatureTour: () => null }));
 
 import { InstallNudgeProvider, useInstallNudge } from './InstallNudgeContext';
 import { TourProvider, useTour } from './TourContext';
