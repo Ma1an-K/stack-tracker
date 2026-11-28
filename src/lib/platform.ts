@@ -15,3 +15,11 @@ export function isNativeApp(): boolean {
 export function publicOrigin(): string {
   return isNativeApp() ? SITE_URL : window.location.origin;
 }
+
+/** True when running as an installed web app (launched from the Home Screen). */
+export function isStandalone(): boolean {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}

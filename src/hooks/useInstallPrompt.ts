@@ -1,5 +1,7 @@
 // src/hooks/useInstallPrompt.ts
 import { useState, useEffect, useRef } from 'react';
+import { getInstallContext, type InstallContext } from '@/lib/installContext';
+import { isNativeApp, isStandalone } from '@/lib/platform';
 
 // BeforeInstallPromptEvent is not in the standard TypeScript DOM lib
 interface BeforeInstallPromptEvent extends Event {
@@ -7,10 +9,9 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-export type InstallPlatform = 'android' | 'ios' | 'installed' | 'unsupported';
-
 export interface InstallPromptInfo {
-  platform: InstallPlatform;
+  context: InstallContext;
+  /** Shows the browser's install prompt; only set when context is 'android-prompt'. */
   trigger: (() => void) | null;
 }
 
@@ -28,34 +29,28 @@ export function useInstallPrompt(): InstallPromptInfo {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  const isStandalone =
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (navigator as unknown as { standalone?: boolean }).standalone === true;
+  const context = getInstallContext({
+    ua: navigator.userAgent,
+    maxTouchPoints: navigator.maxTouchPoints ?? 0,
+    standalone: isStandalone(),
+    native: isNativeApp(),
+    hasPrompt: deferredPromptRef.current !== null,
+  });
 
-  const isIOS =
-    /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-    !(window as unknown as { MSStream?: unknown }).MSStream;
+  if (context !== 'android-prompt') return { context, trigger: null };
 
-  if (isStandalone) return { platform: 'installed', trigger: null };
-  if (isIOS) return { platform: 'ios', trigger: null };
-  if (deferredPromptRef.current) {
-    return {
-      platform: 'android',
-      trigger: () => {
-        const prompt = deferredPromptRef.current;
-        if (!prompt) return;
-        prompt.prompt();
-        prompt.userChoice
-          .then(() => {
-            deferredPromptRef.current = null;
-            forceUpdate(n => n + 1);
-          })
-          .catch(() => {
-            deferredPromptRef.current = null;
-            forceUpdate(n => n + 1);
-          });
-      },
-    };
-  }
-  return { platform: 'unsupported', trigger: null };
+  return {
+    context,
+    trigger: () => {
+      const prompt = deferredPromptRef.current;
+      if (!prompt) return;
+      // The event can only be used once, whatever the user chooses.
+      const reset = () => {
+        deferredPromptRef.current = null;
+        forceUpdate(n => n + 1);
+      };
+      prompt.prompt();
+      prompt.userChoice.then(reset, reset);
+    },
+  };
 }
