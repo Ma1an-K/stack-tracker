@@ -32,6 +32,7 @@ import { GettingStartedCard } from '@/components/home/GettingStartedCard';
 import { useGettingStarted } from '@/hooks/useGettingStarted';
 import { useTips } from '@/hooks/useTips';
 import { Tip } from '@/components/tips/Tip';
+import { InstallBanner } from '@/components/install/InstallBanner';
 
 export function DashboardPage() {
   const { homegame } = useAuthContext();
@@ -63,6 +64,7 @@ function HomegameDashboard() {
 
   return (
     <div className="space-y-6">
+      <InstallBanner />
       <header className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="section-header mb-1">{greeting()}</p>

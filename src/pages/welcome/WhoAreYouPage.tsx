@@ -4,6 +4,7 @@ import { Check, Loader2 } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { usePlayers } from '@/hooks/usePlayers';
 import { usePlayerClaims } from '@/hooks/usePlayerClaims';
+import { useInstallNudge } from '@/contexts/InstallNudgeContext';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -22,7 +23,8 @@ export function WhoAreYouPage() {
   const { homegame } = useAuthContext();
   const navigate = useNavigate();
   const { players, loading } = usePlayers(homegame?.id);
-  const { requestClaim } = usePlayerClaims(homegame?.id);
+  const { requestClaim, myRequests, loading: claimsLoading } = usePlayerClaims(homegame?.id);
+  const { firstSuccess } = useInstallNudge();
   const [picked, setPicked] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
 
@@ -32,10 +34,14 @@ export function WhoAreYouPage() {
 
   const claim = async () => {
     if (!picked) return;
+    // myRequests covers every homegame, so an empty list means this is the account's first claim.
+    const isFirstClaim = !claimsLoading && myRequests.length === 0;
     setClaiming(true);
     const { error } = await requestClaim(picked);
     setClaiming(false);
-    if (!error) navigate('/', { replace: true });
+    if (error) return;
+    firstSuccess('claim', isFirstClaim);
+    navigate('/', { replace: true });
   };
 
   const notListed = () => {

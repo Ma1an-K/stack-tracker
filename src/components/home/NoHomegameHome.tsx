@@ -10,6 +10,7 @@ import { StartGameDialog } from '@/components/oneoff/StartGameDialog';
 import { SavedGamesList } from '@/components/oneoff/SavedGamesList';
 import { playerCount } from '@/lib/oneOff/format';
 import { StartOrJoinCard } from './StartOrJoinCard';
+import { InstallBanner } from '@/components/install/InstallBanner';
 
 /** Home for a signed-in user who isn't in any homegame yet: quick games first, then start or join one. */
 export function NoHomegameHome() {
@@ -20,6 +21,7 @@ export function NoHomegameHome() {
 
   return (
     <div className="space-y-6">
+      <InstallBanner />
       <header className="min-w-0">
         <p className="section-header mb-1">{greeting()}</p>
         <h1 className="page-title truncate">{profile?.display_name || profile?.username || 'Welcome'}</h1>

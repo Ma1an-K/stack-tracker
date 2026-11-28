@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Loader2, Save, Share2, Spade, TriangleAlert } fr
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useOneOffGame } from '@/contexts/OneOffGameContext';
 import { useOneOffHistory } from '@/hooks/useOneOffHistory';
+import { useInstallNudge } from '@/contexts/InstallNudgeContext';
 import { toast } from '@/hooks/use-toast';
 import { settleOneOff } from '@/lib/oneOff/settle';
 import { formatCurrency } from '@/lib/settlement';
@@ -32,7 +33,8 @@ export function OneOffSettlePage() {
   const navigate = useNavigate();
   const { user } = useAuthContext();
   const { game, storageOk, dispatch, discard } = useOneOffGame();
-  const { save } = useOneOffHistory();
+  const { games: savedGames, loading: savedLoading, save } = useOneOffHistory();
+  const { firstSuccess } = useInstallNudge();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   // The currency typed so far; committed on blur so a one-character symbol can be replaced.
@@ -108,6 +110,8 @@ export function OneOffSettlePage() {
     if (!user || saving) return;
     setSaving(true);
     setSaveError(null);
+    // No saved games yet means this is the account's first.
+    const isFirstSave = !savedLoading && savedGames.length === 0;
     // Every control is locked while saving, so nothing typed now is lost by the discard below.
     const { id, error } = await save(game, user.id);
     setSaving(false);
@@ -117,6 +121,7 @@ export function OneOffSettlePage() {
     }
     discard();
     navigate(`/one-off/saved/${id}`);
+    firstSuccess('oneoff', isFirstSave);
   };
 
   return (

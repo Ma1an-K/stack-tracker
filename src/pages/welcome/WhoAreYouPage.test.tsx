@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 
 const requestClaim = vi.fn();
+const firstSuccess = vi.fn();
+let myRequests: { id: string }[] = [];
 const toast = vi.fn();
 
 vi.mock('@/contexts/AuthContext', () => ({
@@ -28,7 +30,11 @@ vi.mock('@/hooks/usePlayers', () => ({
 }));
 
 vi.mock('@/hooks/usePlayerClaims', () => ({
-  usePlayerClaims: () => ({ requestClaim }),
+  usePlayerClaims: () => ({ requestClaim, myRequests, loading: false }),
+}));
+
+vi.mock('@/contexts/InstallNudgeContext', () => ({
+  useInstallNudge: () => ({ firstSuccess, sheetOpen: false }),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({ toast: (...args: unknown[]) => toast(...args) }));
@@ -38,6 +44,8 @@ import { WhoAreYouPage } from './WhoAreYouPage';
 beforeEach(() => {
   requestClaim.mockReset().mockResolvedValue({ error: null });
   toast.mockReset();
+  firstSuccess.mockReset();
+  myRequests = [];
 });
 
 function Where() {
@@ -75,6 +83,16 @@ describe('WhoAreYouPage', () => {
     fireEvent.click(confirm);
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
     expect(requestClaim).toHaveBeenCalledWith('p-maya');
+    expect(firstSuccess).toHaveBeenCalledWith('claim', true);
+  });
+
+  it('a claim is not the first when the user has claimed before', async () => {
+    myRequests = [{ id: 'r-old' }];
+    renderWho();
+    fireEvent.click(screen.getByRole('button', { name: 'Maya' }));
+    fireEvent.click(screen.getByRole('button', { name: "That's me" }));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
+    expect(firstSuccess).toHaveBeenCalledWith('claim', false);
   });
 
   it('stays put when the claim fails', async () => {
@@ -84,6 +102,7 @@ describe('WhoAreYouPage', () => {
     fireEvent.click(screen.getByRole('button', { name: "That's me" }));
     await waitFor(() => expect(requestClaim).toHaveBeenCalledWith('p-dan'));
     expect(screen.queryByTestId('where')).not.toBeInTheDocument();
+    expect(firstSuccess).not.toHaveBeenCalled();
   });
 
   it('"Skip, I\'m just watching" goes home without a claim', () => {

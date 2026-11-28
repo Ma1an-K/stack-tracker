@@ -2,7 +2,8 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLiveSession } from '@/contexts/LiveSessionContext';
 import { usePlayers } from '@/hooks/usePlayers';
-import { useSessions } from '@/hooks/useSessions';
+import { countSessionsIn, useSessions } from '@/hooks/useSessions';
+import { useInstallNudge } from '@/contexts/InstallNudgeContext';
 import { SessionPaymentInput } from '@/types/database';
 import { SessionForm } from '@/components/sessions/SessionForm';
 import { LiveSessionCard } from '@/components/sessions/LiveSessionCard';
@@ -16,10 +17,11 @@ import { EmptyState } from '@/components/common/EmptyState';
 export function NewSessionPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { homegame, isOwner } = useAuthContext();
+  const { homegame, homegames, isOwner } = useAuthContext();
+  const { firstSuccess } = useInstallNudge();
   const { liveSession, finish } = useLiveSession();
   const { activePlayers, loading: playersLoading, addPlayer } = usePlayers(homegame?.id);
-  const { createSession } = useSessions(homegame?.id, homegame?.name);
+  const { sessions, loading: sessionsLoading, createSession } = useSessions(homegame?.id, homegame?.name);
   const currency = homegame?.currency || '$';
 
   // Arriving from "End Session & Cash Out": pre-seed the normal form with the
@@ -34,12 +36,22 @@ export function NewSessionPage() {
     return result;
   };
 
+  // The account's first session anywhere: none in this homegame (checked before saving)
+  // and none in the user's other homegames. A failed count errs towards "not first".
+  const isAccountsFirstSession = async () => {
+    const others = homegames.filter((h) => h.id !== homegame?.id).map((h) => h.id);
+    if (others.length === 0) return true;
+    return (await countSessionsIn(others)) === 0;
+  };
+
   const handleSubmit = async (
     date: string,
     players: { player_id: string; buy_in: number; cash_out: number }[],
     notes: string | undefined,
     payments: SessionPaymentInput[]
   ) => {
+    // Read before saving: an empty homegame means this may be the account's first session.
+    const homegameWasEmpty = !sessionsLoading && sessions.length === 0;
     const result = await createSession(date, players, notes, payments);
     if (!result.error) {
       clearStale();
@@ -47,6 +59,7 @@ export function NewSessionPage() {
       // Land on the result: Sessions opens the newest card with its settlement.
       const newId = (result as { session?: { id?: string } }).session?.id;
       navigate('/sessions', { state: { expandLatest: true, expandSessionId: newId } });
+      if (homegameWasEmpty) void isAccountsFirstSession().then((first) => firstSuccess('session', first));
     }
     return result;
   };

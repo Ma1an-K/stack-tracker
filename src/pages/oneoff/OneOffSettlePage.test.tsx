@@ -6,6 +6,8 @@ import type { OneOffGame } from '@/lib/oneOff/types';
 const discard = vi.fn();
 const dispatch = vi.fn(() => ({ error: null }));
 const save = vi.fn();
+const firstSuccess = vi.fn();
+let savedGames: { id: string }[] = [];
 let game: OneOffGame | null = null;
 let storageOk = true;
 
@@ -24,13 +26,17 @@ vi.mock('@/contexts/OneOffGameContext', () => ({
 
 vi.mock('@/hooks/useOneOffHistory', () => ({
   useOneOffHistory: () => ({
-    games: [],
+    games: savedGames,
     loading: false,
     refetch: vi.fn(),
     get: vi.fn(),
     save,
     remove: vi.fn(),
   }),
+}));
+
+vi.mock('@/contexts/InstallNudgeContext', () => ({
+  useInstallNudge: () => ({ firstSuccess, sheetOpen: false }),
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
@@ -73,6 +79,8 @@ beforeEach(() => {
   discard.mockReset();
   dispatch.mockClear();
   save.mockReset();
+  firstSuccess.mockReset();
+  savedGames = [];
   storageOk = true;
 });
 
@@ -105,6 +113,17 @@ describe('OneOffSettlePage', () => {
     await waitFor(() => expect(screen.getByText('Saved page')).toBeInTheDocument());
     expect(save).toHaveBeenCalledWith(game, 'user-1');
     expect(discard).toHaveBeenCalled();
+    expect(firstSuccess).toHaveBeenCalledWith('oneoff', true);
+  });
+
+  it('a save is not the first when the user already has saved games', async () => {
+    savedGames = [{ id: 'old' }];
+    game = makeGame(10);
+    save.mockResolvedValue({ id: 'saved-43', error: null });
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /save to my history/i }));
+    await waitFor(() => expect(screen.getByText('Saved page')).toBeInTheDocument());
+    expect(firstSuccess).toHaveBeenCalledWith('oneoff', false);
   });
 
   it('shows the save error and keeps the game when save refuses', async () => {
@@ -114,6 +133,7 @@ describe('OneOffSettlePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /save to my history/i }));
     expect(await screen.findByText("Couldn't save. Check your connection and try again.")).toBeInTheDocument();
     expect(discard).not.toHaveBeenCalled();
+    expect(firstSuccess).not.toHaveBeenCalled();
   });
 
   it('Done asks first, then discards and goes back to the hub', async () => {

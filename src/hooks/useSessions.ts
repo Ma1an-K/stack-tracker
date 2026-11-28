@@ -5,6 +5,15 @@ import { Session, SessionWithPlayers, SessionPlayerWithDetails, SessionPaymentIn
 import { toast } from '@/hooks/use-toast';
 import { logError } from '@/lib/errorLog';
 
+/** How many sessions these homegames have between them, or null if the count failed. */
+export async function countSessionsIn(homegameIds: string[]): Promise<number | null> {
+  const { count, error } = await supabase
+    .from('sessions')
+    .select('*', { count: 'exact', head: true })
+    .in('homegame_id', homegameIds);
+  return error ? null : count ?? 0;
+}
+
 interface SessionPlayerInput {
   player_id: string;
   buy_in: number;
