@@ -10,6 +10,12 @@ vi.mock('@/hooks/useInstallPrompt', () => ({
   useInstallPrompt: () => ({ context, trigger: null }),
 }));
 
+// Supabase reads the confirmation token from the URL while auth is loading.
+let authLoading = false;
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuthContext: () => ({ loading: authLoading }),
+}));
+
 import { ConfirmedPage } from './ConfirmedPage';
 
 function renderAt() {
@@ -25,6 +31,7 @@ function renderAt() {
 
 beforeEach(() => {
   context = 'ios-safari';
+  authLoading = false;
   sessionStorage.clear();
 });
 
@@ -50,5 +57,30 @@ describe('ConfirmedPage', () => {
     renderAt();
     expect(screen.getByText('app home')).toBeInTheDocument();
     expect(screen.queryByText("You're confirmed")).not.toBeInTheDocument();
+  });
+
+  it('on desktop, waits for sign-in from the link to finish before opening the app', () => {
+    context = 'desktop';
+    authLoading = true;
+    const { rerender } = renderAt();
+    expect(screen.queryByText('app home')).not.toBeInTheDocument();
+
+    authLoading = false;
+    rerender(
+      <MemoryRouter initialEntries={['/confirmed']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Routes>
+          <Route path="/confirmed" element={<ConfirmedPage />} />
+          <Route path="/" element={<p>app home</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('app home')).toBeInTheDocument();
+  });
+
+  it('on a phone, offers "Continue here instead" only once sign-in from the link has finished', () => {
+    context = 'android-manual';
+    authLoading = true;
+    renderAt();
+    expect(screen.queryByRole('button', { name: 'Continue here instead' })).not.toBeInTheDocument();
   });
 });

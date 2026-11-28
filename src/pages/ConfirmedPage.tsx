@@ -2,6 +2,8 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { APP_ICON } from '@/components/install/InstallGuide';
 import { Button } from '@/components/ui/button';
+import { SplashScreen } from '@/components/common/SplashScreen';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { isPhoneContext } from '@/lib/installContext';
 import { markContinuedInBrowser } from '@/lib/installFirst';
@@ -14,7 +16,11 @@ import { markContinuedInBrowser } from '@/lib/installFirst';
  */
 export function ConfirmedPage() {
   const { context } = useInstallPrompt();
+  const { loading } = useAuthContext();
   const navigate = useNavigate();
+
+  // Supabase is still reading the token from the link; leaving now would drop it.
+  if (loading) return <SplashScreen />;
 
   if (!isPhoneContext(context)) return <Navigate to="/" replace />;
 
