@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, Session, SessionWithPlayers, Settlement, Homegame } from '@/types/database';
-import { calculateSettlements } from '@/lib/settlement';
+import { settleSession } from '@/lib/sessions/settle';
 import { calculateLeaderboard } from '@/lib/leaderboard';
 import { computeHomegameBadges, PlayerBadge } from '@/lib/badges';
 
@@ -260,7 +260,8 @@ export function usePersonalStats() {
           playerBadges = badgeMap.get(myPlayer.id) || [];
         }
 
-        // Calculate settlements for unsettled sessions involving this player
+        // Calculate settlements for unsettled sessions involving this player;
+        // a Session the Settlement module refuses (e.g. not Balanced) is skipped
         // Sort by most recent first
         const sortedUnsettledSessions = ((unsettledSessions || []) as SessionWithPlayers[]).sort((a, b) =>
           new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -270,9 +271,10 @@ export function usePersonalStats() {
         sortedUnsettledSessions.forEach(session => {
           const sessionPlayers = session.session_players || [];
           if (sessionPlayers.some(sp => sp.player_id === myPlayer.id)) {
-            const settlements = calculateSettlements(sessionPlayers, session.session_payments ?? []);
+            const settlement = settleSession(sessionPlayers, session.session_payments ?? []);
+            if (settlement.status === 'refused') return;
             // Filter settlements involving this player
-            settlements.forEach(s => {
+            settlement.transfers.forEach(s => {
               if (s.from.id === myPlayer.id || s.to.id === myPlayer.id) {
                 pendingSettlements.push(s);
               }
