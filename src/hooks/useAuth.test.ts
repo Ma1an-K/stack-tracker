@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   authCallback: null as AuthCallback | null,
   getSession: null as unknown as (...args: unknown[]) => unknown,
   rpc: null as unknown as (...args: unknown[]) => unknown,
+  signUp: null as unknown as (...args: unknown[]) => unknown,
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
@@ -21,6 +22,7 @@ vi.mock("@/integrations/supabase/client", () => ({
         return { data: { subscription: { unsubscribe: () => {} } } };
       },
       getSession: (...args: unknown[]) => mocks.getSession(...args),
+      signUp: (...args: unknown[]) => mocks.signUp(...args),
     },
   },
 }));
@@ -157,5 +159,20 @@ describe("useAuth joinHomegame", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("join_with_invite_code", { code_input: "ABCD1234" });
     expect(result.current.currentHomegame).toMatchObject({ id: "h2", role: "member" });
     expect(localStorage.getItem("currentHomegameId")).toBe("h2");
+  });
+});
+
+describe("useAuth signUp", () => {
+  it("sends the confirmation link to /confirmed on this site", async () => {
+    mocks.signUp = vi.fn(() => Promise.resolve({ data: { user: null }, error: null }));
+    const { result } = renderHook(() => useAuth());
+
+    await act(async () => { await result.current.signUp("a@b.co", "secret123", " Dan "); });
+
+    expect(mocks.signUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({ emailRedirectTo: `${window.location.origin}/confirmed` }),
+      }),
+    );
   });
 });

@@ -130,8 +130,9 @@ export function useAuth() {
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    const redirectUrl = `${publicOrigin()}/`;
-    
+    // The confirmation email lands on /confirmed, which sends phone users back to the installed app.
+    const redirectUrl = `${publicOrigin()}/confirmed`;
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,

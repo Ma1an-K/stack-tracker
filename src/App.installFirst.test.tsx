@@ -114,3 +114,19 @@ describe('install first on a phone', () => {
     expect(screen.getByLabelText('Username')).toBeInTheDocument();
   });
 });
+
+describe('the confirmation email landing', () => {
+  it('on a phone browser, /confirmed points them back to the Home Screen app', () => {
+    window.history.replaceState(null, '', '/confirmed');
+    render(<App />);
+    expect(screen.getByRole('heading', { name: "You're confirmed" })).toBeInTheDocument();
+  });
+
+  it('on a laptop, /confirmed goes straight to /', () => {
+    context = 'desktop';
+    window.history.replaceState(null, '', '/confirmed');
+    render(<App />);
+    expect(window.location.pathname).toBe('/');
+    expect(screen.queryByText("You're confirmed")).not.toBeInTheDocument();
+  });
+});

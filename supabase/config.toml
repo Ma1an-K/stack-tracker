@@ -15,3 +15,8 @@ port = 54424
 
 [analytics]
 port = 54427
+
+[auth]
+# The Vite dev server (vite.config.ts). Production keeps its own allow-list in the dashboard.
+site_url = "http://localhost:8080"
+additional_redirect_urls = ["http://localhost:8080/confirmed", "http://127.0.0.1:8080/confirmed"]

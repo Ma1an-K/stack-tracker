@@ -20,6 +20,7 @@ import { PublicSettlementPage } from "@/pages/PublicSettlementPage";
 import { PublicHandCalculatorPage } from "@/pages/PublicHandCalculatorPage";
 import { AboutPage } from "@/pages/AboutPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
+import { ConfirmedPage } from "@/pages/ConfirmedPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -178,6 +179,7 @@ function AppRoutes() {
       <Route path="/poker-hand-calculator" element={<PublicHandCalculatorPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/confirmed" element={<ConfirmedPage />} />
       {/* First run: full screen, outside the app shell. */}
       <Route path="/welcome" element={<WelcomeLayout />}>
         <Route index element={<WelcomeChoicePage />} />
