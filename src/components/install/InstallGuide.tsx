@@ -111,11 +111,11 @@ function IosSteps({ inviteCode }: { inviteCode?: string }) {
       {/* Safari's toolbar sits just below this sheet. */}
       <p className="flex items-center justify-center gap-2 pt-1 text-xs font-semibold text-gold-bright" aria-hidden="true">
         Tap
-        <span className="relative grid h-8 w-8 place-items-center text-[hsl(210_90%_66%)]">
+        <span className="grid h-8 w-8 place-items-center text-[hsl(210_90%_66%)]">
           <ShareIcon className="h-5 w-5" />
-          <span className="absolute -inset-1 rounded-[10px] border-2 border-gold motion-safe:animate-ping" />
         </span>
-        below ↓
+        below
+        <span className="inline-block motion-safe:animate-bounce">↓</span>
       </p>
     </div>
   );
