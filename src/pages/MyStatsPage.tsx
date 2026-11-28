@@ -21,12 +21,17 @@ import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { PlayerBadges } from '@/components/badges/PlayerBadges';
 import { ProfitChart } from '@/components/stats/ProfitChart';
 import { useTips } from '@/hooks/useTips';
+import { usePlayerClaims } from '@/hooks/usePlayerClaims';
+import { usePlayers } from '@/hooks/usePlayers';
 import { Tip } from '@/components/tips/Tip';
 
 export function MyStatsPage() {
   const { profile, homegames, homegame, isOwner } = useAuthContext();
   const tips = useTips();
   const stats = usePersonalStats();
+  // myRequests covers every homegame; the current homegame's players scope it.
+  const { myRequests, loading: claimsLoading } = usePlayerClaims(homegame?.id);
+  const { players, loading: playersLoading } = usePlayers(homegame?.id);
   const fresh = useMemo(
     () => ({
       homegameStats: stats.homegameStats,
@@ -44,22 +49,33 @@ export function MyStatsPage() {
   const hasClaimedPlayers = homegameStats.length > 0;
   const currencies = new Set(homegames.map((h) => h.currency || '$'));
   const cur = currencies.size === 1 ? [...currencies][0] : '';
+  const claimsReady = !claimsLoading && !playersLoading;
+  const pendingRequest = claimsReady
+    ? myRequests.find((r) => r.status === 'pending' && players.some((p) => p.id === r.player_id))
+    : undefined;
+  const pendingPlayerName = pendingRequest ? players.find((p) => p.id === pendingRequest.player_id)?.name : undefined;
 
   return (
     <div className="space-y-6">
       <PageHeader eyebrow={profile?.username ? `${profile.username}#${profile.discriminator}` : 'You'} title="My stats" action={<RefreshingDot show={isRefreshing} />} />
 
-      {homegame && !isOwner && !hasClaimedPlayers && tips.shouldShow('mystats-member') && (
+      {homegame && !isOwner && !hasClaimedPlayers && claimsReady && tips.shouldShow('mystats-member') && (
         <Tip onDismiss={() => tips.markSeen('mystats-member')}>
-          Your results show here once your host confirms your name.
+          {pendingRequest
+            ? 'Your results show here once your host confirms your name.'
+            : 'Claim your player: find your name in Players and tap “This is me”.'}
         </Tip>
       )}
 
       {!hasClaimedPlayers ? (
         <EmptyState
           icon={Users}
-          title="Claim your player first"
-          description="Find your name in Players and tap “This is me”. Once the owner approves it, your results show up here."
+          title={pendingRequest ? 'Waiting for your host' : 'Claim your player first'}
+          description={
+            pendingRequest
+              ? `You asked to be ${pendingPlayerName ?? 'a player'}. Your results show up here once the owner approves it.`
+              : 'Find your name in Players and tap “This is me”. Once the owner approves it, your results show up here.'
+          }
           action={
             <Button asChild>
               <Link to="/players">Go to Players</Link>
