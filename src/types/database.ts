@@ -8,6 +8,7 @@ export interface Profile {
   username: string;
   discriminator: number;
   display_name: string | null;
+  seen_tips: string[];
   created_at: string;
   updated_at: string;
 }

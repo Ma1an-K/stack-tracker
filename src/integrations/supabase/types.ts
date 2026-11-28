@@ -407,6 +407,7 @@ export type Database = {
           discriminator: number
           display_name: string | null
           id: string
+          seen_tips: string[]
           updated_at: string
           username: string
         }
@@ -415,6 +416,7 @@ export type Database = {
           discriminator?: number
           display_name?: string | null
           id: string
+          seen_tips?: string[]
           updated_at?: string
           username: string
         }
@@ -423,6 +425,7 @@ export type Database = {
           discriminator?: number
           display_name?: string | null
           id?: string
+          seen_tips?: string[]
           updated_at?: string
           username?: string
         }
