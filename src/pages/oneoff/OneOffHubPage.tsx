@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
-import { ArrowLeft, ChevronRight, ClipboardList, History, Play, Radio, Trash2, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Play, Radio, Trash2, TriangleAlert } from 'lucide-react';
 import { useOneOffGame } from '@/contexts/OneOffGameContext';
-import { useOneOffHistory } from '@/hooks/useOneOffHistory';
+import { useSavedOneOffGames } from '@/hooks/useSavedOneOffGames';
 import { formatCurrency } from '@/lib/settlement';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,11 +16,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { EmptyState } from '@/components/common/EmptyState';
-import { PageSkeleton } from '@/components/common/PageSkeleton';
 import { StartGameDialog } from '@/components/oneoff/StartGameDialog';
-
-const playerCount = (n: number) => `${n} ${n === 1 ? 'player' : 'players'}`;
+import { SavedGamesList } from '@/components/oneoff/SavedGamesList';
+import { playerCount } from '@/lib/oneOff/format';
 
 function DiscardGameButton() {
   const { discard } = useOneOffGame();
@@ -57,7 +54,7 @@ function DiscardGameButton() {
 export function OneOffHubPage() {
   const navigate = useNavigate();
   const { game, storageOk, totalBuyIn } = useOneOffGame();
-  const { games, loading } = useOneOffHistory();
+  const { games, loading } = useSavedOneOffGames();
   const [startMode, setStartMode] = useState<'live' | 'totals' | null>(null);
 
   // Back must never leave the app on a deep link or cold PWA start.
@@ -121,35 +118,7 @@ export function OneOffHubPage() {
 
       <section className="space-y-2">
         <h2 className="section-header px-1">Saved games</h2>
-        {loading && games.length === 0 ? (
-          <PageSkeleton rows={2} />
-        ) : games.length === 0 ? (
-          <EmptyState
-            icon={History}
-            title="No saved games yet"
-            description="Games you save to your history show up here. Only you can see them."
-          />
-        ) : (
-          <ul className="surface divide-y divide-border/50 overflow-hidden">
-            {games.map(g => (
-              <li key={g.id}>
-                <Link
-                  to={`/one-off/saved/${g.id}`}
-                  className="flex min-h-[64px] items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/40 focus:outline-none focus-visible:bg-accent/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{g.label?.trim() || 'One-off game'}</p>
-                    <p className="text-[0.8125rem] text-muted-foreground">
-                      {format(parseISO(g.played_on), 'EEE, MMM d, yyyy')}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-[0.8125rem] text-muted-foreground tabular-nums">{playerCount(g.players.length)}</span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <SavedGamesList games={games} loading={loading} />
       </section>
 
       <StartGameDialog mode={startMode} onOpenChange={o => { if (!o) setStartMode(null); }} />

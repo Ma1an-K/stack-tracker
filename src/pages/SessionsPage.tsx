@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { PageSkeleton } from '@/components/common/PageSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { RefreshingDot } from '@/components/common/RefreshingDot';
+import { StartOrJoinCard } from '@/components/home/StartOrJoinCard';
 
 export function SessionsPage() {
   const { homegame } = useAuthContext();
@@ -36,6 +37,8 @@ export function SessionsPage() {
   const expandLatest = !!navState?.expandLatest;
   const expandId = navState?.expandSessionId;
 
+  // Deep links reach these tabs before a homegame exists; offer one instead.
+  if (!homegame) return <StartOrJoinCard />;
   if (isFirstLoad) return <PageSkeleton rows={5} />;
 
   return (

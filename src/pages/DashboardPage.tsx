@@ -21,22 +21,20 @@ import {
 } from 'lucide-react';
 import { formatProfit } from '@/lib/settlement';
 import { parseISO, formatDistanceToNow } from 'date-fns';
-import { PokerChipSpade } from '@/components/icons/PokerChipSpade';
 import { getIconSrc } from '@/lib/homegameIcons';
 import { HomegameWithRole, Settlement } from '@/types/database';
 import { LiveSessionCard } from '@/components/sessions/LiveSessionCard';
 import { RefreshingDot } from '@/components/common/RefreshingDot';
 import { cn } from '@/lib/utils';
-
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 5) return 'Late night';
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
-}
+import { greeting } from '@/lib/greeting';
+import { NoHomegameHome } from '@/components/home/NoHomegameHome';
 
 export function DashboardPage() {
+  const { homegame } = useAuthContext();
+  return homegame ? <HomegameDashboard /> : <NoHomegameHome />;
+}
+
+function HomegameDashboard() {
   const { profile, homegames, homegame, isOwner, selectHomegame } = useAuthContext();
   const stats = usePersonalStats();
   const { liveSession } = useLiveSession();
@@ -178,13 +176,6 @@ export function DashboardPage() {
             />
           ))}
         </div>
-        {homegames.length === 0 && (
-          <div className="surface py-8 text-center">
-            <PokerChipSpade className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-            <h3 className="font-medium">No homegames yet</h3>
-            <p className="text-sm text-muted-foreground">Create one or join with an invite code from the header.</p>
-          </div>
-        )}
       </section>
 
       {/* Recent activity */}

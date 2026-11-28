@@ -6,6 +6,7 @@ import { PlayerList } from '@/components/players/PlayerList';
 import { ClaimRequestsCard } from '@/components/players/ClaimRequestsCard';
 import { PageHeader } from '@/components/common/PageHeader';
 import { RefreshingDot } from '@/components/common/RefreshingDot';
+import { StartOrJoinCard } from '@/components/home/StartOrJoinCard';
 
 export function PlayersPage() {
   const { homegame, isOwner, user } = useAuthContext();
@@ -23,6 +24,9 @@ export function PlayersPage() {
     rejectClaim,
     hasRequestedPlayer,
   } = usePlayerClaims(homegame?.id);
+
+  // Deep links reach these tabs before a homegame exists; offer one instead.
+  if (!homegame) return <StartOrJoinCard />;
 
   const handleApproveClaim = async (requestId: string, playerId: string, userId: string) => {
     const result = await approveClaim(requestId, playerId, userId);

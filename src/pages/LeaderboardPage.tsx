@@ -5,6 +5,7 @@ import { useStaleWhileLoading } from '@/hooks/useStaleWhileLoading';
 import { Leaderboard } from '@/components/leaderboard/Leaderboard';
 import { PageSkeleton } from '@/components/common/PageSkeleton';
 import { RefreshingDot } from '@/components/common/RefreshingDot';
+import { StartOrJoinCard } from '@/components/home/StartOrJoinCard';
 
 export function LeaderboardPage() {
   const { homegame } = useAuthContext();
@@ -20,6 +21,8 @@ export function LeaderboardPage() {
   const isFirstLoad = p.isFirstLoad || s.isFirstLoad;
   const isRefreshing = p.isRefreshing || s.isRefreshing;
 
+  // Deep links reach these tabs before a homegame exists; offer one instead.
+  if (!homegame) return <StartOrJoinCard />;
   if (isFirstLoad) return <PageSkeleton rows={6} />;
 
   return (
