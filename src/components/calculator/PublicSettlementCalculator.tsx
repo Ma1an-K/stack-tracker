@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Plus, Trash2, ArrowRight, Calculator as CalculatorIcon } from 'lucide-react';
-import {
-  computePublicSettlement,
-  SettlementInputPlayer,
-} from '@/lib/publicSettlement';
+import { settleCalculatorRows, type CalculatorRow } from '@/lib/calculator/settle';
+import { describeRefusal } from '@/lib/settlement/settle';
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$' },
@@ -14,7 +12,7 @@ const CURRENCIES = [
   { code: 'NZD', symbol: 'NZ$' },
 ];
 
-function newPlayer(): SettlementInputPlayer {
+function newPlayer(): CalculatorRow {
   return {
     id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
@@ -31,7 +29,7 @@ function formatMoney(value: number, symbol: string): string {
 }
 
 export function PublicSettlementCalculator() {
-  const [players, setPlayers] = useState<SettlementInputPlayer[]>(() => [
+  const [players, setPlayers] = useState<CalculatorRow[]>(() => [
     { ...newPlayer(), name: 'Player 1' },
     { ...newPlayer(), name: 'Player 2' },
     { ...newPlayer(), name: 'Player 3' },
@@ -41,10 +39,10 @@ export function PublicSettlementCalculator() {
 
   const symbol = CURRENCIES.find(c => c.code === currencyCode)?.symbol ?? '$';
 
-  const result = useMemo(() => computePublicSettlement(players), [players]);
+  const result = useMemo(() => settleCalculatorRows(players), [players]);
   const showResults = submitted;
 
-  const updatePlayer = (id: string, patch: Partial<SettlementInputPlayer>) => {
+  const updatePlayer = (id: string, patch: Partial<CalculatorRow>) => {
     setPlayers(prev => prev.map(p => (p.id === id ? { ...p, ...patch } : p)));
   };
 
@@ -67,14 +65,6 @@ export function PublicSettlementCalculator() {
     ]);
     setSubmitted(false);
   };
-
-  const imbalanceWarning =
-    Math.abs(result.imbalance) > 0.01
-      ? `Buy-ins (${formatMoney(result.totalBuyIn, symbol)}) and cash-outs (${formatMoney(
-          result.totalCashOut,
-          symbol,
-        )}) don't match — off by ${formatMoney(Math.abs(result.imbalance), symbol)}.`
-      : null;
 
   return (
     <div className="space-y-6">
@@ -182,13 +172,14 @@ export function PublicSettlementCalculator() {
         </div>
       </div>
 
-      {showResults && (
+      {showResults && result.status === 'refused' && (
+        <div className="rounded-lg border border-gold/30 bg-gold/5 px-4 py-3 text-sm text-gold">
+          {describeRefusal(result.reason, symbol)}
+        </div>
+      )}
+
+      {showResults && result.status === 'settled' && (
         <div className="space-y-4">
-          {imbalanceWarning && (
-            <div className="rounded-lg border border-gold/30 bg-gold/5 px-4 py-3 text-sm text-gold">
-              {imbalanceWarning}
-            </div>
-          )}
 
           <div className="rounded-2xl border border-[hsl(var(--gold)/0.18)] bg-card/40 p-5 sm:p-6">
             <h2 className="text-lg font-semibold mb-1">Per-player profit</h2>
@@ -196,7 +187,7 @@ export function PublicSettlementCalculator() {
               Cash-out minus buy-in for each player.
             </p>
             <div className="divide-y divide-[hsl(var(--gold)/0.12)]">
-              {result.results
+              {result.players
                 .slice()
                 .sort((a, b) => b.profit - a.profit)
                 .map(r => (
@@ -224,6 +215,10 @@ export function PublicSettlementCalculator() {
 
           <div className="rounded-2xl border border-[hsl(var(--gold)/0.18)] bg-card/40 p-5 sm:p-6">
             <h2 className="text-lg font-semibold mb-1">Settlements</h2>
+            <p className="text-sm text-muted-foreground mb-1">
+              Buy-ins {formatMoney(result.totalBuyIn, symbol)} · Cash-outs{' '}
+              {formatMoney(result.totalCashOut, symbol)}
+            </p>
             <p className="text-sm text-muted-foreground mb-4">
               {result.transfers.length === 0
                 ? 'Nothing to settle — everyone broke even.'
