@@ -219,10 +219,13 @@ export function useAuth() {
         return { error: new Error(result.error_message) };
       }
 
-      // Refresh user data to include the new homegame
+      // Make the joined homegame current (even for a user already in another
+      // one), then refresh so the fetch picks it up from the saved id.
+      const homegameId: string | undefined = result?.homegame_id ?? undefined;
+      if (homegameId) localStorage.setItem('currentHomegameId', homegameId);
       await fetchUserData(user.id);
 
-      return { error: null };
+      return { error: null, homegameId };
     } catch (err) {
       console.error('Error joining homegame:', err);
       logError({ kind: 'save_failed', action: 'useAuth.joinHomegame', error: err });

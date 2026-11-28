@@ -72,7 +72,6 @@ export function HomegameDialog({ open, onOpenChange, defaultTab = 'create', init
       toast({ title: 'Error', description: error.message || 'Failed to join homegame', variant: 'destructive' });
     } else {
       clearPendingCode();
-      toast({ title: 'Joined homegame successfully' });
       setInviteCode('');
       onOpenChange(false);
       navigate('/welcome/who');

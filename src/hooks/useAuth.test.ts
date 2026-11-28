@@ -8,11 +8,13 @@ const mocks = vi.hoisted(() => ({
   db: null as unknown as ReturnType<typeof import("@/test/supabaseMock").createSupabaseMock>,
   authCallback: null as AuthCallback | null,
   getSession: null as unknown as (...args: unknown[]) => unknown,
+  rpc: null as unknown as (...args: unknown[]) => unknown,
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: (table: string) => mocks.db.from(table),
+    rpc: (...args: unknown[]) => mocks.rpc(...args),
     auth: {
       onAuthStateChange: (cb: AuthCallback) => {
         mocks.authCallback = cb;
@@ -114,5 +116,46 @@ describe("useAuth startup", () => {
     act(() => { result.current.refetchUserData(); });
     await waitFor(() => expect(mocks.db.find("profiles")).toHaveLength(2));
     expect(mocks.db.find("homegame_members")).toHaveLength(2);
+  });
+});
+
+describe("useAuth joinHomegame", () => {
+  it("makes the joined homegame current, even when already in another one", async () => {
+    localStorage.setItem("currentHomegameId", "h1");
+    const { result } = renderHook(() => useAuth());
+    act(() => mocks.authCallback!("INITIAL_SESSION", session));
+    await waitFor(() => expect(mocks.db.pending()).toHaveLength(2));
+    await act(async () => {
+      for (const r of mocks.db.pending()) {
+        r.resolve({
+          data: r.table === "profiles" ? { id: "u1" } : [{ role: "owner", homegame: { id: "h1", name: "Friday" } }],
+          error: null,
+        });
+      }
+    });
+    await waitFor(() => expect(result.current.currentHomegame).toMatchObject({ id: "h1" }));
+
+    mocks.rpc = vi.fn(() => Promise.resolve({ data: [{ homegame_id: "h2", error_message: null }], error: null }));
+    let joined: Promise<{ error: unknown; homegameId?: string }>;
+    act(() => { joined = result.current.joinHomegame("ABCD1234"); });
+    await waitFor(() => expect(mocks.db.pending()).toHaveLength(2));
+    await act(async () => {
+      for (const r of mocks.db.pending()) {
+        r.resolve({
+          data: r.table === "profiles"
+            ? { id: "u1" }
+            : [
+                { role: "owner", homegame: { id: "h1", name: "Friday" } },
+                { role: "member", homegame: { id: "h2", name: "Sunday" } },
+              ],
+          error: null,
+        });
+      }
+    });
+
+    await expect(joined!).resolves.toEqual({ error: null, homegameId: "h2" });
+    expect(mocks.rpc).toHaveBeenCalledWith("join_with_invite_code", { code_input: "ABCD1234" });
+    expect(result.current.currentHomegame).toMatchObject({ id: "h2", role: "member" });
+    expect(localStorage.getItem("currentHomegameId")).toBe("h2");
   });
 });

@@ -17,7 +17,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, username: string) => Promise<{ error: ActionError; user?: User }>;
   signOut: () => Promise<{ error: ActionError }>;
   createHomegame: (name: string) => Promise<{ error: ActionError; homegame?: Homegame }>;
-  joinHomegame: (inviteCode: string) => Promise<{ error: ActionError }>;
+  joinHomegame: (inviteCode: string) => Promise<{ error: ActionError; homegameId?: string }>;
   selectHomegame: (homegameId: string) => void;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: ActionError }>;
   updateHomegame: (updates: Partial<Homegame>) => Promise<{ error: ActionError }>;
