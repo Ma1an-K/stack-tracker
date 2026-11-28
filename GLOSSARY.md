@@ -19,7 +19,7 @@ A name on a **Homegame**'s roster whose results are tracked. A **Player** exists
 _Avoid_: Participant, user
 
 **Claim**:
-A **Member**'s request to be linked to a **Player** as "this is me", approved or rejected by the homegame's owner.
+A **Member**'s request to be linked to a **Player** as "this is me", approved or rejected by the homegame's owner only, never an admin.
 
 **Invite code**:
 A code that lets someone join a **Homegame** as a **Member**, optionally with an expiry and a maximum number of uses.
@@ -50,20 +50,24 @@ _Avoid_: Top-up, reload
 **Cash-out**:
 The amount a **Player** left the game with.
 
-**Net**:
-**Cash-out** minus **Buy-in** for one **Player** in one game. Positive is a win.
-_Avoid_: Profit (for a single game), balance
+**Profit**:
+**Cash-out** minus **Buy-in** for one **Player**, in one game or summed across **Sessions**. Positive is a win, negative a loss.
+_Avoid_: Net, balance
 
 **Payment**:
-A transfer between two **Players** that already happened during the game, such as an early leaver paying their loss in cash. It reduces what the **Settlement** still asks of them and never affects stats.
+Money handed from one **Player** to another during the game, such as an early leaver paying their loss in cash. It reduces what the **Settlement** still asks of them and never affects stats.
 _Avoid_: Transfer, settlement
 
 **Settlement**:
-The computed list of who pays whom after a game: the fewest transfers that bring every **Player**'s **Net** to zero, after **Payments**.
+The computed list of who pays whom after a game: the fewest **Transfers** that square every **Player**'s **Profit**, after **Payments**.
 _Avoid_: Payout, payment
 
+**Transfer**:
+One line of a **Settlement**: an amount one **Player** still owes another.
+_Avoid_: Payment (money already handed over during the game)
+
 **Settled**:
-The state of a **Session** once its **Settlement** has been paid.
+The state of a **Session** once someone has marked in the app that its **Settlement** has been paid. A **Session** whose **Payments** covered everything is still not **Settled** until it is marked.
 
 ### Results
 
