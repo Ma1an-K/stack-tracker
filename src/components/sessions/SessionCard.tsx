@@ -5,7 +5,9 @@ import { format, parseISO } from 'date-fns';
 import { ChevronDown, Edit, Trash2, CheckCircle2, ArrowRight, Share2, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
-import { calculateSettlements, formatCurrency, formatProfit } from '@/lib/settlement';
+import { formatCurrency, formatProfit } from '@/lib/settlement';
+import { describeRefusal } from '@/lib/settlement/settle';
+import { settleSession } from '@/lib/sessions/settle';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +56,14 @@ export function SessionCard({
   const [copied, setCopied] = useState(false);
 
   const payments = session.session_payments ?? [];
-  const settlements = calculateSettlements(session.session_players, payments);
+  const settlement = settleSession(session.session_players, payments);
+  const settlements = settlement.status === 'settled' ? settlement.transfers : [];
+  const refusal = settlement.status === 'refused' ? describeRefusal(settlement.reason, currency) : null;
+  // A refused Session has no Profit from the module, but its results still show.
+  const profitOf = (sp: SessionWithPlayers['session_players'][number]) =>
+    settlement.status === 'settled'
+      ? settlement.profits.get(sp.player_id) ?? 0
+      : Number(sp.cash_out) - Number(sp.buy_in);
   const totalPot = session.session_players.reduce(
     (sum, sp) => sum + Number(sp.buy_in),
     0
@@ -72,7 +81,9 @@ export function SessionCard({
       });
     }
 
-    if (settlements.length > 0) {
+    if (refusal) {
+      lines.push('', `⚠️ ${refusal}`);
+    } else if (settlements.length > 0) {
       lines.push('', payments.length > 0 ? '💸 Remaining settlements:' : '💸 Settlements:');
       settlements.forEach(s => {
         lines.push(`  ${s.from.name} → ${s.to.name}: ${currency}${s.amount.toFixed(2)}`);
@@ -108,11 +119,9 @@ export function SessionCard({
     }
   };
 
-  const sorted = [...session.session_players].sort(
-    (a, b) => Number(b.cash_out) - Number(b.buy_in) - (Number(a.cash_out) - Number(a.buy_in))
-  );
+  const sorted = [...session.session_players].sort((a, b) => profitOf(b) - profitOf(a));
   const top = sorted[0];
-  const topProfit = top ? Number(top.cash_out) - Number(top.buy_in) : 0;
+  const topProfit = top ? profitOf(top) : 0;
 
   return (
     <article className={cn('surface overflow-hidden transition-colors', expanded && 'border-gold/30')}>
@@ -170,7 +179,7 @@ export function SessionCard({
             <span className="section-header">Results</span>
             <div className="rounded-xl border border-border/50 bg-muted/40 divide-y divide-border/50">
               {sorted.map((sp) => {
-                  const profit = Number(sp.cash_out) - Number(sp.buy_in);
+                  const profit = profitOf(sp);
                   return (
                     <div
                       key={sp.id}
@@ -215,12 +224,16 @@ export function SessionCard({
           )}
 
           {/* Remaining settlements */}
-          {(settlements.length > 0 || payments.length > 0) && (
+          {(settlements.length > 0 || payments.length > 0 || refusal) && (
             <div className="space-y-3">
               <span className="section-header">
                 {payments.length > 0 ? 'Remaining settlements' : 'Settlements'}
               </span>
-              {settlements.length > 0 ? (
+              {refusal ? (
+                <p className="text-sm text-muted-foreground px-3 py-2.5 rounded-xl bg-muted/40">
+                  {refusal}
+                </p>
+              ) : settlements.length > 0 ? (
                 <div className="space-y-2">
                   {settlements.map((settlement, i) => (
                     <div
