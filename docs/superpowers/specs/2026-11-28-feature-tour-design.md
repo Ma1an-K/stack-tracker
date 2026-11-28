@@ -29,8 +29,8 @@ on the member stats card; it does not get its own card (owner decision).
 
 - Automatically **once**, on the first render of Home (`/`) for an eligible account, once auth data
   has loaded (never during the splash or the `userDataPending` window).
-- **Eligible** = the profile was created on or after `TOUR_RELEASE` (a date constant, set to the
-  deploy date, same pattern as `ONBOARDING_CUTOFF`) **and** `'tour'` is not in `profile.seen_tips`.
+- **Eligible** = the profile was created on or after `TOUR_RELEASE` (an ISO instant with timezone
+  offset, set to the exact deploy instant; same idea as `ONBOARDING_CUTOFF`) **and** `'tour'` is not in `profile.seen_tips`.
   Using the account's creation date means existing accounts never see it automatically and no
   migration or back-fill is needed. A profile without `seen_tips` (column missing) is not eligible.
 - Not during a live game (the Home screen shows the live game then; skip auto-open while a live
@@ -67,5 +67,6 @@ Home install banner stays hidden while the tour is open.
 
 ## Owner deploy steps
 
-- Set `TOUR_RELEASE` to the deploy date before shipping (accounts created earlier never auto-see it).
+- Set `TOUR_RELEASE` to the exact deploy instant with timezone offset before shipping, e.g.
+  `'2026-11-28T14:30:00+11:00'` (accounts created earlier never auto-see it).
 - No database migration.

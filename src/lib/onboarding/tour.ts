@@ -1,7 +1,11 @@
 import type { HomegameRole } from '@/types/database';
 
-/** Accounts created on or after this date see the tour once, automatically. */
-export const TOUR_RELEASE = '2026-11-28';
+/**
+ * Accounts created at or after this instant see the tour once, automatically.
+ * Set it to the exact deploy instant with offset: a bare date parses as UTC
+ * midnight (11:00 AEDT) and would admit accounts made before the deploy.
+ */
+export const TOUR_RELEASE = '2026-11-28T00:00:00+11:00';
 
 export type TourRole = 'host' | 'member' | 'solo';
 
@@ -105,7 +109,7 @@ export const TOUR_CARDS: Record<TourRole, TourCard[]> = {
 };
 
 /**
- * True only for an account created on or after TOUR_RELEASE that has not seen
+ * True only for an account created at or after TOUR_RELEASE that has not seen
  * the tour. A profile without seen_tips (frontend shipped before the column)
  * is never eligible, so nothing shows and nothing is written.
  */

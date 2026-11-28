@@ -50,11 +50,22 @@ describe('isTourEligible', () => {
     expect(isTourEligible({ created_at: TOUR_RELEASE })).toBe(false);
   });
 
-  it('is false for accounts created before the release', () => {
-    expect(isTourEligible({ ...fresh, created_at: '2026-11-27T23:59:59Z' })).toBe(false);
+  it('is an exact instant with a timezone offset, not a bare date', () => {
+    expect(TOUR_RELEASE).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?[+-]\d{2}:\d{2}$/);
   });
 
-  it('is true for an account created on the release date that has not seen it', () => {
+  it('is false for an account created one second before the release instant', () => {
+    const before = new Date(Date.parse(TOUR_RELEASE) - 1000).toISOString();
+    expect(isTourEligible({ ...fresh, created_at: before })).toBe(false);
+  });
+
+  it('reads the instant with its offset (AEDT midnight), not UTC midnight', () => {
+    expect(isTourEligible({ ...fresh, created_at: '2026-11-27T13:00:00Z' })).toBe(true);
+    expect(isTourEligible({ ...fresh, created_at: '2026-11-27T12:59:59Z' })).toBe(false);
+  });
+
+  it('is true for an account created at the exact release instant that has not seen it', () => {
+    expect(isTourEligible({ ...fresh, created_at: new Date(Date.parse(TOUR_RELEASE)).toISOString() })).toBe(true);
     expect(isTourEligible(fresh)).toBe(true);
   });
 
