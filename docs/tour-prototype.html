@@ -1,0 +1,278 @@
+<title>Stack Tracker Feature Tour</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: review notes on the left, a phone showing Home with the tour sheet on the right; stacks on narrow screens.
+   Single dark look on purpose: the app itself is dark-only. */
+:root {
+  color-scheme: dark;
+  --bg: hsl(24 10% 4%);
+  --page: hsl(24 9% 6%);
+  --card: hsl(24 8% 7.5%);
+  --raised: hsl(24 7% 11%);
+  --fg: hsl(38 30% 92%);
+  --muted: hsl(32 10% 63%);
+  --border: hsl(36 22% 17%);
+  --gold: hsl(40 58% 56%);
+  --gold-bright: hsl(43 75% 70%);
+  --gold-ink: hsl(24 10% 6%);
+  --gold-soft: hsl(40 58% 56% / .12);
+  --success: hsl(150 50% 50%);
+  --danger: hsl(2 66% 62%);
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --r: 14px;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--page); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: start; }
+@media (max-width: 860px) { .wrap { grid-template-columns: 1fr; gap: 28px; } .stage { order: -1; position: static; width: 100%; } }
+
+/* ---------- Review panel ---------- */
+.eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 38px); line-height: 1.1; margin: 6px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 60ch; margin: 0 0 22px; }
+.seg-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.paths { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.path-btn { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 500; min-height: 36px; }
+.path-btn[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.note { border: 1px solid var(--border); background: var(--card); border-radius: var(--r); padding: 16px 18px; margin-bottom: 14px; }
+.note h2 { font-family: var(--font-display); font-weight: 600; font-size: 20px; margin: 0 0 8px; }
+.note p, .note li { color: var(--muted); max-width: 62ch; }
+.note p { margin: 0 0 10px; }
+.note p:last-child { margin-bottom: 0; }
+.note ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.note strong { color: var(--fg); font-weight: 600; }
+.open-q { border-left: 2px solid var(--gold); padding: 4px 0 4px 14px; color: var(--muted); font-size: 14px; margin-top: 12px; }
+.open-q strong { color: var(--fg); }
+
+/* ---------- Phone ---------- */
+.stage { position: sticky; top: 20px; justify-self: center; display: grid; gap: 12px; justify-items: center; }
+.phone { width: 375px; max-width: 100%; height: 760px; max-height: calc(100vh - 40px); min-height: 640px; background: var(--bg); border: 1px solid var(--border); border-radius: 38px; overflow: hidden; position: relative; box-shadow: 0 30px 80px -30px hsl(40 58% 56% / .18); }
+.replay { background: none; border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; color: var(--muted); font-size: 13px; min-height: 40px; }
+.replay:hover { color: var(--fg); border-color: var(--gold); }
+
+/* Home behind the sheet */
+.home { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.hdr { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.hdr .logo { width: 40px; height: 40px; border-radius: 11px; background: radial-gradient(circle at 50% 40%, var(--gold-bright), var(--gold) 45%, hsl(36 50% 25%)); }
+.hdr b { display: block; font-size: 15px; }
+.hdr small { color: var(--gold); font-size: 10px; letter-spacing: .14em; font-weight: 600; }
+.hdr .sp { flex: 1; }
+.hdr .grid-ic { width: 40px; height: 40px; border-radius: 12px; border: 1px solid hsl(40 58% 56% / .3); background: var(--gold-soft); }
+.body { flex: 1; padding: 18px 16px; display: grid; gap: 14px; align-content: start; }
+.greet small { color: var(--gold); font-size: 11px; letter-spacing: .14em; font-weight: 600; }
+.greet h3 { font-family: var(--font-display); font-size: 30px; margin: 2px 0 0; font-weight: 600; }
+.acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.act { border-radius: var(--r); border: 1px solid var(--border); background: var(--card); padding: 14px; height: 92px; }
+.act.gold { background: linear-gradient(160deg, var(--gold-bright), var(--gold)); }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tiles i { height: 62px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.nav { display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; padding: 10px 8px 16px; border-top: 1px solid var(--border); font-size: 10px; color: var(--muted); text-align: center; }
+.nav .plus { justify-self: center; width: 52px; height: 52px; border-radius: 50%; background: var(--gold); margin-top: -26px; display: grid; place-items: center; color: var(--gold-ink); font-size: 28px; line-height: 1; }
+
+/* Tour sheet */
+.scrim { position: absolute; inset: 0; background: hsl(24 10% 2% / .62); transition: opacity .2s; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: hsl(24 8% 9%); border-top: 1px solid var(--border); border-radius: 26px 26px 0 0; padding: 10px 0 18px; display: flex; flex-direction: column; transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+.closed .scrim { opacity: 0; pointer-events: none; }
+.closed .sheet { transform: translateY(105%); }
+@media (prefers-reduced-motion: reduce) { .sheet, .scrim { transition: none; } }
+.grab { width: 40px; height: 4px; border-radius: 4px; background: var(--border); margin: 0 auto 8px; }
+.sheet-top { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+.sheet-top .count { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; }
+.skip { background: none; border: 0; color: var(--muted); font-size: 14px; min-height: 44px; padding: 0 4px; }
+.track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.track::-webkit-scrollbar { display: none; }
+.card { flex: 0 0 100%; scroll-snap-align: center; padding: 6px 20px 4px; display: grid; gap: 12px; }
+.card h4 { font-family: var(--font-display); font-weight: 600; font-size: 26px; line-height: 1.1; margin: 4px 0 0; text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; min-height: 63px; }
+.where { font-size: 12px; color: var(--fg); display: inline-flex; gap: 6px; align-items: center; }
+.where span { color: var(--gold); }
+.dots { display: flex; justify-content: center; gap: 6px; margin: 12px 0 14px; }
+.dots i { width: 6px; height: 6px; border-radius: 6px; background: var(--border); transition: width .2s, background .2s; }
+.dots i.on { width: 20px; background: var(--gold); }
+.next { margin: 0 20px; min-height: 50px; border: 0; border-radius: 14px; background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: var(--gold-ink); font-weight: 600; font-size: 15px; }
+
+/* Drawn illustrations */
+.ill { height: 150px; border: 1px solid var(--border); border-radius: 18px; background: radial-gradient(120% 90% at 50% 0%, hsl(30 30% 14%), var(--card)); position: relative; overflow: hidden; display: grid; place-items: center; }
+.ill .row { display: flex; align-items: center; gap: 10px; }
+.pill { border: 1px solid var(--border); background: var(--raised); border-radius: 12px; padding: 9px 12px; font-size: 13px; display: grid; gap: 2px; min-width: 112px; }
+.pill small { color: var(--muted); font-size: 11px; }
+.pill.on { border-color: hsl(40 58% 56% / .55); background: var(--gold-soft); }
+.bigplus { width: 54px; height: 54px; border-radius: 50%; background: var(--gold); color: var(--gold-ink); display: grid; place-items: center; font-size: 30px; box-shadow: 0 0 0 8px var(--gold-soft); }
+.list { width: calc(100% - 40px); display: grid; gap: 7px; }
+.li { display: flex; align-items: center; gap: 10px; background: var(--raised); border: 1px solid var(--border); border-radius: 11px; padding: 8px 12px; font-size: 13px; }
+.li .rk { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; background: var(--border); font-variant-numeric: tabular-nums; }
+.li .rk.g { background: var(--gold); color: var(--gold-ink); }
+.li .sp { flex: 1; }
+.li .amt { font-variant-numeric: tabular-nums; font-weight: 600; }
+.amt.up { color: var(--success); }
+.amt.down { color: var(--danger); }
+.arrow { color: var(--muted); }
+.tick { width: 18px; height: 18px; border-radius: 5px; background: var(--gold); color: var(--gold-ink); display: grid; place-items: center; font-size: 12px; }
+.tick.off { background: none; border: 1px solid var(--border); }
+.badge { position: absolute; right: 18px; top: 14px; font-size: 11px; font-weight: 600; color: var(--gold-bright); background: var(--gold-soft); border: 1px solid hsl(40 58% 56% / .4); border-radius: 999px; padding: 3px 9px; }
+.spark { width: calc(100% - 40px); height: 90px; }
+.menu-g { display: grid; grid-template-columns: repeat(3, 84px); gap: 8px; }
+.menu-g div { height: 58px; border-radius: 12px; border: 1px solid var(--border); background: var(--raised); font-size: 11px; display: grid; place-items: center; text-align: center; padding: 4px; }
+.menu-g div.hl { border-color: hsl(40 58% 56% / .55); background: var(--gold-soft); color: var(--gold-bright); }
+.menu-row { position: absolute; top: 70px; right: 14px; left: 90px; background: hsl(24 8% 10%); border: 1px solid var(--border); border-radius: 14px; padding: 6px; display: grid; gap: 2px; box-shadow: 0 20px 40px -10px #000; }
+.menu-row div { font-size: 13px; padding: 10px; border-radius: 9px; color: var(--muted); }
+.menu-row div.hl { background: var(--gold-soft); color: var(--gold-bright); font-weight: 600; }
+.menu-wrap.hidden { display: none; }
+</style>
+
+<div class="wrap">
+  <section>
+    <div class="eyebrow">Draft for review</div>
+    <h1>Feature tour after first sign-in</h1>
+    <p class="lede">A short swipe-through sheet that shows each new account the four things the app does. It opens once, the first time someone reaches Home, and can be replayed from the menu. Pick a user type to see their version, then swipe or tap Next on the phone.</p>
+
+    <div class="seg-label">Who is signing in</div>
+    <div class="paths" role="group" aria-label="User type">
+      <button class="path-btn" data-role="host" aria-pressed="true">Hosts a homegame</button>
+      <button class="path-btn" data-role="member" aria-pressed="false">Joined a homegame</button>
+      <button class="path-btn" data-role="solo" aria-pressed="false">No homegame</button>
+    </div>
+
+    <div class="note">
+      <h2>When it shows</h2>
+      <ul>
+        <li><strong>Once, on the first visit to Home</strong> after host setup, joining, or choosing "Just settle tonight".</li>
+        <li><strong>Before the install sheet.</strong> The "Keep it one tap away" sheet waits until the tour is closed, so two sheets never stack.</li>
+        <li><strong>Skip closes it for good</strong>, same as finishing it. Remembered on the account, so it doesn't come back on another device.</li>
+        <li><strong>Replay any time</strong> from the header menu: "Take the tour".</li>
+        <li><strong>New accounts only.</strong> Existing users are marked as having seen it, the same way the tips were.</li>
+      </ul>
+    </div>
+
+    <div class="note" id="card-notes">
+      <h2>Cards for this user</h2>
+      <ul id="card-list"></ul>
+    </div>
+
+    <div class="note">
+      <h2>How it sits with what's already there</h2>
+      <p>The Getting started checklist stays: the tour explains the app, the checklist gets a host to their first game. The two one-time tips also stay, since they appear later, at the moment they're useful.</p>
+      <div class="open-q"><strong>Open question:</strong> should the sidepot calculator get its own card? It's a niche tool, so this draft mentions it on the stats card instead of adding a fifth card.</div>
+    </div>
+  </section>
+
+  <div class="stage">
+    <div class="phone" id="phone">
+      <div class="home" aria-hidden="true">
+        <div class="hdr"><div class="logo"></div><div><b id="hg-name">Thursday Night Poker</b><small id="hg-role">OWNER</small></div><div class="sp"></div><div class="grid-ic"></div></div>
+        <div class="body">
+          <div class="greet"><small>GOOD EVENING</small><h3>dana</h3></div>
+          <div class="acts"><div class="act gold"></div><div class="act"></div></div>
+          <div class="tiles"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="nav"><span>Home</span><span>Sessions</span><span class="plus">+</span><span>Standings</span><span>Stats</span></div>
+      </div>
+
+      <div class="menu-wrap hidden" id="menu" aria-hidden="true">
+        <div class="menu-row"><div>Members</div><div>Invites</div><div>Homegame badges</div><div class="hl">Take the tour</div><div>Settings</div></div>
+      </div>
+
+      <div id="tour">
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-label="Feature tour">
+          <div class="grab"></div>
+          <div class="sheet-top"><span class="count" id="count">1 of 4</span><button class="skip" id="skip">Skip</button></div>
+          <div class="track" id="track"></div>
+          <div class="dots" id="dots"></div>
+          <button class="next" id="next">Next</button>
+        </div>
+      </div>
+    </div>
+    <button class="replay" id="replay">Replay from the menu</button>
+  </div>
+</div>
+
+<script>
+const ILL = {
+  log: `<div class="row"><div class="pill on"><b>Play live</b><small>Buy-ins and rebuys as you go</small></div><div class="bigplus">+</div><div class="pill"><b>Final totals</b><small>Game's done, add the numbers</small></div></div>`,
+  oneoff: `<div class="row"><div class="pill on"><b>Live game</b><small>No homegame needed</small></div><div class="bigplus">+</div><div class="pill"><b>Final totals</b><small>Just the numbers</small></div></div>`,
+  settle: `<div class="list">
+    <div class="li"><span>Sam</span><span class="arrow">→</span><span>Dana</span><span class="sp"></span><span class="amt">$30</span><span class="tick">✓</span></div>
+    <div class="li"><span>Alex</span><span class="arrow">→</span><span>Dana</span><span class="sp"></span><span class="amt">$15</span><span class="tick off"></span></div>
+    <div class="li"><span>Alex</span><span class="arrow">→</span><span>Priya</span><span class="sp"></span><span class="amt">$5</span><span class="tick off"></span></div></div>`,
+  standings: `<span class="badge">Hot streak</span><div class="list">
+    <div class="li"><span class="rk g">1</span><span>Dana</span><span class="sp"></span><span class="amt up">+$240</span></div>
+    <div class="li"><span class="rk">2</span><span>Priya</span><span class="sp"></span><span class="amt up">+$85</span></div>
+    <div class="li"><span class="rk">3</span><span>Sam</span><span class="sp"></span><span class="amt down">−$60</span></div></div>`,
+  stats: `<svg class="spark" viewBox="0 0 300 90" aria-hidden="true"><defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="hsl(40 58% 56%)" stop-opacity=".35"/><stop offset="1" stop-color="hsl(40 58% 56%)" stop-opacity="0"/></linearGradient></defs>
+    <line x1="0" x2="300" y1="60" y2="60" stroke="hsl(36 22% 17%)" stroke-dasharray="3 4"/>
+    <path d="M0 62 L40 70 L80 52 L120 58 L160 38 L200 44 L240 22 L300 14 L300 90 L0 90Z" fill="url(#g)"/>
+    <path d="M0 62 L40 70 L80 52 L120 58 L160 38 L200 44 L240 22 L300 14" fill="none" stroke="hsl(43 75% 70%)" stroke-width="2.5"/>
+    <circle cx="300" cy="14" r="4" fill="hsl(43 75% 70%)"/></svg>`,
+  run: `<div class="menu-g"><div class="hl">Invites</div><div>Members</div><div>Players</div><div class="hl">Approve claims</div><div>Admins</div><div>Badges</div></div>`,
+  crew: `<div class="row"><div class="pill on"><b>Start a homegame</b><small>Standings for the regulars</small></div><div class="pill"><b>Join with code</b><small>From your host</small></div></div>`,
+};
+
+const CARDS = {
+  host: [
+    { ill: 'log', t: 'Log every game', p: 'Tap + to play live and track buy-ins and rebuys as they happen, or enter the final totals once the game is done.', w: 'The + button' },
+    { ill: 'settle', t: 'Settle up in seconds', p: 'Every game works out who pays whom in the fewest transfers. Tick payments off as they come in, or share the result with the group.', w: 'Sessions' },
+    { ill: 'standings', t: 'Standings and badges', p: 'A running leaderboard for your crew, with badges for streaks, big nights and milestones.', w: 'Standings' },
+    { ill: 'run', t: 'Run your homegame', p: 'Invite players, approve people claiming their name, and make trusted players admins. It’s all in the menu.', w: 'The menu, top right' },
+  ],
+  member: [
+    { ill: 'log', t: 'Log every game', p: 'Anyone in the homegame can log a game. Tap + to play live or enter the final totals afterwards.', w: 'The + button' },
+    { ill: 'settle', t: 'Settle up in seconds', p: 'Each game shows who pays whom in the fewest transfers, so nobody does the maths at the table.', w: 'Sessions' },
+    { ill: 'standings', t: 'Standings and badges', p: 'See where you rank in the crew and the badges you’ve earned along the way.', w: 'Standings' },
+    { ill: 'stats', t: 'Your own stats', p: 'Your results across every game and homegame, once your host confirms which player is you. The sidepot calculator is in the menu too.', w: 'Stats' },
+  ],
+  solo: [
+    { ill: 'oneoff', t: 'Log any game', p: 'Tap + to run a live game or enter final totals. No homegame or setup needed.', w: 'The + button' },
+    { ill: 'settle', t: 'Settle up in seconds', p: 'Get who pays whom in the fewest transfers, then save the game to your history.', w: 'Home, saved games' },
+    { ill: 'crew', t: 'Same crew every week?', p: 'Start a homegame for running standings, badges and stats, or join one with a code from your host.', w: 'Home' },
+  ],
+};
+const ROLE_HDR = { host: ['Thursday Night Poker', 'OWNER'], member: ['Thursday Night Poker', 'MEMBER'], solo: ['Stack Tracker', 'NO HOMEGAME YET'] };
+
+let role = 'host', idx = 0;
+const track = document.getElementById('track'), dots = document.getElementById('dots'), next = document.getElementById('next');
+const count = document.getElementById('count'), tour = document.getElementById('tour'), menu = document.getElementById('menu');
+
+function render() {
+  const cards = CARDS[role];
+  track.innerHTML = cards.map(c => `<div class="card"><div class="ill" aria-hidden="true">${ILL[c.ill]}</div><h4>${c.t}</h4><p>${c.p}</p><span class="where"><span>Where</span>${c.w}</span></div>`).join('');
+  dots.innerHTML = cards.map(() => '<i></i>').join('');
+  document.getElementById('card-list').innerHTML = cards.map((c, i) => `<li><strong>${i + 1}. ${c.t}.</strong> ${c.p}</li>`).join('');
+  document.getElementById('hg-name').textContent = ROLE_HDR[role][0];
+  document.getElementById('hg-role').textContent = ROLE_HDR[role][1];
+  track.scrollLeft = 0; idx = 0; sync();
+}
+function sync() {
+  const n = CARDS[role].length;
+  [...dots.children].forEach((d, i) => d.classList.toggle('on', i === idx));
+  count.textContent = `${idx + 1} of ${n}`;
+  next.textContent = idx === n - 1 ? 'Let’s play' : 'Next';
+}
+track.addEventListener('scroll', () => {
+  const i = Math.round(track.scrollLeft / track.clientWidth);
+  if (i !== idx) { idx = i; sync(); }
+}, { passive: true });
+function go(i) { track.scrollTo({ left: i * track.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
+function close() { tour.classList.add('closed'); }
+next.addEventListener('click', () => idx < CARDS[role].length - 1 ? go(idx + 1) : close());
+document.getElementById('skip').addEventListener('click', close);
+document.getElementById('replay').addEventListener('click', () => {
+  menu.classList.remove('hidden');
+  setTimeout(() => { menu.classList.add('hidden'); tour.classList.remove('closed'); render(); }, 900);
+});
+document.querySelectorAll('.path-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.path-btn').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  role = b.dataset.role; tour.classList.remove('closed'); render();
+}));
+render();
+</script>
